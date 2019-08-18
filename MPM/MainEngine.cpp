@@ -121,9 +121,9 @@ bool MainEngine::Init()
 	InitShaderPipeline();
 	InitScreen();
 
-	m_mpm = std::make_unique<mpm::MpmManager>();
-	m_mpm->InitComputeShaderPipeline();
-	m_mouseShader = m_mpm->GetMouseShader();
+	m_mpmEngine = std::make_unique<mpm::MpmEngine>();
+	m_mpmEngine->InitComputeShaderPipeline();
+	m_mouseShader = m_mpmEngine->GetMouseShader();
 
 	return true;
 }
@@ -224,7 +224,7 @@ void MainEngine::Loop()
 		ypos = ypos / (double)SRC_HEIGHT;
 
 		// y value is given inverted
-		m_mpm->SetMouseValues(glm::vec2(xpos, 1.f - ypos), left_click, right_click);
+		m_mpmEngine->SetMouseValues(glm::vec2(xpos, 1.f - ypos), left_click, right_click);
 
 
 		m_mouseShader->Use();
@@ -262,7 +262,7 @@ void MainEngine::Render()
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 
-	m_mpm->Render();
+	m_mpmEngine->Render();
 
 	// Start the Dear ImGui frame
 	ImGui_ImplOpenGL3_NewFrame();
@@ -279,7 +279,7 @@ void MainEngine::Render()
 		ImGui::End();
 	}
 	//ImGui::ShowDemoWindow();
-	m_mpm->RenderGUI();
+	m_mpmEngine->RenderGUI();
 	// Rendering
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

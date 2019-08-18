@@ -1,7 +1,7 @@
 #pragma once
 
 #define GLM_ENABLE_EXPERIMENTAL
-
+#include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
@@ -32,7 +32,9 @@ struct MaterialPoint {
 // optimize move semantics later
 struct PointCloud {
 	PointCloud() {};
-	~PointCloud() {};
+	~PointCloud() {
+		glDeleteBuffers(1, &ssbo);
+	};
 
 	size_t N;
 	std::vector<MaterialPoint> points;
@@ -40,4 +42,6 @@ struct PointCloud {
 
 	float mew;
 	float lam;
+
+	GLuint ssbo;
 };

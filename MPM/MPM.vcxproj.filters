@@ -66,7 +66,7 @@
     <ClCompile Include="glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mpm.cpp">
+    <ClCompile Include="MpmEngine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -119,10 +119,13 @@
     <ClInclude Include="Grid.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="mpm.h">
+    <ClInclude Include="ModelingEngine.h">
       <Filter>Header Files\apps</Filter>
     </ClInclude>
-    <ClInclude Include="GeometricModeller.h">
+    <ClInclude Include="Engine.h">
+      <Filter>Header Files\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="MpmEngine.h">
       <Filter>Header Files\apps</Filter>
     </ClInclude>
   </ItemGroup>

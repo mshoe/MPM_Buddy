@@ -1,6 +1,6 @@
 #pragma once
 
-class GeometricModdeller {
+class ModelingEngine {
 
 
 	bool InitComputeShaderPipeline();

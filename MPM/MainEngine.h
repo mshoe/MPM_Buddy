@@ -7,8 +7,9 @@
 #include "Constants.h"
 #include "Shader.h"
 #include "Camera.h"
-#include "mpm.h"
-#include "GeometricModeller.h"
+#include "Engine.h"
+#include "MpmEngine.h"
+#include "ModelingEngine.h"
 
 #include <glad/glad.h>
 
@@ -37,17 +38,15 @@ public:
 	void Update(float lag);
 	void Render();
 
-private:	
-	
-
-
-
+private:
 	GLFWwindow *m_window;
 	bool m_cameraImgui = true;
 
 	std::shared_ptr<StandardShader> m_mouseShader;
 	std::unique_ptr<Camera> m_camera;
-	std::unique_ptr<mpm::MpmManager> m_mpm;
+	std::shared_ptr<mpm::MpmEngine> m_mpmEngine;
+
+	std::shared_ptr<Engine> m_currentEngine;
 
 	float m_time = 0.f;
 

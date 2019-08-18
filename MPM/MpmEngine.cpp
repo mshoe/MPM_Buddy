@@ -1,4 +1,4 @@
-#include "mpm.h"
+#include "MpmEngine.h"
 #include "imgui/imgui.h"
 
 float BSpline(float x) {
@@ -13,7 +13,7 @@ float BSplineSlope(float x) {
 
 
 
-bool mpm::MpmManager::InitComputeShaderPipeline()
+bool mpm::MpmEngine::InitComputeShaderPipeline()
 {
 	using namespace std::chrono;
 
@@ -38,7 +38,7 @@ bool mpm::MpmManager::InitComputeShaderPipeline()
 
 	glCreateVertexArrays(1, &VisualizeVAO);
 
-	m_pPointCloud = std::make_unique<StandardShader>(std::vector<std::string>{"shaders\\graphics\\pointCloud.vs"}, std::vector<std::string>{"shaders\\graphics\\pointCloud.fs"}, "shaders\\compute\\mpm_header.comp");
+	m_pPointCloudShader = std::make_unique<StandardShader>(std::vector<std::string>{"shaders\\graphics\\pointCloud.vs"}, std::vector<std::string>{"shaders\\graphics\\pointCloud.fs"}, "shaders\\compute\\mpm_header.comp");
 	m_mouseShader = std::make_unique<StandardShader>(std::vector<std::string>{"shaders\\graphics\\mouseShader.vs"}, std::vector<std::string>{"shaders\\graphics\\mouseShader.fs"}, "shaders\\compute\\mpm_header.comp");
 
 	CreateDemo();
@@ -46,17 +46,16 @@ bool mpm::MpmManager::InitComputeShaderPipeline()
 	return true;
 }
 
-bool mpm::MpmManager::CleanupComputeShaderPipeline()
+bool mpm::MpmEngine::CleanupComputeShaderPipeline()
 {
-	if (pointCloudSSBO != nullptr)
-		glDeleteBuffers((GLsizei)m_numPointClouds, pointCloudSSBO);
+	m_pointCloudMap.clear();
 	glDeleteBuffers(1, &gridSSBO);
 	glDeleteVertexArrays(1, &VisualizeVAO);
 
 	return false;
 }
 
-void mpm::MpmManager::MpmTimeStep(float dt)
+void mpm::MpmEngine::MpmTimeStep(float dt)
 {
 #ifdef MPM_DEBUG
 	using namespace std::chrono;
@@ -68,15 +67,15 @@ void mpm::MpmManager::MpmTimeStep(float dt)
 	m_gReset->Use();
 	glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-	for (size_t i = 0; i < m_numPointClouds; i++) {
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudSSBO[i]);
+	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudPair.second->ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 		/*m_p2gGather->Use();
 		m_p2gGather->SetFloat("dt", dt);
 		glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);*/
 		m_p2gScatter->Use();
 		m_p2gScatter->SetFloat("dt", dt);
-		int g2p_workgroups = int(glm::ceil(float(m_pointClouds[i].N) / float(G2P_WORKGROUP_SIZE)));
+		int g2p_workgroups = int(glm::ceil(float(pointCloudPair.second->N) / float(G2P_WORKGROUP_SIZE)));
 		glDispatchCompute(g2p_workgroups, 1, 1);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 	}
@@ -92,14 +91,14 @@ void mpm::MpmManager::MpmTimeStep(float dt)
 	glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-	for (size_t i = 0; i < m_numPointClouds; i++) {
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudSSBO[i]);
+	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudPair.second->ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 		m_g2pGather->Use();
 		m_g2pGather->SetFloat("dt", dt);
-		m_g2pGather->SetFloat("lam", m_pointClouds[i].lam);
-		m_g2pGather->SetFloat("mew", m_pointClouds[i].mew);
-		int g2p_workgroups = int(glm::ceil(float(m_pointClouds[i].N) / float(G2P_WORKGROUP_SIZE)));
+		m_g2pGather->SetFloat("lam", pointCloudPair.second->lam);
+		m_g2pGather->SetFloat("mew", pointCloudPair.second->mew);
+		int g2p_workgroups = int(glm::ceil(float(pointCloudPair.second->N) / float(G2P_WORKGROUP_SIZE)));
 		glDispatchCompute(g2p_workgroups, 1, 1);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 	}
@@ -113,23 +112,23 @@ void mpm::MpmManager::MpmTimeStep(float dt)
 #endif
 }
 
-void mpm::MpmManager::Render()
+void mpm::MpmEngine::Render()
 {
 	if (!m_paused) {
 		MpmTimeStep(m_dt);
 	}
-	m_pPointCloud->Use();
+	m_pPointCloudShader->Use();
 	glBindVertexArray(VisualizeVAO);
-	for (size_t i = 0; i < m_numPointClouds; i++) {
-		m_pPointCloud->SetVec("pointCloudColor", m_pointClouds[i].color);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudSSBO[i]);
-		glDrawArrays(GL_POINTS, 0, (GLsizei)m_pointClouds[i].N);
+	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+		m_pPointCloudShader->SetVec("pointCloudColor", pointCloudPair.second->color);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudPair.second->ssbo);
+		glDrawArrays(GL_POINTS, 0, (GLsizei)pointCloudPair.second->N);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
 	}
 	glBindVertexArray(0);
 }
 
-void mpm::MpmManager::RenderGUI()
+void mpm::MpmEngine::RenderGUI()
 {
 	if (m_renderGUI) {
 		ImGui::Begin("MPM Grid Data", &m_renderGUI);
@@ -147,16 +146,15 @@ void mpm::MpmManager::RenderGUI()
 		ImGui::Text(std::to_string(m_timeStep).c_str());
 		ImGui::InputFloat("dt", &m_dt, 0.001f, 1.f/60.f, "%.6f");
 
-		ImGui::InputFloat2("circle init x", m_circle_x, "%.3f");
+		/*ImGui::InputFloat2("circle init x", m_circle_x, "%.3f");
 		ImGui::InputFloat2("circle init v", m_circle_v, "%.3f");
 		ImGui::InputFloat2("donut init x", m_donut_x, "%.3f");
-		ImGui::InputFloat2("donut init v", m_donut_v, "%.3f");
+		ImGui::InputFloat2("donut init v", m_donut_v, "%.3f");*/
 		
 		
 		if (ImGui::Button("Get node data") && m_paused) {
 			UpdateNodeData();
 		}
-		ImGui::InputInt("Select point cloud", &m_pointCloudSelect, 1, 1);
 		ImGui::InputInt2("Grid Node:", m_node);
 		ImGui::Text(m_nodeText.c_str());
 		
@@ -177,7 +175,7 @@ void mpm::MpmManager::RenderGUI()
 
 		ImGui::End();
 
-		ImGui::Begin("Material Point View");
+		/*ImGui::Begin("Material Point View");
 		if (ImGui::Button("View Particles") && m_paused) {
 			void *ptr = glMapNamedBuffer(pointCloudSSBO[m_pointCloudSelect], GL_READ_ONLY);
 			MaterialPoint *data = static_cast<MaterialPoint*>(ptr);
@@ -191,35 +189,35 @@ void mpm::MpmManager::RenderGUI()
 		}
 		ImGui::Text(m_pointsViewStr.c_str());
 
-		ImGui::End();
+		ImGui::End();*/
 	}
 }
 
-void mpm::MpmManager::UpdateNodeData()
+void mpm::MpmEngine::UpdateNodeData()
 {
-	if (0 <= m_pointCloudSelect && m_pointCloudSelect < m_numPointClouds) {
-		if (0 <= m_node[0] && m_node[0] < GRID_SIZE_X && 0 <= m_node[1] && m_node[1] < GRID_SIZE_Y) {
-			void *ptr = glMapNamedBuffer(gridSSBO, GL_READ_ONLY);
-			GridNode *data = static_cast<GridNode*>(ptr);
-			GridNode gn = data[m_node[0] * GRID_SIZE_X + m_node[1]];
-			std::ostringstream nodeText;
-			nodeText << gn << std::endl;
-			m_nodeText = nodeText.str();
-			glUnmapNamedBuffer(gridSSBO);
-		}
+	if (0 <= m_node[0] && m_node[0] < GRID_SIZE_X && 0 <= m_node[1] && m_node[1] < GRID_SIZE_Y) {
+		void *ptr = glMapNamedBuffer(gridSSBO, GL_READ_ONLY);
+		GridNode *data = static_cast<GridNode*>(ptr);
+		GridNode gn = data[m_node[0] * GRID_SIZE_X + m_node[1]];
+		std::ostringstream nodeText;
+		nodeText << gn << std::endl;
+		m_nodeText = nodeText.str();
+		glUnmapNamedBuffer(gridSSBO);
 	}
 }
 
 
-PointCloud mpm::MpmManager::GenPointCloud(const Shape& shape, sdf::sdFunc _sdf,
+std::shared_ptr<PointCloud> mpm::MpmEngine::GenPointCloud(const Shape& shape, sdf::sdFunc _sdf,
 	const float gridDimX, const float gridDimY, const float particleSpacing, 
 	const float density, const float youngMod, const float poisson,
-	glm::vec2 initialVelocity)
+	glm::vec2 initialVelocity, glm::vec3 color)
 {
-	PointCloud pointCloud;
+	std::shared_ptr<PointCloud> pointCloud = std::make_shared<PointCloud>();
 
-	pointCloud.mew = youngMod / (2.f + 2.f*poisson);
-	pointCloud.lam = youngMod * poisson / ((1.f + poisson) * (1.f - 2.f * poisson));
+	pointCloud->color = color;
+
+	pointCloud->mew = youngMod / (2.f + 2.f*poisson);
+	pointCloud->lam = youngMod * poisson / ((1.f + poisson) * (1.f - 2.f * poisson));
 
 	float mass = particleSpacing * particleSpacing * density;
 	
@@ -240,16 +238,16 @@ PointCloud mpm::MpmManager::GenPointCloud(const Shape& shape, sdf::sdFunc _sdf,
 				mp.P = glm::mat2(0.f); // initial Piola stress tensor is 0
 				
 				
-				pointCloud.points.push_back(mp);
+				pointCloud->points.push_back(mp);
 			}
 		}
 	}
-	pointCloud.N = pointCloud.points.size();
+	pointCloud->N = pointCloud->points.size();
 
 	return pointCloud;
 }
 
-void mpm::MpmManager::CreateDemo()
+void mpm::MpmEngine::CreateDemo()
 {
 	using namespace std::chrono;
 
@@ -257,7 +255,7 @@ void mpm::MpmManager::CreateDemo()
 	time_point<high_resolution_clock> t2;
 
 	t1 = high_resolution_clock::now();
-	m_pointClouds.clear();
+	m_pointCloudMap.clear();
 	t2 = high_resolution_clock::now();
 	std::cout << "Clearing point clouds took" << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
 
@@ -271,67 +269,68 @@ void mpm::MpmManager::CreateDemo()
 
 	t1 = high_resolution_clock::now();
 	sdf::sdFunc dCircle(sdf::DemoCircle);
-	Shape shape(glm::vec2(m_circle_x[0], m_circle_x[1]), std::vector<float>{5.f});
-	m_pointClouds.push_back(GenPointCloud(shape, dCircle, GRID_SIZE_X, GRID_SIZE_Y, 0.25f, 0.16f, youngMod, poisson, glm::vec2(m_circle_v[0], m_circle_v[1])));
-	m_pointClouds[index].color = glm::vec3(1.f, 0.f, 0.f);
+	Shape shape(glm::vec2(35.f, 10.f), std::vector<float>{5.f});
+	m_pointCloudMap["circle1"] = GenPointCloud(shape, dCircle, GRID_SIZE_X, GRID_SIZE_Y, 0.25f, 0.16f, youngMod, poisson, glm::vec2(-3.f, 0.f), glm::vec3(1.f, 0.f, 0.f));
+	
 	t2 = high_resolution_clock::now();
-	std::cout << "Finished generating " << m_pointClouds[index].N << " points for DemoCircle point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
-	t1 = high_resolution_clock::now();
+	std::cout << "Finished generating " << m_pointCloudMap["circle1"]->N << " points for DemoCircle point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
+	
 	index++;
 
-	sdf::sdFunc dDonut(sdf::DemoDonut);
-	Shape shape2(glm::vec2(m_donut_x[0], m_donut_x[1]), std::vector<float>{1.5f, 6.f});
-	/*PointCloud sh2 = GenPointCloud(shape2, dDonut, GRID_SIZE_X, GRID_SIZE_Y, 0.25f, 0.16f, 100.f, 0.2f, glm::vec2(m_donut_v[0], m_donut_v[1]));
-	m_pointClouds[0].points.insert(m_pointClouds[0].points.end(), sh2.points.begin(), sh2.points.end());
-	m_pointClouds[0].N += sh2.N;*/
-	m_pointClouds.push_back(GenPointCloud(shape2, dDonut, GRID_SIZE_X, GRID_SIZE_Y, 0.25f, 0.16f, youngMod, poisson, glm::vec2(m_donut_v[0], m_donut_v[1])));
-	m_pointClouds[index].color = glm::vec3(0.f, 1.f, 0.f);
-	t2 = high_resolution_clock::now();
-	std::cout << "Finished generating " << m_pointClouds[index].N << " points for DemoDonut point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
-	index++;
+	//t1 = high_resolution_clock::now();
+	//sdf::sdFunc dDonut(sdf::DemoDonut);
+	//Shape shape2(glm::vec2(15.f, 10.f), std::vector<float>{1.5f, 6.f});
+	///*PointCloud sh2 = GenPointCloud(shape2, dDonut, GRID_SIZE_X, GRID_SIZE_Y, 0.25f, 0.16f, 100.f, 0.2f, glm::vec2(m_donut_v[0], m_donut_v[1]));
+	//m_pointClouds[0].points.insert(m_pointClouds[0].points.end(), sh2.points.begin(), sh2.points.end());
+	//m_pointClouds[0].N += sh2.N;*/
+	//m_pointClouds.push_back(GenPointCloud(shape2, dDonut, GRID_SIZE_X, GRID_SIZE_Y, 0.25f, 0.16f, youngMod, poisson, glm::vec2(3.f, 0.f)));
+	//m_pointClouds[index].color = glm::vec3(0.f, 1.f, 0.f);
+	//t2 = high_resolution_clock::now();
+	//std::cout << "Finished generating " << m_pointClouds[index].N << " points for DemoDonut point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
+	//index++;
 
-	sdf::sdFunc dDonut2(sdf::DemoDonut);
-	Shape shape3(glm::vec2(80.f, 80.f), std::vector<float>{1.0f, 5.f});
-	m_pointClouds.push_back(GenPointCloud(shape3, dDonut2, GRID_SIZE_X, GRID_SIZE_Y, 0.25f, 0.16f, youngMod, poisson, glm::vec2(0.f, 0.f)));
-	m_pointClouds[index].color = glm::vec3(0.f, 0.5f, 0.5f);
-	t2 = high_resolution_clock::now();
-	std::cout << "Finished generating " << m_pointClouds[index].N << " points for DemoDonut point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
-	index++;
+	//sdf::sdFunc dDonut2(sdf::DemoDonut);
+	//Shape shape3(glm::vec2(80.f, 80.f), std::vector<float>{1.0f, 5.f});
+	//m_pointClouds.push_back(GenPointCloud(shape3, dDonut2, GRID_SIZE_X, GRID_SIZE_Y, 0.25f, 0.16f, youngMod, poisson, glm::vec2(0.f, 0.f)));
+	//m_pointClouds[index].color = glm::vec3(0.f, 0.5f, 0.5f);
+	//t2 = high_resolution_clock::now();
+	//std::cout << "Finished generating " << m_pointClouds[index].N << " points for DemoDonut point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
+	//index++;
 
-	t1 = high_resolution_clock::now();
-	sdf::sdFunc dCircle2(sdf::DemoCircle);
-	Shape shape4(glm::vec2(50.f, 50.f), std::vector<float>{3.f});
-	m_pointClouds.push_back(GenPointCloud(shape4, dCircle2, GRID_SIZE_X, GRID_SIZE_Y, 0.25f, 0.16f, youngMod, poisson, glm::vec2(m_circle_v[0], m_circle_v[1])));
-	m_pointClouds[index].color = glm::vec3(1.f, 1.f, 0.f);
-	t2 = high_resolution_clock::now();
-	std::cout << "Finished generating " << m_pointClouds[index].N << " points for DemoCircle point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
-	t1 = high_resolution_clock::now();
-	index++;
+	//t1 = high_resolution_clock::now();
+	//sdf::sdFunc dCircle2(sdf::DemoCircle);
+	//Shape shape4(glm::vec2(50.f, 50.f), std::vector<float>{3.f});
+	//m_pointClouds.push_back(GenPointCloud(shape4, dCircle2, GRID_SIZE_X, GRID_SIZE_Y, 0.25f, 0.16f, youngMod, poisson, glm::vec2(3.f, 0.f)));
+	//m_pointClouds[index].color = glm::vec3(1.f, 1.f, 0.f);
+	//t2 = high_resolution_clock::now();
+	//std::cout << "Finished generating " << m_pointClouds[index].N << " points for DemoCircle point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
+	//t1 = high_resolution_clock::now();
+	//index++;
 
-	t1 = high_resolution_clock::now();
-	sdf::sdFunc dCircle3(sdf::DemoCircle);
-	Shape shape5(glm::vec2(90.f, 30.f), std::vector<float>{7.f});
-	m_pointClouds.push_back(GenPointCloud(shape5, dCircle3, GRID_SIZE_X, GRID_SIZE_Y, 0.25f, 0.16f, youngMod, poisson, glm::vec2(m_circle_v[0], m_circle_v[1])));
-	m_pointClouds[index].color = glm::vec3(0.4f, 0.3f, 0.7f);
-	t2 = high_resolution_clock::now();
-	std::cout << "Finished generating " << m_pointClouds[index].N << " points for DemoCircle point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
-	t1 = high_resolution_clock::now();
-	index++;
+	//t1 = high_resolution_clock::now();
+	//sdf::sdFunc dCircle3(sdf::DemoCircle);
+	//Shape shape5(glm::vec2(90.f, 30.f), std::vector<float>{7.f});
+	//m_pointClouds.push_back(GenPointCloud(shape5, dCircle3, GRID_SIZE_X, GRID_SIZE_Y, 0.25f, 0.16f, youngMod, poisson, glm::vec2(3.f, 0.f)));
+	//m_pointClouds[index].color = glm::vec3(0.4f, 0.3f, 0.7f);
+	//t2 = high_resolution_clock::now();
+	//std::cout << "Finished generating " << m_pointClouds[index].N << " points for DemoCircle point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
+	//t1 = high_resolution_clock::now();
+	//index++;
 
-	sdf::sdFunc dDonut3(sdf::DemoDonut);
-	Shape shape6(glm::vec2(20.f, 80.f), std::vector<float>{1.f, 4.f});
-	m_pointClouds.push_back(GenPointCloud(shape6, dDonut3, GRID_SIZE_X, GRID_SIZE_Y, 0.25f, 0.16f, youngMod, poisson, glm::vec2(0.f, 0.f)));
-	m_pointClouds[index].color = glm::vec3(0.8f, 0.2f, 0.2f);
-	t2 = high_resolution_clock::now();
-	std::cout << "Finished generating " << m_pointClouds[index].N << " points for DemoDonut point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
-	index++;
+	//sdf::sdFunc dDonut3(sdf::DemoDonut);
+	//Shape shape6(glm::vec2(20.f, 80.f), std::vector<float>{1.f, 4.f});
+	//m_pointClouds.push_back(GenPointCloud(shape6, dDonut3, GRID_SIZE_X, GRID_SIZE_Y, 0.25f, 0.16f, youngMod, poisson, glm::vec2(0.f, 0.f)));
+	//m_pointClouds[index].color = glm::vec3(0.8f, 0.2f, 0.2f);
+	//t2 = high_resolution_clock::now();
+	//std::cout << "Finished generating " << m_pointClouds[index].N << " points for DemoDonut point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
+	//index++;
 
 	//1.5. Test point cloud
    //for (MaterialPoint mp : m_pointClouds[0].points) {
    //	std::cout << mp.x.x << ", " << mp.x.y << std::endl;
    //}
 
-	m_numPointClouds = m_pointClouds.size();
+	//m_numPointClouds = m_pointClouds.size();
 	m_grid = Grid(GRID_SIZE_X, GRID_SIZE_Y);
 
 	glCreateBuffers(1, &gridSSBO);
@@ -343,13 +342,16 @@ void mpm::MpmManager::CreateDemo()
 		GL_MAP_READ_BIT
 	);
 
-	glCreateBuffers((GLsizei)m_numPointClouds, pointCloudSSBO);
+	
 	// Create the buffers for the point clouds
-	for (size_t i = 0; i < m_numPointClouds; ++i) {
+	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+		GLuint pointCloudSSBO;
+		glCreateBuffers(1, &pointCloudSSBO);
+		pointCloudPair.second->ssbo = pointCloudSSBO;
 		glNamedBufferStorage(
-			pointCloudSSBO[i],
-			sizeof(MaterialPoint)*m_pointClouds[i].points.size(),
-			&(m_pointClouds[i].points.front().x.x),
+			pointCloudPair.second->ssbo,
+			sizeof(MaterialPoint)*pointCloudPair.second->points.size(),
+			&(pointCloudPair.second->points.front().x.x),
 			GL_MAP_READ_BIT
 		);
 
@@ -390,7 +392,7 @@ void mpm::MpmManager::CreateDemo()
 	/*glUnmapNamedBuffer(gridSSBO);*/
 }
 
-void mpm::MpmManager::CalculatePointCloudVolumes()
+void mpm::MpmEngine::CalculatePointCloudVolumes()
 {
 	using namespace std::chrono;
 
@@ -398,15 +400,15 @@ void mpm::MpmManager::CalculatePointCloudVolumes()
 	time_point<high_resolution_clock> t2;
 
 	std::cout << "Calculating initial volumes...\n";
-	for (size_t i = 0; i < m_numPointClouds; i++) {
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudSSBO[i]);
+	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudPair.second->ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 		t1 = high_resolution_clock::now();
 		m_p2gCalcVolumes->Use();
 		glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 		m_g2pCalcVolumes->Use();
-		int g2p_workgroups = int(glm::ceil(float(m_pointClouds[i].N) / float(G2P_WORKGROUP_SIZE)));
+		int g2p_workgroups = int(glm::ceil(float(pointCloudPair.second->N) / float(G2P_WORKGROUP_SIZE)));
 		glDispatchCompute(g2p_workgroups, 1, 1);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 		t2 = high_resolution_clock::now();

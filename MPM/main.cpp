@@ -7,10 +7,7 @@
 
 int main(int argc, char* argv) {
 
-
-
 	MainEngine *mainEngine = new MainEngine();
-
 
 	mainEngine->Loop();
 
