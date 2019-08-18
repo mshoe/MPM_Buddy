@@ -5,7 +5,7 @@ This program was made using C++ and OpenGL compute shaders.
 It also uses OpenGL for rendering and ImGui for GUI.
 
 Video demo:
-https://youtu.be/ziMCgmg7P3k
+https://www.youtube.com/watch?v=zI0pmVGq8EA
 
 ![pic](MPM/pics/before.PNG)
 ![pic](MPM/pics/during.PNG)

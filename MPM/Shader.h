@@ -99,8 +99,24 @@ protected:
 
 class StandardShader : public AdvancedShader {
 public:
-	StandardShader(const std::vector<std::string> &vertexPaths, const std::vector<std::string> &fragmentPaths)
+	StandardShader(const std::vector<std::string> &vertexPaths, const std::vector<std::string> &fragmentPaths, std::string headerPath)
 	{
+		// First get the header file str into a std::string
+		std::string headerCode;
+		std::ifstream headerFile;
+		headerFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+		try
+		{
+			headerFile.open(headerPath);
+			std::stringstream headerStream;
+			headerStream << headerFile.rdbuf();
+			headerFile.close();
+			headerCode = headerStream.str();
+		}
+		catch (std::ifstream::failure e) {
+			std::cout << "ERROR::SHADER::HAEDER_FILE_NOT_SUCCESFULLY_READ" << std::endl;
+		}
+
 		// 1. Vertex shader
 		std::vector<GLuint> vertexShaders;
 		vertexShaders.resize(vertexPaths.size());
@@ -111,14 +127,23 @@ public:
 			try
 			{
 				vShaderFile.open(vertexPaths[i]);
-				std::stringstream vShaderStream;
-				vShaderStream << vShaderFile.rdbuf();
+
+				for (std::string line; std::getline(vShaderFile, line); ) {
+					if (line == "/*** HEADER ***/") {
+						vertexCode += headerCode + "\n";
+					}
+					else {
+						vertexCode += line + "\n";
+					}
+				}
+
 				vShaderFile.close();
-				vertexCode = vShaderStream.str();
 			}
 			catch (std::ifstream::failure e)
 			{
-				std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
+				if (!vShaderFile.eof()) {
+					std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
+				}
 			}
 			const char* vShaderCode = vertexCode.c_str();
 			vertexShaders[i] = glCreateShader(GL_VERTEX_SHADER);
