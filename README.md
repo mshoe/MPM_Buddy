@@ -7,7 +7,7 @@ It also uses OpenGL for rendering and ImGui for GUI.
 Video demo:
 https://youtu.be/ziMCgmg7P3k
 
-![pic](pics/before.PNG)
-![pic](pics/during.PNG)
-![pic](pics/during2.PNG)
-![pic](pics/after.PNG)
+![pic](MPM/pics/before.PNG)
+![pic](MPM/pics/during.PNG)
+![pic](MPM/pics/during2.PNG)
+![pic](MPM/pics/after.PNG)
