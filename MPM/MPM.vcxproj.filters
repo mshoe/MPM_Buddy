@@ -19,15 +19,21 @@
     <Filter Include="Resource Files\Shaders">
       <UniqueIdentifier>{0f7b815e-14ed-4c66-8562-432cae1ad37f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Math">
+      <UniqueIdentifier>{70af37af-54fd-4a42-873e-a9d0b693da5a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Shaders\headers">
+      <UniqueIdentifier>{e76ba204-a47c-48da-a261-427e8f420524}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\apps">
+      <UniqueIdentifier>{950170f3-76ad-4159-989e-f09f02a86be1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MainEngine.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="imgui\imgui_impl_opengl3.cpp">
@@ -48,12 +54,18 @@
     <ClCompile Include="imgui\imgui_impl_glfw.cpp">
       <Filter>Resource Files\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="sdf.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="glad.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mpm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainEngine.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="imgui\imgui_impl_glfw.h">
@@ -86,16 +98,88 @@
     <ClInclude Include="Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PointCloud.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="sdf.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Shape.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="mpmShader.comp">
+      <Filter>Resource Files\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Grid.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mpm.h">
+      <Filter>Header Files\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="GeometricModeller.h">
+      <Filter>Header Files\apps</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="imgui\imgui.ini">
       <Filter>Resource Files\imgui</Filter>
     </None>
-    <None Include="mainShader.vs">
+    <None Include="p2gGatherParticlesAndUpdateNode.comp">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="mainShader.fs">
+    <None Include="g2pGatherNodesAndUpdateParticle.comp">
       <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="pointCloud.vs">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="pointCloud.fs">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="p2gCalculateVolumes.comp">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="g2pCalculateVolumes.comp">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="gComputeCollisions.comp">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="gridShader.fs">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="gridShader.vs">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="gImplicitUpdate.comp">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="gOptimizationIntegrator.comp">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="gResetNodes.comp">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="gUpdateNodes.comp">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="p2gScatter.comp">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="p2gScatterParticleAndUpdateNodes.comp">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="mouseShader.vs">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="mouseShader.fs">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="mpm_header.comp">
+      <Filter>Resource Files\Shaders\headers</Filter>
     </None>
   </ItemGroup>
 </Project>

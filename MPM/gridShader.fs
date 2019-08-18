@@ -1,5 +1,9 @@
 #version 450 core
 
+/* begin MPM shaders header */
+const int GRID_SIZE_X = 32*4;
+const int GRID_SIZE_Y = 32*4;
+
 uniform vec2 iResolution;
 uniform mat4 iCamera;
 uniform vec4 iMouse;

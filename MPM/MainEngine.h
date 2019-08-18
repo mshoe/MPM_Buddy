@@ -7,7 +7,8 @@
 #include "Constants.h"
 #include "Shader.h"
 #include "Camera.h"
-
+#include "mpm.h"
+#include "GeometricModeller.h"
 
 #include <glad/glad.h>
 
@@ -28,7 +29,8 @@ public:
 	~MainEngine();
 
 	bool InitShaderPipeline();
-	bool InitRaymarchingScreen();
+	bool InitScreen();
+	bool InitMPM();
 
 	void Loop();
 	void ProcessInput(GLFWwindow *window, float lag);
@@ -43,8 +45,9 @@ private:
 	GLFWwindow *m_window;
 	bool m_cameraImgui = true;
 
-	std::unique_ptr<StandardShader> m_mainShader;
+	std::shared_ptr<StandardShader> m_mouseShader;
 	std::unique_ptr<Camera> m_camera;
+	std::unique_ptr<mpm::MpmManager> m_mpm;
 
 	float m_time = 0.f;
 

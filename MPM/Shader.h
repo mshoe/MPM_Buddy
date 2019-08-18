@@ -99,35 +99,38 @@ protected:
 
 class StandardShader : public AdvancedShader {
 public:
-	StandardShader(const std::string &vertexPath, const std::vector<std::string> &fragmentPaths)
+	StandardShader(const std::vector<std::string> &vertexPaths, const std::vector<std::string> &fragmentPaths)
 	{
 		// 1. Vertex shader
-		std::string vertexCode;
-		std::ifstream vShaderFile;
-		vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-		try
-		{
-			vShaderFile.open(vertexPath);
-			std::stringstream vShaderStream;
-			vShaderStream << vShaderFile.rdbuf();
-			vShaderFile.close();
-			vertexCode = vShaderStream.str();
+		std::vector<GLuint> vertexShaders;
+		vertexShaders.resize(vertexPaths.size());
+		for (size_t i = 0; i < vertexPaths.size(); i++) {
+			std::string vertexCode;
+			std::ifstream vShaderFile;
+			vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+			try
+			{
+				vShaderFile.open(vertexPaths[i]);
+				std::stringstream vShaderStream;
+				vShaderStream << vShaderFile.rdbuf();
+				vShaderFile.close();
+				vertexCode = vShaderStream.str();
+			}
+			catch (std::ifstream::failure e)
+			{
+				std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
+			}
+			const char* vShaderCode = vertexCode.c_str();
+			vertexShaders[i] = glCreateShader(GL_VERTEX_SHADER);
+			glShaderSource(vertexShaders[i], 1, &vShaderCode, NULL);
+			glCompileShader(vertexShaders[i]);
+			checkCompileErrors(vertexShaders[i], "VERTEX");
 		}
-		catch (std::ifstream::failure e)
-		{
-			std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
-		}
-		const char* vShaderCode = vertexCode.c_str();
-		GLuint vertex;
-		vertex = glCreateShader(GL_VERTEX_SHADER);
-		glShaderSource(vertex, 1, &vShaderCode, NULL);
-		glCompileShader(vertex);
-		checkCompileErrors(vertex, "VERTEX");
 
 
 		// 2. Fragment shaders
-		std::vector<GLuint> fragments;
-		fragments.resize(fragmentPaths.size());
+		std::vector<GLuint> fragmentShaders;
+		fragmentShaders.resize(fragmentPaths.size());
 		for (size_t i = 0; i < fragmentPaths.size(); i++) {
 			std::string fragPath = fragmentPaths[i];
 			std::string fragCode;
@@ -146,25 +149,29 @@ public:
 				std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
 			}
 			const char* fShaderCode = fragCode.c_str();
-			fragments[i] = glCreateShader(GL_FRAGMENT_SHADER);
-			glShaderSource(fragments[i], 1, &fShaderCode, NULL);
-			glCompileShader(fragments[i]);
-			checkCompileErrors(fragments[i], "FRAGMENT");
+			fragmentShaders[i] = glCreateShader(GL_FRAGMENT_SHADER);
+			glShaderSource(fragmentShaders[i], 1, &fShaderCode, NULL);
+			glCompileShader(fragmentShaders[i]);
+			checkCompileErrors(fragmentShaders[i], "FRAGMENT");
 		}
 
 		// 3. Create program, link
 		// shader Program
 		m_ID = glCreateProgram();
-		glAttachShader(m_ID, vertex);
-		for (GLuint frag : fragments) {
+		for (GLuint vert : vertexShaders) {
+			glAttachShader(m_ID, vert);
+		}
+		for (GLuint frag : fragmentShaders) {
 			glAttachShader(m_ID, frag);
 		}
 		glLinkProgram(m_ID);
 		checkCompileErrors(m_ID, "PROGRAM");
 
 		// delete the shaders as they're linked into our program now and no longer necessary
-		glDeleteShader(vertex);
-		for (GLuint frag : fragments) {
+		for (GLuint vert : vertexShaders) {
+			glDeleteShader(vert);
+		}
+		for (GLuint frag : fragmentShaders) {
 			glDeleteShader(frag);
 		}
 	}
@@ -172,7 +179,25 @@ public:
 
 class ComputeShader : public AdvancedShader {
 public:
-	ComputeShader(std::vector<std::string> computePaths) {
+	ComputeShader(std::vector<std::string> computePaths, std::string headerPath) {
+		// Constructs compute shader using compute paths? and a header file
+
+		// First get the header file str into a std::string
+		std::string headerCode;
+		std::ifstream headerFile;
+		headerFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+		try
+		{
+			headerFile.open(headerPath);
+			std::stringstream headerStream;
+			headerStream << headerFile.rdbuf();
+			headerFile.close();
+			headerCode = headerStream.str();
+		}
+		catch (std::ifstream::failure e) {
+			std::cout << "ERROR::SHADER::HAEDER_FILE_NOT_SUCCESFULLY_READ" << std::endl;
+		}
+
 		std::vector<GLuint> computes;
 		computes.resize(computePaths.size());
 		for (size_t i = 0; i < computePaths.size(); i++) {
@@ -183,14 +208,30 @@ public:
 			try
 			{
 				cShaderFile.open(compPath);
-				std::stringstream cShaderStream;
-				cShaderStream << cShaderFile.rdbuf();
+				/*std::stringstream cShaderStream;
+				cShaderStream << cShaderFile.rdbuf();*/
+				
+				for (std::string line; std::getline(cShaderFile, line); ) {
+					if (line == "/*** HEADER ***/") {
+						compCode += headerCode + "\n";
+					}
+					else {
+						compCode += line + "\n";
+					}
+				}
+				
 				cShaderFile.close();
-				compCode = cShaderStream.str();
+				//compCode = cShaderStream.str();
 			}
 			catch (std::ifstream::failure e)
 			{
-				std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
+				// only an error if it did not reach end of file
+				if (!cShaderFile.eof()) {
+					std::cout << compCode << std::endl;
+					std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
+					std::cout << e.code() << std::endl;
+					std::cout << e.what() << std::endl;
+				}
 			}
 			const char* cShaderCode = compCode.c_str();
 			computes[i] = glCreateShader(GL_COMPUTE_SHADER);

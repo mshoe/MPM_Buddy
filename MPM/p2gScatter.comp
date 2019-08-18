@@ -1,0 +1,83 @@
+#version 450 core
+
+layout (local_size_x = 1024) in;
+
+/* begin MPM shaders header */
+const int GRID_SIZE_X = 32*4;
+const int GRID_SIZE_Y = 32*4;
+
+struct materialPoint {
+	vec2 x;
+	vec2 v;
+	float m;
+	float vol;
+	mat2 B;
+	mat2 F;
+	mat2 P;
+};
+
+layout (std430, binding = 1) buffer pointCloud {
+	readonly materialPoint points[];
+};
+
+uniform float dt = 1/60.0;
+
+struct gridNode {
+	float m;
+	float opengl_padding;
+	vec2 v;
+	vec2 momentum;
+	vec2 force;
+};
+
+layout (std430, binding = 2) buffer particleGrid {
+	gridNode nodes[GRID_SIZE_X][GRID_SIZE_Y];
+};
+
+layout (std430, binding = 3) buffer particleGridSumArray {
+	gridNode tempNodes[][GRID_SIZE_X][GRID_SIZE_Y]; // size of first dimension is same as points.size()
+};
+
+/* end MPM shaders header */
+float BSpline(in float x);
+float BSplineSlope(in float x);
+void InBounds(inout int i, inout int j, out float inbounds);
+
+uniform mat2 Dp_inv = 3 * mat2(1.0); // Should be 4 for quadratic B-Spline, but 3 is giving me more realistic results
+
+
+void main() {
+
+	uint pid = gl_GlobalInvocationID.x;
+	uint N = points.length();
+	if (pid > N) {
+		return;
+	}
+
+	int oob = int(pid >= N);
+	// -3 is obviously out of bounds, so the results of this invocation should do nothing
+	vec2 xp = (pid >= N) ? vec2(-3.0, -3.0) : points[pid * oob].x;
+
+	int botLeftNode_i = int(floor(xp.x)) - 1;
+	int botLeftNode_j = int(floor(xp.y)) - 1;
+
+	for (int i = 0; i <= 3; ++i) {
+		for (int j = 0; j <= 3; ++j) {
+			int curNode_i = botLeftNode_i + i;
+			int curNode_j = botLeftNode_j + j;
+			float inb = 1.0;
+			InBounds(curNode_i, curNode_j, inb);
+
+			vec2 dpg = vec2(curNode_i, curNode_j) - xp;
+			float dx = -dpg.x; // sign matters for gradient
+			float dy = -dpg.y;
+			float wpg = BSpline(dx) * BSpline(dy);
+			vec2 wpgGrad = vec2(BSplineSlope(dx) * BSpline(dy),
+								BSpline(dx) * BSplineSlope(dy));
+
+			tempNodes[pid][curNode_i][curNode_j].m = wpg * points[p].m;
+			tempNodes[pid][curNode_i][curNode_j].momentum = wpg * points[p].m * (points[p].v + points[p].B * Dp_inv * dpg);
+			tempNodes[pid][curNode_i][curNode_j].force = -points[p].vol * points[p].P * transpose(points[p].F) * wpgGrad;
+		}
+	}
+}

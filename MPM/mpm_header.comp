@@ -1,0 +1,81 @@
+/* begin MPM shaders header */
+const int GRID_SIZE_X = 32*4;
+const int GRID_SIZE_Y = 32*4;
+
+struct materialPoint {
+	vec2 x;
+	vec2 v;
+	float m;
+	float vol;
+	mat2 B;
+	mat2 F;
+	mat2 P;
+};
+
+struct gridNode {
+	float m;
+	float opengl_padding;
+	vec2 v;
+	vec2 momentum;
+	vec2 force;
+};
+
+layout (std430, binding = 1) buffer pointCloud {
+	materialPoint points[];
+};
+
+
+layout (std430, binding = 2) buffer particleGrid {
+	gridNode nodes[GRID_SIZE_X][GRID_SIZE_Y];
+};
+
+float QuadBSpline(in float x) {
+	x = abs(x);
+	return (x < 0.5) ? 	step(0.0, x)*(0.75 - x*x) :
+						step(x, 1.5)*0.5*(1.5 - x)*(1.5-x);
+}
+
+float QuadBSplineSlope(in float x) {
+	float absx = abs(x);
+	return (absx < 0.5) ? 	step(0.0, absx)*(-2*x) : 
+						step(absx, 1.5)*(x - 1.5*x/absx);
+}
+
+float BSpline(in float x) {
+	x = abs(x);
+	return (x < 1.0) ? 	step(0.0, x)*(0.5*x*x*x - x*x + 2.0/3.0) :
+						step(x, 2.0)*(2.0-x)*(2.0-x)*(2.0-x)/6.0;
+}
+
+float BSplineSlope(in float x) {
+	float absx = abs(x);
+	return (absx < 1.0) ? 	step(0.0, absx)*(1.5*x*absx-2*x) : 
+						step(absx, 2.0)*(-x*absx/2 + 2*x - 2*x/absx);
+}
+
+void InBounds(inout int i, inout int j, out float inbounds) {
+	float r1 = float(int((0 <= i) && (i < GRID_SIZE_X)));
+	float r2 = float(int((0 <= j) && (j < GRID_SIZE_Y)));
+	inbounds = r1 * r2;
+
+	// also sets i and j to 0 if they are out of bounds, 
+	// so they don't produce an error when accessing arrays
+	i = (inbounds != 0.0) ? i : 0;
+	j = (inbounds != 0.0) ? j : 0;
+}
+
+
+uniform float dt = 1/60.0;
+
+uniform mat2 Dp_inv = 3 * mat2(1.0); // Should be 4 for quadratic B-Spline, but 3 is giving me more realistic results
+uniform vec2 gravity = vec2(0.0, -9.8);
+uniform vec2 globalForce = vec2(0.0, 0.0);
+
+uniform float mew = 41.6667;
+uniform float lam = 27.7778;
+
+const uint NEO_HOOKEAN = 0;
+const uint FIXED_COROTATED = 1;
+uniform uint comodel = 1; //FIXED_COROTATED;
+
+/* end MPM shaders header */

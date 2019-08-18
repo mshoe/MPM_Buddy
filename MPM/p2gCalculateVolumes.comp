@@ -1,0 +1,29 @@
+#version 450 core
+
+layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+
+/*** HEADER ***/
+
+void main() {
+	vec2 nodePos = vec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
+	uvec2 node = uvec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y); // grid node index
+
+	uint N = points.length();
+	float nodeMass = 0.0;
+	
+	// P2G
+	for (uint p = 0; p < N; ++p) {
+		vec2 dpg = nodePos - points[p].x;
+		float dx = dpg.x;
+		float dy = dpg.y;
+		float wpg = BSpline(dx) * BSpline(dy);
+
+		nodeMass += wpg * points[p].m;
+	}
+
+	nodes[node.x][node.y].m = nodeMass;
+	nodes[node.x][node.y].opengl_padding = -69.0;
+	nodes[node.x][node.y].v = vec2(0.0);//vec2(0.097, 0.0091);
+	//nodes[node.x][node.y].momentum = vec2(0.042, 0.041);
+	//nodes[node.x][node.y].force = vec2(0.069, 0.096);
+}
