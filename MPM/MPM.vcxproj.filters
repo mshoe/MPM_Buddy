@@ -28,6 +28,12 @@
     <Filter Include="Header Files\apps">
       <UniqueIdentifier>{950170f3-76ad-4159-989e-f09f02a86be1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\Shaders\compute">
+      <UniqueIdentifier>{b54417a9-b145-45c4-af39-05f7b52fa5a6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Shaders\graphics">
+      <UniqueIdentifier>{4efcf464-1275-459d-b0cf-8387946d71ee}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -110,9 +116,6 @@
     <ClInclude Include="Shape.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
-    <ClInclude Include="mpmShader.comp">
-      <Filter>Resource Files\Shaders</Filter>
-    </ClInclude>
     <ClInclude Include="Grid.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -127,58 +130,61 @@
     <None Include="imgui\imgui.ini">
       <Filter>Resource Files\imgui</Filter>
     </None>
-    <None Include="p2gGatherParticlesAndUpdateNode.comp">
-      <Filter>Resource Files\Shaders</Filter>
+    <None Include="shaders\compute\p2gCalculateVolumes.comp">
+      <Filter>Resource Files\Shaders\compute</Filter>
     </None>
-    <None Include="g2pGatherNodesAndUpdateParticle.comp">
-      <Filter>Resource Files\Shaders</Filter>
+    <None Include="shaders\compute\p2gGatherParticlesAndUpdateNode.comp">
+      <Filter>Resource Files\Shaders\compute</Filter>
     </None>
-    <None Include="pointCloud.vs">
-      <Filter>Resource Files\Shaders</Filter>
+    <None Include="shaders\compute\p2gScatter.comp">
+      <Filter>Resource Files\Shaders\compute</Filter>
     </None>
-    <None Include="pointCloud.fs">
-      <Filter>Resource Files\Shaders</Filter>
+    <None Include="shaders\compute\p2gScatterParticleAndUpdateNodes.comp">
+      <Filter>Resource Files\Shaders\compute</Filter>
     </None>
-    <None Include="p2gCalculateVolumes.comp">
-      <Filter>Resource Files\Shaders</Filter>
+    <None Include="shaders\compute\g2pCalculateVolumes.comp">
+      <Filter>Resource Files\Shaders\compute</Filter>
     </None>
-    <None Include="g2pCalculateVolumes.comp">
-      <Filter>Resource Files\Shaders</Filter>
+    <None Include="shaders\compute\g2pGatherNodesAndUpdateParticle.comp">
+      <Filter>Resource Files\Shaders\compute</Filter>
     </None>
-    <None Include="gComputeCollisions.comp">
-      <Filter>Resource Files\Shaders</Filter>
+    <None Include="shaders\compute\gComputeCollisions.comp">
+      <Filter>Resource Files\Shaders\compute</Filter>
     </None>
-    <None Include="gridShader.fs">
-      <Filter>Resource Files\Shaders</Filter>
+    <None Include="shaders\compute\gImplicitUpdate.comp">
+      <Filter>Resource Files\Shaders\compute</Filter>
     </None>
-    <None Include="gridShader.vs">
-      <Filter>Resource Files\Shaders</Filter>
+    <None Include="shaders\compute\gOptimizationIntegrator.comp">
+      <Filter>Resource Files\Shaders\compute</Filter>
     </None>
-    <None Include="gImplicitUpdate.comp">
-      <Filter>Resource Files\Shaders</Filter>
+    <None Include="shaders\compute\gResetNodes.comp">
+      <Filter>Resource Files\Shaders\compute</Filter>
     </None>
-    <None Include="gOptimizationIntegrator.comp">
-      <Filter>Resource Files\Shaders</Filter>
+    <None Include="shaders\compute\gUpdateNodes.comp">
+      <Filter>Resource Files\Shaders\compute</Filter>
     </None>
-    <None Include="gResetNodes.comp">
-      <Filter>Resource Files\Shaders</Filter>
+    <None Include="shaders\graphics\pointCloud.fs">
+      <Filter>Resource Files\Shaders\graphics</Filter>
     </None>
-    <None Include="gUpdateNodes.comp">
-      <Filter>Resource Files\Shaders</Filter>
+    <None Include="shaders\graphics\pointCloud.vs">
+      <Filter>Resource Files\Shaders\graphics</Filter>
     </None>
-    <None Include="p2gScatter.comp">
-      <Filter>Resource Files\Shaders</Filter>
+    <None Include="shaders\graphics\gridShader.fs">
+      <Filter>Resource Files\Shaders\graphics</Filter>
     </None>
-    <None Include="p2gScatterParticleAndUpdateNodes.comp">
-      <Filter>Resource Files\Shaders</Filter>
+    <None Include="shaders\graphics\gridShader.vs">
+      <Filter>Resource Files\Shaders\graphics</Filter>
     </None>
-    <None Include="mouseShader.vs">
-      <Filter>Resource Files\Shaders</Filter>
+    <None Include="shaders\graphics\mainShader.fs">
+      <Filter>Resource Files\Shaders\graphics</Filter>
     </None>
-    <None Include="mouseShader.fs">
-      <Filter>Resource Files\Shaders</Filter>
+    <None Include="shaders\graphics\mouseShader.fs">
+      <Filter>Resource Files\Shaders\graphics</Filter>
     </None>
-    <None Include="mpm_header.comp">
+    <None Include="shaders\graphics\mouseShader.vs">
+      <Filter>Resource Files\Shaders\graphics</Filter>
+    </None>
+    <None Include="shaders\compute\mpm_header.comp">
       <Filter>Resource Files\Shaders\headers</Filter>
     </None>
   </ItemGroup>

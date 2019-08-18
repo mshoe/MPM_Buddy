@@ -27,19 +27,19 @@ bool mpm::MpmManager::InitComputeShaderPipeline()
 	std::cout << "max work group size: " << work_group_size << std::endl;
 
 	// first compile shaders
-	m_gReset = std::make_unique<ComputeShader>(std::vector<std::string>{"gResetNodes.comp"}, "mpm_header.comp");
-	m_p2gScatter = std::make_unique<ComputeShader>(std::vector<std::string>{"p2gScatterParticleAndUpdateNodes.comp"}, "mpm_header.comp");
-	m_p2gGather = std::make_unique<ComputeShader>(std::vector<std::string>{"p2gGatherParticlesAndUpdateNode.comp"}, "mpm_header.comp");
-	m_gUpdate = std::make_unique<ComputeShader>(std::vector<std::string>{"gUpdateNodes.comp"}, "mpm_header.comp");
+	m_gReset = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\gResetNodes.comp"}, "shaders\\compute\\mpm_header.comp");
+	m_p2gScatter = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\p2gScatterParticleAndUpdateNodes.comp"}, "shaders\\compute\\mpm_header.comp");
+	m_p2gGather = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\p2gGatherParticlesAndUpdateNode.comp"}, "shaders\\compute\\mpm_header.comp");
+	m_gUpdate = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\gUpdateNodes.comp"}, "shaders\\compute\\mpm_header.comp");
 
-	m_g2pGather = std::make_unique<ComputeShader>(std::vector<std::string>{"g2pGatherNodesAndUpdateParticle.comp"}, "mpm_header.comp");
-	m_p2gCalcVolumes = std::make_unique<ComputeShader>(std::vector<std::string> {"p2gCalculateVolumes.comp"}, "mpm_header.comp");
-	m_g2pCalcVolumes = std::make_unique<ComputeShader>(std::vector<std::string> {"g2pCalculateVolumes.comp"}, "mpm_header.comp");
+	m_g2pGather = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\g2pGatherNodesAndUpdateParticle.comp"}, "shaders\\compute\\mpm_header.comp");
+	m_p2gCalcVolumes = std::make_unique<ComputeShader>(std::vector<std::string> {"shaders\\compute\\p2gCalculateVolumes.comp"}, "shaders\\compute\\mpm_header.comp");
+	m_g2pCalcVolumes = std::make_unique<ComputeShader>(std::vector<std::string> {"shaders\\compute\\g2pCalculateVolumes.comp"}, "shaders\\compute\\mpm_header.comp");
 
 	glCreateVertexArrays(1, &VisualizeVAO);
 
-	m_pPointCloud = std::make_unique<StandardShader>(std::vector<std::string>{"pointCloud.vs"}, std::vector<std::string>{"pointCloud.fs"});
-	m_mouseShader = std::make_unique<StandardShader>(std::vector<std::string>{"mouseShader.vs"}, std::vector<std::string>{"mouseShader.fs"});
+	m_pPointCloud = std::make_unique<StandardShader>(std::vector<std::string>{"shaders\\graphics\\pointCloud.vs"}, std::vector<std::string>{"shaders\\graphics\\pointCloud.fs"});
+	m_mouseShader = std::make_unique<StandardShader>(std::vector<std::string>{"shaders\\graphics\\mouseShader.vs"}, std::vector<std::string>{"shaders\\graphics\\mouseShader.fs"});
 
 	CreateDemo();
 
