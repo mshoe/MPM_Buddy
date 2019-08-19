@@ -33,6 +33,10 @@ namespace mpm {
 		void Render();
 		void RenderGUI();
 
+		void HandleInput();
+
+		//void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+
 	private:
 
 		//*** FUNCTIONS ***//
@@ -43,13 +47,15 @@ namespace mpm {
 			m_globalForce = _globalForce;
 		}
 
-		std::shared_ptr<PointCloud> GenPointCloud(const Shape& shape, sdf::sdFunc _sdf,
+		//void InstantiatePointCloud();
+
+		std::shared_ptr<PointCloud> GenPointCloud(const std::string pointCloudID, Shape& shape, sdf::sdFunc _sdf,
 			const float gridDimX, const float gridDimY, const float particleSpacing, 
 			const float density, const float youngMod, const float poisson,
 			glm::vec2 initialVelocity, glm::vec3 color);
 
 		void CreateDemo();
-		void CalculatePointCloudVolumes();
+		void CalculatePointCloudVolumes(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
 
 
 		//*** SHADERS ***//
@@ -87,7 +93,7 @@ namespace mpm {
 
 
 		// Reorganize this stuff
-		size_t m_numPointClouds = 0;
+		unsigned int m_circleCount = 0;
 		//std::vector<PointCloud> m_pointClouds;
 		std::unordered_map<std::string, std::shared_ptr<PointCloud>> m_pointCloudMap;
 		//GLuint pointCloudSSBO[20];
@@ -98,6 +104,9 @@ namespace mpm {
 		GLfloat m_donut_v[2] = { 3.f, 0.f };
 		glm::vec2 m_cx = glm::vec2(30.f, 10.f);*/
 		
+
+
+		bool m_createCircleState = false;
 
 		// imgui stuff
 		bool m_renderGUI = true;

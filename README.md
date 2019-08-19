@@ -4,8 +4,8 @@ Simulation of deformable elastic bodies based on continuum mechanics.
 This program was made using C++ and OpenGL compute shaders.
 It also uses OpenGL for rendering and ImGui for GUI.
 
-Video demo:
-https://www.youtube.com/watch?v=zI0pmVGq8EA
+Circle Tool Demo:
+https://youtu.be/fhKNuo9MTek
 
 ![pic](MPM/pics/before.PNG)
 ![pic](MPM/pics/during.PNG)

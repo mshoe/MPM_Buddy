@@ -27,7 +27,6 @@ public:
 		m_rightButtonDown = _rightButtonDown;
 	}
 
-
 	std::shared_ptr<StandardShader> GetMouseShader() const { return m_mouseShader; }
 protected:
 	std::shared_ptr<StandardShader> m_mouseShader = nullptr;

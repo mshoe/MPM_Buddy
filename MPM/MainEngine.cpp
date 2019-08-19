@@ -124,6 +124,8 @@ bool MainEngine::Init()
 	m_mpmEngine = std::make_unique<mpm::MpmEngine>();
 	m_mpmEngine->InitComputeShaderPipeline();
 	m_mouseShader = m_mpmEngine->GetMouseShader();
+	//auto fMouseButtonCallback = std::bind(&mpm::MpmEngine::MouseButtonCallback, m_mpmEngine, _1);
+	//glfwSetMouseButtonCallback(m_window, fMouseButtonCallback);
 
 	return true;
 }
@@ -219,13 +221,15 @@ void MainEngine::Loop()
 		left_click = (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) ? 1.0f : 0.0f;
 		right_click = (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) ? 1.0f : 0.0f;
 
+		
+
 		// normalize mouse coordinates
 		xpos = xpos / (double)SRC_WIDTH;
 		ypos = ypos / (double)SRC_HEIGHT;
 
 		// y value is given inverted
 		m_mpmEngine->SetMouseValues(glm::vec2(xpos, 1.f - ypos), left_click, right_click);
-
+		m_mpmEngine->HandleInput();
 
 		m_mouseShader->Use();
 		m_mouseShader->SetMat("iCamera", m_camera->lookat());

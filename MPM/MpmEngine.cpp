@@ -41,6 +41,20 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 	m_pPointCloudShader = std::make_unique<StandardShader>(std::vector<std::string>{"shaders\\graphics\\pointCloud.vs"}, std::vector<std::string>{"shaders\\graphics\\pointCloud.fs"}, "shaders\\compute\\mpm_header.comp");
 	m_mouseShader = std::make_unique<StandardShader>(std::vector<std::string>{"shaders\\graphics\\mouseShader.vs"}, std::vector<std::string>{"shaders\\graphics\\mouseShader.fs"}, "shaders\\compute\\mpm_header.comp");
 
+
+	// Initialize the grid SSBO on the GPU
+	m_grid = Grid(GRID_SIZE_X, GRID_SIZE_Y);
+
+	glCreateBuffers(1, &gridSSBO);
+
+	glNamedBufferStorage(
+		gridSSBO,
+		sizeof(GridNode) * GRID_SIZE_X * GRID_SIZE_Y,
+		&(m_grid.nodes[0].m),
+		GL_MAP_READ_BIT
+	);
+
+
 	CreateDemo();
 
 	return true;
@@ -151,6 +165,11 @@ void mpm::MpmEngine::RenderGUI()
 		ImGui::InputFloat2("donut init x", m_donut_x, "%.3f");
 		ImGui::InputFloat2("donut init v", m_donut_v, "%.3f");*/
 		
+
+		if (ImGui::Button("Create Solid Circle") && m_paused) {
+			m_createCircleState = true;
+		}
+
 		
 		if (ImGui::Button("Get node data") && m_paused) {
 			UpdateNodeData();
@@ -193,6 +212,44 @@ void mpm::MpmEngine::RenderGUI()
 	}
 }
 
+void mpm::MpmEngine::HandleInput()
+{
+
+	if (m_paused && m_createCircleState && m_leftButtonDown)
+	{
+		m_createCircleState = false;
+
+		float youngMod = 400.f;
+		float poisson = 0.3f;
+
+		using namespace std::chrono;
+
+		time_point<high_resolution_clock> t1;
+		time_point<high_resolution_clock> t2;
+
+		std::cout << "Mouse position is at (" << m_mousePos.x << ", " << m_mousePos.y << ")" << std::endl;
+
+		// 1. Create point clouds
+		std::cout << "Generating point cloud...\n";
+
+		t1 = high_resolution_clock::now();
+
+
+		m_circleCount++;
+		sdf::sdFunc dCircle(sdf::DemoCircle);
+		Shape shape(glm::vec2(m_mousePos.x * GRID_SIZE_X, m_mousePos.y * GRID_SIZE_Y), std::vector<float>{5.f});
+		std::string circleID = "circle" + std::to_string(m_circleCount);
+		GenPointCloud(circleID, shape, dCircle, GRID_SIZE_X, GRID_SIZE_Y, 0.25f, 0.16f, youngMod, poisson, glm::vec2(-3.f, 0.f), glm::vec3(1.f, 0.f, 0.f));
+
+		t2 = high_resolution_clock::now();
+
+		
+
+		std::cout << "Finished generating " << m_pointCloudMap[circleID]->N << " points for '" << circleID << "' point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
+	}
+}
+
+
 void mpm::MpmEngine::UpdateNodeData()
 {
 	if (0 <= m_node[0] && m_node[0] < GRID_SIZE_X && 0 <= m_node[1] && m_node[1] < GRID_SIZE_Y) {
@@ -207,7 +264,7 @@ void mpm::MpmEngine::UpdateNodeData()
 }
 
 
-std::shared_ptr<PointCloud> mpm::MpmEngine::GenPointCloud(const Shape& shape, sdf::sdFunc _sdf,
+std::shared_ptr<PointCloud> mpm::MpmEngine::GenPointCloud(const std::string pointCloudID, Shape& shape, sdf::sdFunc _sdf,
 	const float gridDimX, const float gridDimY, const float particleSpacing, 
 	const float density, const float youngMod, const float poisson,
 	glm::vec2 initialVelocity, glm::vec3 color)
@@ -244,6 +301,23 @@ std::shared_ptr<PointCloud> mpm::MpmEngine::GenPointCloud(const Shape& shape, sd
 	}
 	pointCloud->N = pointCloud->points.size();
 
+	// Create the SSBO for the point cloud, so it is stored on the GPU
+	GLuint pointCloudSSBO;
+	glCreateBuffers(1, &pointCloudSSBO);
+	pointCloud->ssbo = pointCloudSSBO;
+	glNamedBufferStorage(
+		pointCloud->ssbo,
+		sizeof(MaterialPoint) * pointCloud->points.size(),
+		&(pointCloud->points.front().x.x),
+		GL_MAP_READ_BIT
+	);
+
+	// Calculate volumes for the point cloud (volumes stored in SSBO on GPU)
+	CalculatePointCloudVolumes(pointCloudID, pointCloud);
+
+
+	m_pointCloudMap[pointCloudID] = pointCloud;
+
 	return pointCloud;
 }
 
@@ -263,19 +337,21 @@ void mpm::MpmEngine::CreateDemo()
 	float poisson = 0.3f;
 
 	// 1. Create point clouds
-	std::cout << "Generating point clouds...\n";
+	std::cout << "Generating point cloud...\n";
 
-	int index = 0;
+	m_circleCount++;
 
 	t1 = high_resolution_clock::now();
+
 	sdf::sdFunc dCircle(sdf::DemoCircle);
 	Shape shape(glm::vec2(35.f, 10.f), std::vector<float>{5.f});
-	m_pointCloudMap["circle1"] = GenPointCloud(shape, dCircle, GRID_SIZE_X, GRID_SIZE_Y, 0.25f, 0.16f, youngMod, poisson, glm::vec2(-3.f, 0.f), glm::vec3(1.f, 0.f, 0.f));
+	GenPointCloud("circle1", shape, dCircle, GRID_SIZE_X, GRID_SIZE_Y, 0.25f, 0.16f, youngMod, poisson, glm::vec2(-3.f, 0.f), glm::vec3(1.f, 0.f, 0.f));
 	
 	t2 = high_resolution_clock::now();
-	std::cout << "Finished generating " << m_pointCloudMap["circle1"]->N << " points for DemoCircle point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
+
+	std::cout << "Finished generating " << m_pointCloudMap["circle1"]->N << " points for 'circle1' point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
 	
-	index++;
+	
 
 	//t1 = high_resolution_clock::now();
 	//sdf::sdFunc dDonut(sdf::DemoDonut);
@@ -331,33 +407,26 @@ void mpm::MpmEngine::CreateDemo()
    //}
 
 	//m_numPointClouds = m_pointClouds.size();
-	m_grid = Grid(GRID_SIZE_X, GRID_SIZE_Y);
-
-	glCreateBuffers(1, &gridSSBO);
-
-	glNamedBufferStorage(
-		gridSSBO,
-		sizeof(GridNode)*GRID_SIZE_X*GRID_SIZE_Y,
-		&(m_grid.nodes[0].m),
-		GL_MAP_READ_BIT
-	);
+	
 
 	
 	// Create the buffers for the point clouds
-	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
-		GLuint pointCloudSSBO;
-		glCreateBuffers(1, &pointCloudSSBO);
-		pointCloudPair.second->ssbo = pointCloudSSBO;
-		glNamedBufferStorage(
-			pointCloudPair.second->ssbo,
-			sizeof(MaterialPoint)*pointCloudPair.second->points.size(),
-			&(pointCloudPair.second->points.front().x.x),
-			GL_MAP_READ_BIT
-		);
+	//for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+	//	GLuint pointCloudSSBO;
+	//	glCreateBuffers(1, &pointCloudSSBO);
+	//	pointCloudPair.second->ssbo = pointCloudSSBO;
+	//	glNamedBufferStorage(
+	//		pointCloudPair.second->ssbo,
+	//		sizeof(MaterialPoint)*pointCloudPair.second->points.size(),
+	//		&(pointCloudPair.second->points.front().x.x),
+	//		GL_MAP_READ_BIT
+	//	);
 
-	}
+	//}
 
-	CalculatePointCloudVolumes();
+	//for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+	//	CalculatePointCloudVolumes(pointCloudPair.first, pointCloudPair.second);
+	//}
 
 	//for (int i = 0; i < 100; i++) {
 	//	MpmTimeStep(0.f);
@@ -392,28 +461,28 @@ void mpm::MpmEngine::CreateDemo()
 	/*glUnmapNamedBuffer(gridSSBO);*/
 }
 
-void mpm::MpmEngine::CalculatePointCloudVolumes()
+void mpm::MpmEngine::CalculatePointCloudVolumes(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud)
 {
 	using namespace std::chrono;
 
 	time_point<high_resolution_clock> t1;
 	time_point<high_resolution_clock> t2;
 
-	std::cout << "Calculating initial volumes...\n";
-	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudPair.second->ssbo);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
-		t1 = high_resolution_clock::now();
-		m_p2gCalcVolumes->Use();
-		glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
-		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-		m_g2pCalcVolumes->Use();
-		int g2p_workgroups = int(glm::ceil(float(pointCloudPair.second->N) / float(G2P_WORKGROUP_SIZE)));
-		glDispatchCompute(g2p_workgroups, 1, 1);
-		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-		t2 = high_resolution_clock::now();
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, 0);
-	}
-	std::cout << "Finished calculating initial volumes in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
+	std::cout << "Calculating initial volumes for '" << pointCloudID << "'...\n";
+	
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloud->ssbo);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
+	t1 = high_resolution_clock::now();
+	m_p2gCalcVolumes->Use();
+	glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+	m_g2pCalcVolumes->Use();
+	int g2p_workgroups = int(glm::ceil(float(pointCloud->N) / float(G2P_WORKGROUP_SIZE)));
+	glDispatchCompute(g2p_workgroups, 1, 1);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+	t2 = high_resolution_clock::now();
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, 0);
+
+	std::cout << "Finished calculating initial volumes for '" << pointCloudID << "' in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
 }
