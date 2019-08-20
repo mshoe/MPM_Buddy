@@ -4,7 +4,6 @@
 #include "Constants.h"
 #include "Shader.h"
 #include "Shape.h"
-#include "sdf.h"
 #include "PointCloud.h"
 #include "Grid.h"
 
@@ -47,15 +46,14 @@ namespace mpm {
 			m_globalForce = _globalForce;
 		}
 
-		//void InstantiatePointCloud();
-
-		std::shared_ptr<PointCloud> GenPointCloud(const std::string pointCloudID, Shape& shape, sdf::sdFunc _sdf,
+		std::shared_ptr<PointCloud> GenPointCloud(const std::string pointCloudID, sdf::Shape& shape,
 			const float gridDimX, const float gridDimY, const float particleSpacing, 
 			const float density, const float youngMod, const float poisson,
 			glm::vec2 initialVelocity, glm::vec3 color);
-
-		void CreateDemo();
 		void CalculatePointCloudVolumes(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
+
+		//void CreateDemo();
+		
 
 
 		//*** SHADERS ***//

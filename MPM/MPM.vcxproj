@@ -132,7 +132,6 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainEngine.cpp" />
     <ClCompile Include="MpmEngine.cpp" />
-    <ClCompile Include="sdf.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
@@ -151,7 +150,6 @@
     <ClInclude Include="MainEngine.h" />
     <ClInclude Include="MpmEngine.h" />
     <ClInclude Include="PointCloud.h" />
-    <ClInclude Include="sdf.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Shape.h" />
   </ItemGroup>
