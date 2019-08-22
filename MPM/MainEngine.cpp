@@ -250,6 +250,23 @@ void MainEngine::ProcessInput(GLFWwindow * window, float lag)
 
 	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
 		std::cout << "E pressed" << std::endl;
+
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+		m_mpmEngine->SetPausedState(true);
+
+	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+			m_mpmEngine->SetPausedState(false);
+		}
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
+		m_mpmEngine->SetCreateCircleState(m_mpmEngine->GetPausedState());
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+		m_mpmEngine->SetCreateRectState(m_mpmEngine->GetPausedState());
+	}
 }
 
 void MainEngine::Update(float lag)
@@ -262,11 +279,14 @@ void MainEngine::Render()
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	
+	m_mouseShader->Use();
 	glBindVertexArray(VAO);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 
 	m_mpmEngine->Render();
+
+	
 
 	// Start the Dear ImGui frame
 	ImGui_ImplOpenGL3_NewFrame();

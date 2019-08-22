@@ -36,6 +36,24 @@ namespace mpm {
 
 		//void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 
+		void SetPausedState(bool state) { m_paused = state; }
+		bool GetPausedState() { return m_paused; }
+
+		void SetCreateCircleState(bool state) {
+			if (state) {
+				m_createRectState = false;
+			}
+			m_createCircleState = state; 
+		}
+
+
+		void SetCreateRectState(bool state) {
+			if (state) {
+				m_createCircleState = false;
+			}
+			m_createRectState = state;
+		}
+
 	private:
 
 		//*** FUNCTIONS ***//
@@ -47,12 +65,14 @@ namespace mpm {
 		}
 
 		std::shared_ptr<PointCloud> GenPointCloud(const std::string pointCloudID, sdf::Shape& shape,
-			const float gridDimX, const float gridDimY, const float particleSpacing, 
-			const float density, const float youngMod, const float poisson,
+			const float gridDimX, const float gridDimY, 
+			const float particleSpacing, const float density, 
+			const float inner_rounding, const float outer_rounding, 
+			const float youngMod, const float poisson,
 			glm::vec2 initialVelocity, glm::vec3 color);
 		void CalculatePointCloudVolumes(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
 
-		//void CreateDemo();
+		void CreateDemo();
 		
 
 
@@ -92,6 +112,8 @@ namespace mpm {
 
 		// Reorganize this stuff
 		unsigned int m_circleCount = 0;
+		unsigned int m_rectCount = 0;
+
 		//std::vector<PointCloud> m_pointClouds;
 		std::unordered_map<std::string, std::shared_ptr<PointCloud>> m_pointCloudMap;
 		//GLuint pointCloudSSBO[20];
@@ -102,9 +124,24 @@ namespace mpm {
 		GLfloat m_donut_v[2] = { 3.f, 0.f };
 		glm::vec2 m_cx = glm::vec2(30.f, 10.f);*/
 		
+		float m_youngMod = 400.f;
+		float m_poisson = 0.3f;
 
+		float m_particleSpacing = 0.25f;
+		float m_density = 0.16f;
 
+		int m_color[3] = { 255, 0, 0};
+		//sdf::Circle m_circlePrototype;
+		
 		bool m_createCircleState = false;
+		float m_circle_r = 5.f;
+		float m_circle_inner_radius = 0.f;
+		float m_circle_rounding = 0.f;
+		bool m_createRectState = false;
+		float m_rect_b = 3.f;
+		float m_rect_h = 3.f;
+		float m_rect_inner_radius = 0.f;
+		float m_rect_rounding = 2.f;
 
 		// imgui stuff
 		bool m_renderGUI = true;

@@ -184,5 +184,11 @@
     <None Include="shaders\compute\mpm_header.comp">
       <Filter>Resource Files\Shaders\headers</Filter>
     </None>
+    <None Include="shaders\graphics\sdf.fs">
+      <Filter>Resource Files\Shaders\graphics</Filter>
+    </None>
+    <None Include="shaders\graphics\sdf.vs">
+      <Filter>Resource Files\Shaders\graphics</Filter>
+    </None>
   </ItemGroup>
 </Project>
