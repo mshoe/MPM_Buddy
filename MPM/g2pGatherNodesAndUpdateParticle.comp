@@ -1,0 +1,75 @@
+#version 450 core
+
+layout (local_size_x = 1024) in;
+
+/*** HEADER ***/
+
+void main() {
+
+	uint pid = gl_GlobalInvocationID.x;
+	uint N = points.length();
+	if (pid >= N) { // hopefully this isn't a huge performance hit?
+		return;
+	}
+	
+	vec2 xp = points[pid].x;
+
+	int botLeftNode_i = int(floor(xp.x)) - 1;
+	int botLeftNode_j = int(floor(xp.y)) - 1;
+
+	vec2 vp = vec2(0.0);
+	mat2 bp = mat2(0.0);
+	mat2 dfp = mat2(1.0);
+
+	for (int i = 0; i <= 3; ++i) {
+		for (int j = 0; j <= 3; ++j) {
+			int curNode_i = botLeftNode_i + i;
+			int curNode_j = botLeftNode_j + j;
+			float inb = 1.0;
+			InBounds(curNode_i, curNode_j, inb);
+
+			vec2 dpg = vec2(curNode_i, curNode_j) - xp;
+			float dx = -dpg.x; // sign matters for gradient
+			float dy = -dpg.y;
+			float wpg = BSpline(dx) * BSpline(dy);
+			vec2 wpgGrad = vec2(BSplineSlope(dx) * BSpline(dy),
+								BSpline(dx) * BSplineSlope(dy));
+
+			vec2 vg = nodes[curNode_i][curNode_j].v*inb; // if inb is 0, then no data is changed
+			dfp += dt*outerProduct(vg, wpgGrad)*inb;
+			vp += wpg*vg*inb;
+			bp += wpg*outerProduct(vg, dpg)*inb;
+		}
+	}
+
+
+
+	// THIS IS WHERE DIFFERENT CONSTITUTIVE MODELS ARE EVALUATED
+
+	points[pid].F = dfp*points[pid].F;
+	points[pid].v = vp;
+	points[pid].B = bp;
+	points[pid].x += dt*vp;//dt*(vec2(0.0, -9.8));
+	mat2 F = points[pid].F;
+	mat2 Fit = transpose(inverse(points[pid].F));
+	float J = determinant(F);
+
+	if (comodel == NEO_HOOKEAN) {
+		points[pid].P = mew*(F - Fit) + lam*log(J)*Fit;
+	} else if (comodel == FIXED_COROTATED) {
+		// calculate the polar decomposition F = RU.
+		// Then calculate P using F and R
+
+		float x = F[0][0] + F[1][1];
+		float y = F[0][1] - F[1][0]; // glsl is column major. This is really F_21 - F_12 in row major notation
+
+		float d = sqrt(x*x + y*y);
+
+		float c = x/d;
+		float s = -y/d;
+		mat2 R = (d == 0.0) ? mat2(1.0, 0.0, 0.0, 1.0) : mat2(c, -s, s, c);
+
+		points[pid].P = 2.0*mew*(F - R) + lam*(J - 1.0)*J*Fit;
+	}
+
+}

@@ -156,6 +156,7 @@
   <ItemGroup>
     <None Include="imgui\imgui.ini" />
     <None Include="shaders\compute\g2pCalculateVolumes.comp" />
+    <None Include="shaders\compute\g2pGatherImplicit.comp" />
     <None Include="shaders\compute\g2pGatherNodesAndUpdateParticle.comp" />
     <None Include="shaders\compute\gComputeCollisions.comp" />
     <None Include="shaders\compute\gImplicitUpdate.comp" />
@@ -166,6 +167,7 @@
     <None Include="shaders\compute\p2gCalculateVolumes.comp" />
     <None Include="shaders\compute\p2gGatherParticlesAndUpdateNode.comp" />
     <None Include="shaders\compute\p2gScatter.comp" />
+    <None Include="shaders\compute\p2gScatterImplict.comp" />
     <None Include="shaders\compute\p2gScatterParticleAndUpdateNodes.comp" />
     <None Include="shaders\graphics\gridShader.fs" />
     <None Include="shaders\graphics\gridShader.vs" />

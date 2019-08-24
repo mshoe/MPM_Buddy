@@ -190,5 +190,11 @@
     <None Include="shaders\graphics\sdf.vs">
       <Filter>Resource Files\Shaders\graphics</Filter>
     </None>
+    <None Include="shaders\compute\p2gScatterImplict.comp">
+      <Filter>Resource Files\Shaders\compute</Filter>
+    </None>
+    <None Include="shaders\compute\g2pGatherImplicit.comp">
+      <Filter>Resource Files\Shaders\compute</Filter>
+    </None>
   </ItemGroup>
 </Project>

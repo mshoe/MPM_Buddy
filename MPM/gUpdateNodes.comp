@@ -1,0 +1,19 @@
+#version 450 core
+
+layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+
+/*** HEADER ***/
+
+uniform vec2 mousePos; // this is normalized w.r.t. screen
+
+uniform float mousePower;
+
+void main() {
+	uvec2 node = uvec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
+	float nodeMass = nodes[node.x][node.y].m;
+	vec2 nodeMomentum = nodes[node.x][node.y].momentum;
+	vec2 nodeForce = nodes[node.x][node.y].force;
+
+	vec2 mouseForce = mousePower * normalize(vec2(mousePos.x * GRID_SIZE_X - node.x, mousePos.y * GRID_SIZE_Y - node.y));
+	nodes[node.x][node.y].v = (nodeMass == 0.0) ? vec2(0.0) : nodeMomentum/nodeMass -0.005*nodeMomentum/nodeMass + dt*(nodeForce/nodeMass + globalForce + mouseForce);
+}
