@@ -267,6 +267,10 @@ void MainEngine::ProcessInput(GLFWwindow * window, float lag)
 	if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
 		m_mpmEngine->SetCreateRectState(m_mpmEngine->GetPausedState());
 	}
+
+	if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
+		m_mpmEngine->SetCreateIsoTriState(m_mpmEngine->GetPausedState());
+	}
 }
 
 void MainEngine::Update(float lag)

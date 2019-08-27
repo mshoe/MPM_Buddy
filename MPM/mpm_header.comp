@@ -18,6 +18,14 @@ struct gridNode {
 	vec2 v;
 	vec2 momentum;
 	vec2 force;
+
+	// for implicit time step / conjugate residuals	
+	mat2 deltaForce;
+	vec2 xk; // velocity guess
+	vec2 rk;
+	vec2 pk;
+	mat2 Ark;
+	mat2 Apk;
 };
 
 layout (std430, binding = 1) buffer pointCloud {
@@ -64,6 +72,25 @@ void InBounds(inout int i, inout int j, out float inbounds) {
 	j = (inbounds != 0.0) ? j : 0;
 }
 
+void PolarDecomp(in mat2 F, out mat2 R, out mat2 S) {
+	// calculate the polar decomposition F = RS.
+
+	float x = F[0][0] + F[1][1];
+	float y = F[0][1] - F[1][0]; // glsl is column major. This is really F_21 - F_12 in row major notation
+
+	float d = sqrt(x*x + y*y);
+
+	float c = x/d;
+	float s = -y/d;
+	R = (d == 0.0) ? mat2(1.0, 0.0, 0.0, 1.0) : mat2(c, -s, s, c);
+	S = transpose(R) * F;
+}
+
+mat2 cofactorMatrix(in mat2 X) {
+	return mat2(X[1][1], -X[1][0], // column 1
+				-X[0][1], X[0][0]); // column 2
+}
+
 
 uniform float dt = 1/60.0;
 
@@ -77,5 +104,10 @@ uniform float lam = 27.7778;
 const uint NEO_HOOKEAN = 0;
 const uint FIXED_COROTATED = 1;
 uniform uint comodel = 1; //FIXED_COROTATED;
+
+uniform uint implicit = 1;
+
+const uint conjResMaxIter = 30;
+uniform uint conjResIter = 0; // if this goes over MAX_ITER, stop the conjugate residuals
 
 /* end MPM shaders header */

@@ -34,6 +34,9 @@
     <Filter Include="Resource Files\Shaders\graphics">
       <UniqueIdentifier>{4efcf464-1275-459d-b0cf-8387946d71ee}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\Shaders\compute\implicit">
+      <UniqueIdentifier>{eb996653-418c-4163-ab42-5f4cf227edbd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -133,9 +136,6 @@
     <None Include="shaders\compute\p2gGatherParticlesAndUpdateNode.comp">
       <Filter>Resource Files\Shaders\compute</Filter>
     </None>
-    <None Include="shaders\compute\p2gScatter.comp">
-      <Filter>Resource Files\Shaders\compute</Filter>
-    </None>
     <None Include="shaders\compute\p2gScatterParticleAndUpdateNodes.comp">
       <Filter>Resource Files\Shaders\compute</Filter>
     </None>
@@ -143,12 +143,6 @@
       <Filter>Resource Files\Shaders\compute</Filter>
     </None>
     <None Include="shaders\compute\g2pGatherNodesAndUpdateParticle.comp">
-      <Filter>Resource Files\Shaders\compute</Filter>
-    </None>
-    <None Include="shaders\compute\gComputeCollisions.comp">
-      <Filter>Resource Files\Shaders\compute</Filter>
-    </None>
-    <None Include="shaders\compute\gImplicitUpdate.comp">
       <Filter>Resource Files\Shaders\compute</Filter>
     </None>
     <None Include="shaders\compute\gOptimizationIntegrator.comp">
@@ -190,11 +184,14 @@
     <None Include="shaders\graphics\sdf.vs">
       <Filter>Resource Files\Shaders\graphics</Filter>
     </None>
-    <None Include="shaders\compute\p2gScatterImplict.comp">
-      <Filter>Resource Files\Shaders\compute</Filter>
+    <None Include="shaders\compute\implicit\gConjugateResidualsInitPart1.comp">
+      <Filter>Resource Files\Shaders\compute\implicit</Filter>
     </None>
-    <None Include="shaders\compute\g2pGatherImplicit.comp">
-      <Filter>Resource Files\Shaders\compute</Filter>
+    <None Include="shaders\compute\implicit\gConjugateResidualsStepPart1.comp">
+      <Filter>Resource Files\Shaders\compute\implicit</Filter>
+    </None>
+    <None Include="shaders\compute\implicit\g2p2gDeltaForce.comp">
+      <Filter>Resource Files\Shaders\compute\implicit</Filter>
     </None>
   </ItemGroup>
 </Project>

@@ -10,5 +10,5 @@ void main() {
 	nodes[node.x][node.y].v = vec2(0.0);
 	nodes[node.x][node.y].momentum = vec2(0.0);
 	nodes[node.x][node.y].force = vec2(0.0);
-
+	nodes[node.x][node.y].forceDerivative = mat2(0.0);
 }

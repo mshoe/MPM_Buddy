@@ -42,6 +42,7 @@ namespace mpm {
 		void SetCreateCircleState(bool state) {
 			if (state) {
 				m_createRectState = false;
+				m_createIsoTriState = false;
 			}
 			m_createCircleState = state; 
 		}
@@ -50,8 +51,17 @@ namespace mpm {
 		void SetCreateRectState(bool state) {
 			if (state) {
 				m_createCircleState = false;
+				m_createIsoTriState = false;
 			}
 			m_createRectState = state;
+		}
+
+		void SetCreateIsoTriState(bool state) {
+			if (state) {
+				m_createCircleState = false;
+				m_createRectState = false;
+			}
+			m_createIsoTriState = state;
 		}
 
 	private:
@@ -113,6 +123,7 @@ namespace mpm {
 		// Reorganize this stuff
 		unsigned int m_circleCount = 0;
 		unsigned int m_rectCount = 0;
+		unsigned int m_isoTriCount = 0;
 
 		//std::vector<PointCloud> m_pointClouds;
 		std::unordered_map<std::string, std::shared_ptr<PointCloud>> m_pointCloudMap;
@@ -137,11 +148,18 @@ namespace mpm {
 		float m_circle_r = 5.f;
 		float m_circle_inner_radius = 0.f;
 		float m_circle_rounding = 0.f;
+
 		bool m_createRectState = false;
 		float m_rect_b = 3.f;
 		float m_rect_h = 3.f;
 		float m_rect_inner_radius = 0.f;
 		float m_rect_rounding = 2.f;
+
+		bool m_createIsoTriState = false;
+		float m_iso_tri_b = 3.f;
+		float m_iso_tri_h = 3.f;
+		float m_iso_tri_inner_radius = 0.f;
+		float m_iso_tri_rounding = 2.f;
 
 		// imgui stuff
 		bool m_renderGUI = true;

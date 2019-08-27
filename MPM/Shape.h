@@ -73,12 +73,38 @@ namespace sdf {
 		}
 
 		float Sdf(glm::vec2 p) {
-			glm::vec2 d = glm::abs(p - pos) - glm::vec2(b, h);
+			glm::vec2 d = glm::abs(p - pos) - glm::vec2(b/2.f, h/2.f);
 
 			return glm::length(glm::max(d, glm::vec2(0.f))) + glm::min(glm::max(d.x, d.y), 0.0f);
 		}
 
 		float b, h; // b = horizontal base length, h = vertical height length;
+	};
+
+	struct IsoscelesTriangle : public Shape {
+	private:
+		IsoscelesTriangle() {}
+	public:
+		IsoscelesTriangle(glm::vec2 _pos, float _b, float _h) {
+			pos = _pos;
+			b = _b;
+			h = _h;
+		}
+
+		float Sdf(glm::vec2 p) {
+			p = p - pos;
+
+			glm::vec2 q = glm::vec2(glm::abs(b/2.f), -glm::abs(h));
+			p.x = abs(p.x);
+			glm::vec2 a = p - q * glm::clamp(glm::dot(p, q) / glm::dot(q, q), 0.0f, 1.0f);
+			glm::vec2 b = p - q * glm::vec2(glm::clamp(p.x / q.x, 0.0f, 1.0f), 1.0f);
+			float s = -glm::sign(q.y);
+			glm::vec2 d = min(glm::vec2(dot(a, a), s * (p.x * q.y - p.y * q.x)),
+				glm::vec2(glm::dot(b, b), s * (p.y - q.y)));
+			return -sqrt(d.x) * glm::sign(d.y);
+		}
+
+		float b, h;
 	};
 
 	//enum BOOLEAN_GEOMETRY_NODE_TYPE {

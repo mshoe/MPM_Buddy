@@ -194,6 +194,7 @@ void mpm::MpmEngine::RenderGUI()
 		ImGui::Begin("Geometry Editor");
 
 		ImGui::InputInt3("Color", m_color);
+
 		ImGui::InputFloat("Young's Modulus", &m_youngMod, 1.f, 10.f, "%.1f");
 		ImGui::InputFloat("Poisson's Ratio", &m_poisson, 0.005f, 0.05f, "%.3f");
 		ImGui::InputFloat("Point Spacing", &m_particleSpacing, 0.01f, 0.1f, "%.2f");
@@ -215,6 +216,15 @@ void mpm::MpmEngine::RenderGUI()
 		if (ImGui::Button("Create Solid Rectangle") && m_paused) {
 			m_createRectState = true;
 		}
+
+		ImGui::InputFloat("Isosceles Triangle Base Length", &m_iso_tri_b, 0.1f, 1.f, "%.1f");
+		ImGui::InputFloat("Isosceles Height Length", &m_iso_tri_h, 0.1f, 1.f, "%.1f");
+		ImGui::InputFloat("Isosceles Triangle Inner Radius", &m_iso_tri_inner_radius, 0.1f, 1.f, "%.1f");
+		ImGui::InputFloat("Isosceles Triangle Rounding", &m_iso_tri_rounding, 0.1f, 1.f, "%.1f");
+		if (ImGui::Button("Create Solid Triangle") && m_paused) {
+			m_createIsoTriState = true;
+		}
+
 
 
 		ImGui::End();
@@ -310,6 +320,37 @@ void mpm::MpmEngine::HandleInput()
 
 
 		std::cout << "Finished generating " << pointCloud->N << " points for '" << rectID << "' point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
+	}
+
+	if (m_paused && m_createIsoTriState && m_leftButtonDown)
+	{
+		m_createIsoTriState = false;
+
+		std::cout << "Mouse position is at (" << m_mousePos.x << ", " << m_mousePos.y << ")" << std::endl;
+
+		// 1. Create point clouds
+		std::cout << "Generating point cloud...\n";
+
+		t1 = high_resolution_clock::now();
+
+
+		m_isoTriCount++;
+		//sdf::sdFunc dCircle(sdf::DemoCircle);
+		sdf::IsoscelesTriangle shape(glm::vec2(m_mousePos.x * GRID_SIZE_X, m_mousePos.y * GRID_SIZE_Y), m_iso_tri_b, m_iso_tri_h);
+		std::string isoTriID = "isoTri" + std::to_string(m_isoTriCount);
+
+		glm::vec3 color;
+		color.x = (float)glm::clamp(m_color[0], 0, 255) / 255.f;
+		color.y = (float)glm::clamp(m_color[1], 0, 255) / 255.f;
+		color.z = (float)glm::clamp(m_color[2], 0, 255) / 255.f;
+
+		float inner_rounding = glm::min(m_iso_tri_b, m_iso_tri_h) - m_iso_tri_inner_radius;
+		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(isoTriID, shape, GRID_SIZE_X, GRID_SIZE_Y, m_particleSpacing, m_density, inner_rounding, m_iso_tri_rounding, m_youngMod, m_poisson, glm::vec2(0.f, 0.f), color);
+
+		t2 = high_resolution_clock::now();
+
+
+		std::cout << "Finished generating " << pointCloud->N << " points for '" << isoTriID << "' point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
 	}
 }
 
