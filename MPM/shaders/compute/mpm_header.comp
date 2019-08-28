@@ -18,6 +18,17 @@ struct gridNode {
 	vec2 v;
 	vec2 momentum;
 	vec2 force;
+
+	// for implicit time step / conjugate residuals	
+	vec2 deltaForce;
+	vec2 xk; // velocity guess
+	vec2 rk;
+	vec2 pk;
+	vec2 Ark;
+	vec2 Apk;
+
+	float rkArk;
+	float glsl_padding2;
 };
 
 layout (std430, binding = 1) buffer pointCloud {
@@ -64,6 +75,36 @@ void InBounds(inout int i, inout int j, out float inbounds) {
 	j = (inbounds != 0.0) ? j : 0;
 }
 
+void PolarDecomp(in mat2 F, out mat2 R, out mat2 S) {
+	// calculate the polar decomposition F = RS.
+
+	float x = F[0][0] + F[1][1];
+	float y = F[0][1] - F[1][0]; // glsl is column major. This is really F_21 - F_12 in row major notation
+
+	float d = sqrt(x*x + y*y);
+
+	float c = x/d;
+	float s = -y/d;
+	R = (d == 0.0) ? mat2(1.0, 0.0, 0.0, 1.0) : mat2(c, -s, s, c);
+	S = transpose(R) * F;
+}
+
+mat2 cofactorMatrix(in mat2 X) {
+	return mat2(X[1][1], -X[1][0], // column 1
+				-X[0][1], X[0][0]); // column 2
+}
+
+float innerProduct(in mat2 X, in mat2 Y) {
+	return X[0][0]*Y[0][0] + X[1][0]*Y[1][0] + X[0][1]*Y[0][1] + X[1][1]*Y[1][1];
+}
+
+bool isnanVec2(in vec2 v) {
+	return isnan(v.x) || isnan(v.y);
+}
+
+bool isinfVec2(in vec2 v) {
+	return isinf(v.x) || isinf(v.y);
+}
 
 uniform float dt = 1/60.0;
 
@@ -77,5 +118,8 @@ uniform float lam = 27.7778;
 const uint NEO_HOOKEAN = 0;
 const uint FIXED_COROTATED = 1;
 uniform uint comodel = 1; //FIXED_COROTATED;
+
+uniform float IMPLICIT_RATIO = 1.0;
+uniform float drag = 0.005;
 
 /* end MPM shaders header */

@@ -19,6 +19,8 @@
 #include <unordered_map>
 #include <tuple>
 
+//#define MPM_CR_DEBUG 1
+
 namespace mpm {
 
 	class MpmEngine : public Engine {
@@ -64,10 +66,24 @@ namespace mpm {
 			m_createIsoTriState = state;
 		}
 
+
+		// temporarily putting node stuff here
+		bool m_nodeGraphicsActive = false;
+		std::shared_ptr<StandardShader> m_nodeShader = nullptr;
+		int m_node[2] = { 26, 8 };
+
+		std::shared_ptr<StandardShader> GetNodeShader() {
+			return m_nodeShader;
+		}
+		bool GetNodeShaderActive() {
+			return m_nodeGraphicsActive;
+		}
+
 	private:
 
 		//*** FUNCTIONS ***//
 		void MpmTimeStep(float dt);
+		void MpmImplictTimeCR(float dt);
 
 		void UpdateNodeData();
 		void SetGlobalForce(glm::vec2 _globalForce) {
@@ -84,6 +100,7 @@ namespace mpm {
 
 		void CreateDemo();
 		
+		void PrintGridData();
 
 
 		//*** SHADERS ***//
@@ -100,6 +117,15 @@ namespace mpm {
 		std::unique_ptr<StandardShader> m_pPointCloudShader = nullptr;
 
 		
+
+		// Implict time integration shaders
+		std::unique_ptr<ComputeShader> m_p2g2pDeltaForce = nullptr;
+		std::unique_ptr<ComputeShader> m_gConjugateResidualsInitPart1 = nullptr;
+		std::unique_ptr<ComputeShader> m_gConjugateResidualsInitPart2 = nullptr;
+		std::unique_ptr<ComputeShader> m_gConjugateResidualsInitPart3 = nullptr;
+		std::unique_ptr<ComputeShader> m_gConjugateResidualsStepPart1 = nullptr;
+		std::unique_ptr<ComputeShader> m_gConjugateResidualsStepPart2 = nullptr;
+		std::unique_ptr<ComputeShader> m_gConjugateResidualsConclusion = nullptr;
 		
 		GLuint gridSSBO;
 		GLuint VisualizeVAO;
@@ -107,11 +133,15 @@ namespace mpm {
 		
 		Grid m_grid;
 
+		float m_drag = 0.005f;
 		glm::vec2 m_globalForce = glm::vec2(0.f);
 		GLfloat m_globalForceArray[2] = { 0.f, 0.f }; // for input with imgui
 		float m_set_dt = 1.f / 60.f;
 		float m_dt = 1.f / 60.f;
-		bool m_paused = false;
+		bool m_paused = true;
+		bool m_implicit = false;
+		float m_implicit_ratio = 1.f;
+		int m_max_conj_res_iter = 30;
 
 		int m_pointCloudSelect = 0;
 		int m_timeStep = 0;
@@ -163,7 +193,8 @@ namespace mpm {
 
 		// imgui stuff
 		bool m_renderGUI = true;
-		int m_node[2] = { 26, 8 };
+
+		// put node stuff here later
 		std::string m_nodeText = "x:\nv:\n";
 		std::string m_pointsViewStr = "";
 	};

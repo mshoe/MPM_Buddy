@@ -283,13 +283,17 @@ void MainEngine::Render()
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	
+	
 	m_mouseShader->Use();
+	m_mouseShader->SetBool("nodeGraphicsActive", m_mpmEngine->m_nodeGraphicsActive);
+	m_mouseShader->SetInt("nodeI", m_mpmEngine->m_node[0]);
+	m_mouseShader->SetInt("nodeJ", m_mpmEngine->m_node[1]);
+
 	glBindVertexArray(VAO);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 
 	m_mpmEngine->Render();
-
 	
 
 	// Start the Dear ImGui frame

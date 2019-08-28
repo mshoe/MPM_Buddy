@@ -1,0 +1,21 @@
+#version 450 core
+
+layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+
+/*** HEADER ***/
+
+uniform vec2 mousePos; // this is normalized w.r.t. screen
+
+uniform float mousePower;
+
+void main() {
+	uvec2 node = uvec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
+
+	// rk was holding xk (x0), doesn't matter which we use but it is clearer if we use x0
+	// this deltaForce was calculated using x0
+	float nodeMass = nodes[node.x][node.y].m;
+	vec2 Ax0 = (nodeMass == 0.0) ? vec2(0.0) : nodes[node.x][node.y].xk - dt*dt/nodeMass*IMPLICIT_RATIO*nodes[node.x][node.y].deltaForce;
+	
+	nodes[node.x][node.y].rk = nodes[node.x][node.y].v - Ax0; // initially r0 = b - Ax0
+	nodes[node.x][node.y].pk = nodes[node.x][node.y].rk; // Initially p0 = r0
+}

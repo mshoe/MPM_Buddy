@@ -36,10 +36,21 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 	m_p2gCalcVolumes = std::make_unique<ComputeShader>(std::vector<std::string> {"shaders\\compute\\p2gCalculateVolumes.comp"}, "shaders\\compute\\mpm_header.comp");
 	m_g2pCalcVolumes = std::make_unique<ComputeShader>(std::vector<std::string> {"shaders\\compute\\g2pCalculateVolumes.comp"}, "shaders\\compute\\mpm_header.comp");
 
+	// implict time integration shaders
+	m_p2g2pDeltaForce = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\implicit\\g2p2gDeltaForce.comp"}, "shaders\\compute\\mpm_header.comp");
+	m_gConjugateResidualsInitPart1 = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\implicit\\gCR_InitPart1.comp"}, "shaders\\compute\\mpm_header.comp");
+	m_gConjugateResidualsInitPart2 = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\implicit\\gCR_InitPart2.comp"}, "shaders\\compute\\mpm_header.comp");
+	m_gConjugateResidualsInitPart3 = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\implicit\\gCR_InitPart3.comp"}, "shaders\\compute\\mpm_header.comp");
+
+	m_gConjugateResidualsStepPart1 = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\implicit\\gCR_StepPart1.comp"}, "shaders\\compute\\mpm_header.comp");
+	m_gConjugateResidualsStepPart2 = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\implicit\\gCR_StepPart2.comp"}, "shaders\\compute\\mpm_header.comp");
+	m_gConjugateResidualsConclusion = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\implicit\\gCR_Conclusion.comp"}, "shaders\\compute\\mpm_header.comp");
+
 	glCreateVertexArrays(1, &VisualizeVAO);
 
 	m_pPointCloudShader = std::make_unique<StandardShader>(std::vector<std::string>{"shaders\\graphics\\pointCloud.vs"}, std::vector<std::string>{"shaders\\graphics\\pointCloud.fs"}, "shaders\\compute\\mpm_header.comp");
-	m_mouseShader = std::make_unique<StandardShader>(std::vector<std::string>{"shaders\\graphics\\mouseShader.vs"}, std::vector<std::string>{"shaders\\graphics\\mouseShader.fs"}, "shaders\\compute\\mpm_header.comp");
+	m_mouseShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\mouseShader.vs"}, std::vector<std::string>{"shaders\\graphics\\mouseShader.fs"}, "shaders\\compute\\mpm_header.comp");
+	//m_nodeShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\nodeSelectionShader.vs"}, std::vector<std::string>{"shaders\\graphics\\nodeSelectionShader.fs"}, "shaders\\compute\\mpm_header.comp");
 
 
 	// Initialize the grid SSBO on the GPU
@@ -98,12 +109,17 @@ void mpm::MpmEngine::MpmTimeStep(float dt)
 	m_gUpdate->SetFloat("dt", dt);
 	m_gUpdate->SetVec("globalForce", m_globalForce);
 	m_gUpdate->SetVec("mousePos", m_mousePos);
+	m_gUpdate->SetFloat("drag", m_drag);
 	if (m_rightButtonDown)
 		m_gUpdate->SetFloat("mousePower", m_mousePower);
 	else
 		m_gUpdate->SetFloat("mousePower", 0.f);
 	glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+	if (m_implicit) {
+		MpmImplictTimeCR(dt);
+	}
 
 	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudPair.second->ssbo);
@@ -123,6 +139,127 @@ void mpm::MpmEngine::MpmTimeStep(float dt)
 #ifdef MPM_DEBUG
 	t2 = high_resolution_clock::now();
 	std::cout << "Finished calculating timestep in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
+#endif
+}
+
+void mpm::MpmEngine::MpmImplictTimeCR(float dt)
+{
+#ifdef MPM_CR_DEBUG
+	PrintGridData();
+#endif
+	// IMPLICIT INIT PART 1
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
+	m_gConjugateResidualsInitPart1->Use();
+	glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+#ifdef MPM_CR_DEBUG
+	PrintGridData();
+#endif
+
+	// CALCULATE deltaForce using v from explicit update
+	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudPair.second->ssbo);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
+		m_p2g2pDeltaForce->Use();
+		m_p2g2pDeltaForce->SetFloat("lam", pointCloudPair.second->lam);
+		m_p2g2pDeltaForce->SetFloat("mew", pointCloudPair.second->mew);
+		int p_workgroups = int(glm::ceil(float(pointCloudPair.second->N) / float(G2P_WORKGROUP_SIZE)));
+		glDispatchCompute(p_workgroups, 1, 1);
+		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+	}
+
+#ifdef MPM_CR_DEBUG
+	PrintGridData();
+#endif
+
+	// IMPLICIT INIT PART 2
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
+	m_gConjugateResidualsInitPart2->Use();
+	m_gConjugateResidualsInitPart2->SetFloat("dt", dt);
+	m_gConjugateResidualsInitPart2->SetFloat("IMPLICIT_RATIO", m_implicit_ratio);
+	glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+#ifdef MPM_CR_DEBUG
+	PrintGridData();
+#endif
+
+	// CALCULATE deltaForce using r0
+	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudPair.second->ssbo);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
+		m_p2g2pDeltaForce->Use();
+		m_p2g2pDeltaForce->SetFloat("lam", pointCloudPair.second->lam);
+		m_p2g2pDeltaForce->SetFloat("mew", pointCloudPair.second->mew);
+		int p_workgroups = int(glm::ceil(float(pointCloudPair.second->N) / float(G2P_WORKGROUP_SIZE)));
+		glDispatchCompute(p_workgroups, 1, 1);
+		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+	}
+
+#ifdef MPM_CR_DEBUG
+	PrintGridData();
+#endif
+
+	// IMPLICIT INIT PART 3
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
+	m_gConjugateResidualsInitPart3->Use();
+	m_gConjugateResidualsInitPart3->SetFloat("dt", dt);
+	m_gConjugateResidualsInitPart3->SetFloat("IMPLICIT_RATIO", m_implicit_ratio);
+	glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+#ifdef MPM_CR_DEBUG
+	PrintGridData();
+#endif
+
+	// Now start the conjugate residuals loop
+	for (int i = 0; i < m_max_conj_res_iter; i++) {
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
+		m_gConjugateResidualsStepPart1->Use();
+		glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
+		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+#ifdef MPM_CR_DEBUG
+		PrintGridData();
+#endif
+
+		// CALCULATE deltaForce using rk
+		for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudPair.second->ssbo);
+			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
+			m_p2g2pDeltaForce->Use();
+			m_p2g2pDeltaForce->SetFloat("lam", pointCloudPair.second->lam);
+			m_p2g2pDeltaForce->SetFloat("mew", pointCloudPair.second->mew);
+			int p_workgroups = int(glm::ceil(float(pointCloudPair.second->N) / float(G2P_WORKGROUP_SIZE)));
+			glDispatchCompute(p_workgroups, 1, 1);
+			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+		}
+
+#ifdef MPM_CR_DEBUG
+		PrintGridData();
+#endif
+
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
+		m_gConjugateResidualsStepPart2->Use();
+		m_gConjugateResidualsStepPart2->SetFloat("dt", dt);
+		m_gConjugateResidualsStepPart2->SetFloat("IMPLICIT_RATIO", m_implicit_ratio);
+		glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
+		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+#ifdef MPM_CR_DEBUG
+		PrintGridData();
+#endif
+	}
+
+	// IMPLICIT CONCLUSION
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
+	m_gConjugateResidualsConclusion->Use();
+	glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+#ifdef MPM_CR_DEBUG
+	PrintGridData();
 #endif
 }
 
@@ -148,6 +285,8 @@ void mpm::MpmEngine::RenderGUI()
 		ImGui::Begin("MPM Grid Data", &m_renderGUI);
 
 		
+		ImGui::InputFloat("drag", &m_drag, 0.001f, 0.01f, "%.3f");
+
 		if (ImGui::Button("Set global force")) {
 			m_globalForce.x = m_globalForceArray[0];
 			m_globalForce.y = m_globalForceArray[1];
@@ -166,13 +305,16 @@ void mpm::MpmEngine::RenderGUI()
 		ImGui::InputFloat2("donut init v", m_donut_v, "%.3f");*/
 		
 		
-		
+		ImGui::Checkbox("Node Selection Graphics", &m_nodeGraphicsActive);
 		if (ImGui::Button("Get node data") && m_paused) {
 			UpdateNodeData();
 		}
 		ImGui::InputInt2("Grid Node:", m_node);
 		ImGui::Text(m_nodeText.c_str());
 		
+		ImGui::Checkbox("Implicit Time Integration", &m_implicit);
+		ImGui::InputFloat("Implict Ratio", &m_implicit_ratio);
+
 		if (ImGui::Button("Pause")) {
 			m_paused = !m_paused;
 		}
@@ -523,4 +665,27 @@ void mpm::MpmEngine::CreateDemo()
 	//	//}
 	//}
 	/*glUnmapNamedBuffer(gridSSBO);*/
+}
+
+void mpm::MpmEngine::PrintGridData()
+{
+	void *ptr = glMapNamedBuffer(gridSSBO, GL_READ_ONLY);
+	std::cout << "Reading as GridNode: \n";
+	GridNode *data = static_cast<GridNode*>(ptr);
+	for (int i = 0; i < GRID_SIZE_X*GRID_SIZE_Y; i++) {
+		GridNode gn = data[i];
+		if (gn.m != 0.f || gn.v.x != 0.f || gn.v.y != 0.f) {
+			std::cout << "Grid node: [" << i / GRID_SIZE_X << ", " << i % GRID_SIZE_X << "]" << std::endl;
+			std::cout << gn << std::endl;
+		}
+	}
+	//std::cout << "Reading as GLfloat: \n";
+	//GLfloat *test = static_cast<GLfloat*>(ptr);
+	//for (int i = 0; i < GRID_SIZE_X*GRID_SIZE_Y*4; i++) {
+	//	//if (test[i] != 0.f) {
+	//		std::cout << "Index: " << i << std::endl;
+	//		std::cout << test[i] << std::endl;
+	//	//}
+	//}
+	glUnmapNamedBuffer(gridSSBO);
 }

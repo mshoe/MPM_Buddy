@@ -41,7 +41,7 @@ void main() {
 
 			// node.r will initially be = b - A*x0
 			// after first time step node.r has a different update rule from conjugate residuals
-			dF += outerProduct(nodes[curNode_i][curNode_j].r, wpgGrad)*inb; // if inb is 0, then no data is changed
+			dF += outerProduct(nodes[curNode_i][curNode_j].rk, wpgGrad)*inb; // if inb is 0, then no data is changed
 			
 		}
 	}
@@ -52,21 +52,21 @@ void main() {
 	mat2 R;
 	mat2 S;
 	PolarDecomp(F, R, S);
-	dF = dF * F
+	dF = dF * F;
 
 	mat2 A = mat2(0.0);
 
 
 	// lam*J*F^-T * (J*F^-T : dF) term
-	A += J*J*Fit*(dot(Fit, dF))
+	A += J*J*Fit*(innerProduct(Fit, dF));
 
 	// lam*(J-1)*d(J*F^-T) term
-	A += (J-1)cofactorMatrix(dF);
+	A += (J-1)*cofactorMatrix(dF);
 	A *= lam;
 
 
-	b = R[1][0]*dF[0][0] + R[1][1]*dF[0][1] - (dF[1][0]*R[0][0] + dF[1][1]*R[0][1]);
-	a = b / (S[0][0] + S[1][1]);
+	float b = R[1][0]*dF[0][0] + R[1][1]*dF[0][1] - (dF[1][0]*R[0][0] + dF[1][1]*R[0][1]);
+	float a = b / (S[0][0] + S[1][1]);
 	mat2 dR = R * mat2(0, a, -a, 0); // column major
 
 
@@ -92,8 +92,9 @@ void main() {
 								BSpline(dx) * BSplineSlope(dy));
 
 			// Just need to add the force derivative for the implict time integration step
-
-			atomicAdd(nodes[curNode_i][curNode_j].deltaForce, p.vol*A*(Fit*wpgGrad));
+			vec2 delforce = points[pid].vol*A*(Fit*wpgGrad);
+			atomicAdd(nodes[curNode_i][curNode_j].deltaForce.x, delforce.x);
+			atomicAdd(nodes[curNode_i][curNode_j].deltaForce.y, delforce.y);
 			barrier();
 		}
 	}

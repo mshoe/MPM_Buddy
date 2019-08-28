@@ -11,5 +11,7 @@ uniform float mousePower;
 void main() {
 	uvec2 node = uvec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
 
-
+	// this is now calculating for k + 1 instead of k
+	nodes[node.x][node.y].v = nodes[node.x][node.y].xk;
+	//nodes[node.x][node.y].v = (isinfVec2(nodes[node.x][node.y].xk) || isnanVec2(nodes[node.x][node.y].xk)) ? vec2(0.0) : nodes[node.x][node.y].xk;
 }

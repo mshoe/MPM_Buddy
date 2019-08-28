@@ -1,0 +1,25 @@
+#version 450 core
+
+layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+
+/*** HEADER ***/
+
+uniform vec2 mousePos; // this is normalized w.r.t. screen
+
+uniform float mousePower;
+
+void main() {
+	uvec2 node = uvec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
+
+	// get ready for the implicit step by resetting conjugate residual variables
+
+	nodes[node.x][node.y].deltaForce = vec2(0.0);
+	nodes[node.x][node.y].xk = nodes[node.x][node.y].v; // Initial guess x0 is the explicit v
+	nodes[node.x][node.y].rk = nodes[node.x][node.y].v; // Initial r is b - Ax0, 
+														// but we are using the .rk member as u for computing A*u,
+														// so we put v in the .rk member one-time only thing for initialization
+	nodes[node.x][node.y].pk = vec2(0.0);
+	nodes[node.x][node.y].Ark = vec2(0.0);
+	nodes[node.x][node.y].Apk = vec2(0.0);
+	nodes[node.x][node.y].rkArk = 0.0;
+}
