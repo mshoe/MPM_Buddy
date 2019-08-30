@@ -4,16 +4,12 @@ layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
 /*** HEADER ***/
 
-uniform vec2 mousePos; // this is normalized w.r.t. screen
-
-uniform float mousePower;
-
 void main() {
 	uvec2 node = uvec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
 
 	// Now we are actually calculating Ark
-	float nodeMass = nodes[node.x][node.y].m;
-	nodes[node.x][node.y].Ark = (nodeMass == 0.0) ? vec2(0.0) : nodes[node.x][node.y].rk - dt*dt/nodeMass*IMPLICIT_RATIO*nodes[node.x][node.y].deltaForce;
+	double nodeMass = nodes[node.x][node.y].m;
+	nodes[node.x][node.y].Ark = (nodeMass == 0.0) ? dvec2(0.0) : nodes[node.x][node.y].rk - dt*dt/nodeMass*IMPLICIT_RATIO*nodes[node.x][node.y].deltaForce;
 	
 	nodes[node.x][node.y].Apk = nodes[node.x][node.y].Ark; // pk is rk initially, so Apk is Ark initially
 }

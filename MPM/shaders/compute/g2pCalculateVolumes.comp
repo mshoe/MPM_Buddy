@@ -14,19 +14,19 @@ void main() {
 	highp int node_i = int(floor(points[pid].x.x + 0.5));
 	highp int node_j = int(floor(points[pid].x.y + 0.5));
 
-	float massFromGrid = 0.f;
+	double massFromGrid = 0.f;
 	for (int i = -2; i <= 2; ++i) {
 		for (int j = -2; j <= 2; ++j) {
 
 			int curNode_i = node_i + i;
 			int curNode_j = node_j + j;
-			float inb;
+			double inb;
 			InBounds(curNode_i, curNode_j, inb);
 
-			vec2 dpg = vec2(curNode_i, curNode_j) - points[pid].x;
-			float dx = -dpg.x;
-			float dy = -dpg.y;
-			float wpg = BSpline(dx) * BSpline(dy);
+			dvec2 dpg = dvec2(curNode_i, curNode_j) - points[pid].x;
+			double dx = -dpg.x;
+			double dy = -dpg.y;
+			double wpg = BSpline(dx) * BSpline(dy);
 
 			massFromGrid += wpg * nodes[curNode_i][curNode_j].m * inb;
 		}

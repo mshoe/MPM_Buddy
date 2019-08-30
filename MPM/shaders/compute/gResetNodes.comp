@@ -7,7 +7,7 @@ layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 void main() {
 	uvec2 node = uvec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
 	nodes[node.x][node.y].m = 0.0;
-	nodes[node.x][node.y].v = vec2(0.0);
-	nodes[node.x][node.y].momentum = vec2(0.0);
-	nodes[node.x][node.y].force = vec2(0.0);
+	nodes[node.x][node.y].v = dvec2(0.0);
+	nodes[node.x][node.y].momentum = dvec2(0.0);
+	nodes[node.x][node.y].force = dvec2(0.0);
 }

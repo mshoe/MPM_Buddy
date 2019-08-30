@@ -10,26 +10,26 @@
 
 struct GridNode {
 	GridNode() {}
-	GLfloat m = 0.f;
+	GLreal m = 0.0;
 
 	// We need this padding here because when reading from buffers, they will put a byte in-between m and v.
 	// This will offset out GridNode values.
 	// With a padding, we can read GridNode structs easily.
-	GLfloat glsl_padding = 0.f;
+	GLreal glsl_padding = 0.0;
 
-	glm::vec2 v = glm::vec2(0.0097f);
-	glm::vec2 momentum = glm::vec2(0.0069f);
-	glm::vec2 force = glm::vec2(0.0042f);
+	vec2 v = vec2(0.0097);
+	vec2 momentum = vec2(0.0069);
+	vec2 force = vec2(0.0042);
 	
-	glm::vec2 deltaForce = glm::vec2(0.69420f);
-	glm::vec2 xk = glm::vec2(0.1234f);
-	glm::vec2 rk = glm::vec2(0.4321f);
-	glm::vec2 pk = glm::vec2(0.1010f);
-	glm::vec2 Ark = glm::vec2(2.f);
-	glm::vec2 Apk = glm::vec2(3.f);
+	vec2 deltaForce = vec2(0.69420);
+	vec2 xk = vec2(0.1234);
+	vec2 rk = vec2(0.4321);
+	vec2 pk = vec2(0.1010);
+	vec2 Ark = vec2(2.0);
+	vec2 Apk = vec2(3.0);
 
-	GLfloat rkArk = 0.1f;
-	GLfloat glsl_padding2 = 0.f;
+	GLreal rkArk = 0.1;
+	GLreal glsl_padding2 = 0.0;
 
 	friend std::ostream & operator << (std::ostream &out, const GridNode &c) {
 		out << "m: " << c.m << "\n";

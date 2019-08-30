@@ -33,8 +33,8 @@ public:
 	bool InitMPM();
 
 	void Loop();
-	void ProcessInput(GLFWwindow *window, float lag);
-	void Update(float lag);
+	void ProcessInput(GLFWwindow *window, real lag);
+	void Update(real lag);
 	void Render();
 
 private:
@@ -42,12 +42,12 @@ private:
 	bool m_cameraImgui = true;
 
 	std::shared_ptr<StandardShader> m_mouseShader;
-	std::unique_ptr<Camera> m_camera;
+	//std::unique_ptr<Camera> m_camera;
 	std::shared_ptr<mpm::MpmEngine> m_mpmEngine;
 
 	std::shared_ptr<Engine> m_currentEngine;
 
-	float m_time = 0.f;
+	real m_time = 0.f;
 
 	// Rendering stuff
 	GLuint VAO;

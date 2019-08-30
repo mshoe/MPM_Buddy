@@ -1,14 +1,14 @@
 #include "MpmEngine.h"
 #include "imgui/imgui.h"
 
-float BSpline(float x) {
-	return (x < 0.5f) ? glm::step(0.0f, x)*(0.75f - x * x) :
-		glm::step(x, 1.5f)*0.5f*(1.5f - abs(x))*(1.5f - abs(x));
+real BSpline(real x) {
+	return (x < 0.5) ? glm::step(0.0, x)*(0.75 - x * x) :
+		glm::step(x, 1.5)*0.5*(1.5 - abs(x))*(1.5 - abs(x));
 }
 
-float BSplineSlope(float x) {
-	return (x < 0.5f) ? glm::step(0.0f, x)*(-2.f * x) :
-		glm::step(x, 1.5f)*(1.5f - abs(x))*x / abs(x);
+real BSplineSlope(real x) {
+	return (x < 0.5) ? glm::step(0.0, x)*(-2.0 * x) :
+		glm::step(x, 1.5)*(1.5 - abs(x))*x / abs(x);
 }
 
 
@@ -79,7 +79,7 @@ bool mpm::MpmEngine::CleanupComputeShaderPipeline()
 	return false;
 }
 
-void mpm::MpmEngine::MpmTimeStep(float dt)
+void mpm::MpmEngine::MpmTimeStep(real dt)
 {
 #ifdef MPM_DEBUG
 	using namespace std::chrono;
@@ -98,21 +98,21 @@ void mpm::MpmEngine::MpmTimeStep(float dt)
 		m_p2gGather->SetFloat("dt", dt);
 		glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);*/
 		m_p2gScatter->Use();
-		m_p2gScatter->SetFloat("dt", dt);
-		int g2p_workgroups = int(glm::ceil(float(pointCloudPair.second->N) / float(G2P_WORKGROUP_SIZE)));
+		m_p2gScatter->SetReal("dt", dt);
+		int g2p_workgroups = int(glm::ceil(real(pointCloudPair.second->N) / real(G2P_WORKGROUP_SIZE)));
 		glDispatchCompute(g2p_workgroups, 1, 1);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 	}
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 	m_gUpdate->Use();
-	m_gUpdate->SetFloat("dt", dt);
+	m_gUpdate->SetReal("dt", dt);
 	m_gUpdate->SetVec("globalForce", m_globalForce);
 	m_gUpdate->SetVec("mousePos", m_mousePos);
-	m_gUpdate->SetFloat("drag", m_drag);
+	m_gUpdate->SetReal("drag", m_drag);
 	if (m_rightButtonDown)
-		m_gUpdate->SetFloat("mousePower", m_mousePower);
+		m_gUpdate->SetReal("mousePower", m_mousePower);
 	else
-		m_gUpdate->SetFloat("mousePower", 0.f);
+		m_gUpdate->SetReal("mousePower", 0.0);
 	glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
@@ -124,14 +124,14 @@ void mpm::MpmEngine::MpmTimeStep(float dt)
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudPair.second->ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 		m_g2pGather->Use();
-		m_g2pGather->SetFloat("dt", dt);
-		m_g2pGather->SetFloat("lam", pointCloudPair.second->lam);
-		m_g2pGather->SetFloat("mew", pointCloudPair.second->mew);
-		m_g2pGather->SetFloat("crit_c", pointCloudPair.second->crit_c);
-		m_g2pGather->SetFloat("crit_s", pointCloudPair.second->crit_s);
-		m_g2pGather->SetFloat("hardening", pointCloudPair.second->hardening);
+		m_g2pGather->SetReal("dt", dt);
+		m_g2pGather->SetReal("lam", pointCloudPair.second->lam);
+		m_g2pGather->SetReal("mew", pointCloudPair.second->mew);
+		m_g2pGather->SetReal("crit_c", pointCloudPair.second->crit_c);
+		m_g2pGather->SetReal("crit_s", pointCloudPair.second->crit_s);
+		m_g2pGather->SetReal("hardening", pointCloudPair.second->hardening);
 		m_g2pGather->SetuInt("comodel", pointCloudPair.second->comodel);
-		int g2p_workgroups = int(glm::ceil(float(pointCloudPair.second->N) / float(G2P_WORKGROUP_SIZE)));
+		int g2p_workgroups = int(glm::ceil(real(pointCloudPair.second->N) / real(G2P_WORKGROUP_SIZE)));
 		glDispatchCompute(g2p_workgroups, 1, 1);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 	}
@@ -145,7 +145,7 @@ void mpm::MpmEngine::MpmTimeStep(float dt)
 #endif
 }
 
-void mpm::MpmEngine::MpmImplictTimeCR(float dt)
+void mpm::MpmEngine::MpmImplictTimeCR(real dt)
 {
 #ifdef MPM_CR_DEBUG
 	PrintGridData();
@@ -165,9 +165,9 @@ void mpm::MpmEngine::MpmImplictTimeCR(float dt)
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudPair.second->ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 		m_p2g2pDeltaForce->Use();
-		m_p2g2pDeltaForce->SetFloat("lam", pointCloudPair.second->lam);
-		m_p2g2pDeltaForce->SetFloat("mew", pointCloudPair.second->mew);
-		int p_workgroups = int(glm::ceil(float(pointCloudPair.second->N) / float(G2P_WORKGROUP_SIZE)));
+		m_p2g2pDeltaForce->SetReal("lam", pointCloudPair.second->lam);
+		m_p2g2pDeltaForce->SetReal("mew", pointCloudPair.second->mew);
+		int p_workgroups = int(glm::ceil(real(pointCloudPair.second->N) / real(G2P_WORKGROUP_SIZE)));
 		glDispatchCompute(p_workgroups, 1, 1);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 	}
@@ -179,8 +179,8 @@ void mpm::MpmEngine::MpmImplictTimeCR(float dt)
 	// IMPLICIT INIT PART 2
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 	m_gConjugateResidualsInitPart2->Use();
-	m_gConjugateResidualsInitPart2->SetFloat("dt", dt);
-	m_gConjugateResidualsInitPart2->SetFloat("IMPLICIT_RATIO", m_implicit_ratio);
+	m_gConjugateResidualsInitPart2->SetReal("dt", dt);
+	m_gConjugateResidualsInitPart2->SetReal("IMPLICIT_RATIO", m_implicit_ratio);
 	glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
@@ -193,9 +193,9 @@ void mpm::MpmEngine::MpmImplictTimeCR(float dt)
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudPair.second->ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 		m_p2g2pDeltaForce->Use();
-		m_p2g2pDeltaForce->SetFloat("lam", pointCloudPair.second->lam);
-		m_p2g2pDeltaForce->SetFloat("mew", pointCloudPair.second->mew);
-		int p_workgroups = int(glm::ceil(float(pointCloudPair.second->N) / float(G2P_WORKGROUP_SIZE)));
+		m_p2g2pDeltaForce->SetReal("lam", pointCloudPair.second->lam);
+		m_p2g2pDeltaForce->SetReal("mew", pointCloudPair.second->mew);
+		int p_workgroups = int(glm::ceil(real(pointCloudPair.second->N) / real(G2P_WORKGROUP_SIZE)));
 		glDispatchCompute(p_workgroups, 1, 1);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 	}
@@ -207,8 +207,8 @@ void mpm::MpmEngine::MpmImplictTimeCR(float dt)
 	// IMPLICIT INIT PART 3
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 	m_gConjugateResidualsInitPart3->Use();
-	m_gConjugateResidualsInitPart3->SetFloat("dt", dt);
-	m_gConjugateResidualsInitPart3->SetFloat("IMPLICIT_RATIO", m_implicit_ratio);
+	m_gConjugateResidualsInitPart3->SetReal("dt", dt);
+	m_gConjugateResidualsInitPart3->SetReal("IMPLICIT_RATIO", m_implicit_ratio);
 	glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
@@ -232,9 +232,9 @@ void mpm::MpmEngine::MpmImplictTimeCR(float dt)
 			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudPair.second->ssbo);
 			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 			m_p2g2pDeltaForce->Use();
-			m_p2g2pDeltaForce->SetFloat("lam", pointCloudPair.second->lam);
-			m_p2g2pDeltaForce->SetFloat("mew", pointCloudPair.second->mew);
-			int p_workgroups = int(glm::ceil(float(pointCloudPair.second->N) / float(G2P_WORKGROUP_SIZE)));
+			m_p2g2pDeltaForce->SetReal("lam", pointCloudPair.second->lam);
+			m_p2g2pDeltaForce->SetReal("mew", pointCloudPair.second->mew);
+			int p_workgroups = int(glm::ceil(real(pointCloudPair.second->N) / real(G2P_WORKGROUP_SIZE)));
 			glDispatchCompute(p_workgroups, 1, 1);
 			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 		}
@@ -245,8 +245,8 @@ void mpm::MpmEngine::MpmImplictTimeCR(float dt)
 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 		m_gConjugateResidualsStepPart2->Use();
-		m_gConjugateResidualsStepPart2->SetFloat("dt", dt);
-		m_gConjugateResidualsStepPart2->SetFloat("IMPLICIT_RATIO", m_implicit_ratio);
+		m_gConjugateResidualsStepPart2->SetReal("dt", dt);
+		m_gConjugateResidualsStepPart2->SetReal("IMPLICIT_RATIO", m_implicit_ratio);
 		glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
@@ -273,8 +273,8 @@ void mpm::MpmEngine::Render()
 			MpmTimeStep(m_dt);
 		}
 		else {
-			float curr_dt = 0.f;
-			float rt_dt = 1.f / 60.f;
+			real curr_dt = 0.0;
+			real rt_dt = 1.0 / 60.0;
 			while (curr_dt < rt_dt) {
 				MpmTimeStep(m_dt);
 				curr_dt += m_dt;
@@ -298,26 +298,22 @@ void mpm::MpmEngine::RenderGUI()
 		ImGui::Begin("MPM Grid Data", &m_renderGUI);
 
 		
-		ImGui::InputFloat("drag", &m_drag, 0.0001f, 0.01f, "%.4f");
+		ImGui::InputReal("drag", &m_drag, 0.0001, 0.01, "%.4f");
 
 		if (ImGui::Button("Set global force")) {
 			m_globalForce.x = m_globalForceArray[0];
 			m_globalForce.y = m_globalForceArray[1];
 		}
-		ImGui::InputFloat2("", m_globalForceArray, "%.3f");
+		ImGui::InputReal("Global Force x", &m_globalForce.x, 0.1, 1.0, "%.16f");
+		ImGui::InputReal("Global Force y", &m_globalForce.y, 0.1, 1.0, "%.16f");
 
-		ImGui::InputFloat("Mouse power", &m_mousePower);
+		ImGui::InputReal("Mouse power", &m_mousePower);
 
 		ImGui::Text(std::to_string(m_time).c_str());
 		ImGui::Text(std::to_string(m_timeStep).c_str());
-		ImGui::InputFloat("dt", &m_dt, 0.001f, 1.f/60.f, "%.6f");
+		ImGui::InputReal("dt", &m_dt, 0.001, 1.0/60.0, "%.6f");
 
 		ImGui::Checkbox("Realtime Rendering", &m_rt);
-
-		/*ImGui::InputFloat2("circle init x", m_circle_x, "%.3f");
-		ImGui::InputFloat2("circle init v", m_circle_v, "%.3f");
-		ImGui::InputFloat2("donut init x", m_donut_x, "%.3f");
-		ImGui::InputFloat2("donut init v", m_donut_v, "%.3f");*/
 		
 		
 		ImGui::Checkbox("Node Selection Graphics", &m_nodeGraphicsActive);
@@ -328,7 +324,7 @@ void mpm::MpmEngine::RenderGUI()
 		ImGui::Text(m_nodeText.c_str());
 		
 		ImGui::Checkbox("Implicit Time Integration", &m_implicit);
-		ImGui::InputFloat("Implict Ratio", &m_implicit_ratio);
+		ImGui::InputReal("Implict Ratio", &m_implicit_ratio);
 
 		if (ImGui::Button("Pause")) {
 			m_paused = !m_paused;
@@ -343,7 +339,7 @@ void mpm::MpmEngine::RenderGUI()
 			//CreateDemo();
 			m_pointCloudMap.clear();
 			m_timeStep = 0;
-			m_time = 0.f;
+			m_time = 0.0;
 		}
 
 		ImGui::End();
@@ -354,13 +350,13 @@ void mpm::MpmEngine::RenderGUI()
 		ImGui::ColorEdit4("Color", m_color);
 		//ImGui::InputInt3("Color", m_color);
 
-		ImGui::InputFloat("Young's Modulus", &m_youngMod, 1.f, 10.f, "%.1f");
-		ImGui::InputFloat("Poisson's Ratio", &m_poisson, 0.005f, 0.05f, "%.3f");
-		ImGui::InputFloat("Point Spacing", &m_particleSpacing, 0.01f, 0.1f, "%.2f");
-		ImGui::InputFloat("Density", &m_density, 0.01f, 0.1f, "%.2f");
-		ImGui::InputFloat("Critical Compression", &m_crit_c, 0.001f, 0.01f, "%.4f");
-		ImGui::InputFloat("Critical Stretch", &m_crit_s, 0.001f, 0.01f, "%.4f");
-		ImGui::InputFloat("Hardening", &m_hardening, 0.001f, 0.01f, "%.4f");
+		ImGui::InputReal("Young's Modulus", &m_youngMod, 1.0, 10.0, "%.1f");
+		ImGui::InputReal("Poisson's Ratio", &m_poisson, 0.005, 0.05, "%.3f");
+		ImGui::InputReal("Point Spacing", &m_particleSpacing, 0.01, 0.1, "%.2f");
+		ImGui::InputReal("Density", &m_density, 0.01, 0.1, "%.2f");
+		ImGui::InputReal("Critical Compression", &m_crit_c, 0.001, 0.01, "%.4f");
+		ImGui::InputReal("Critical Stretch", &m_crit_s, 0.001, 0.01, "%.4f");
+		ImGui::InputReal("Hardening", &m_hardening, 0.001, 0.01, "%.4f");
 
 		if (ImGui::Button("Fixed Corotated Elasticity")) {
 			m_comodel = 1;
@@ -373,26 +369,26 @@ void mpm::MpmEngine::RenderGUI()
 
 
 
-		ImGui::InputFloat("Circle Radius", &m_circle_r, 0.1f, 1.f, "%.1f");
-		ImGui::InputFloat("Circle Inner Radius", &m_circle_inner_radius, 0.1f, 1.f, "%.1f");
-		ImGui::InputFloat("Circle Rounding", &m_circle_rounding, 0.1f, 1.f, "%.1f");
+		ImGui::InputReal("Circle Radius", &m_circle_r, 0.1, 1.0, "%.1f");
+		ImGui::InputReal("Circle Inner Radius", &m_circle_inner_radius, 0.1, 1.0, "%.1f");
+		ImGui::InputReal("Circle Rounding", &m_circle_rounding, 0.1, 1.0, "%.1f");
 		if (ImGui::Button("Create Solid Circle") && m_paused) {
 			m_createCircleState = true;
 		}
 
 
-		ImGui::InputFloat("Rectangle Base Length", &m_rect_b, 0.1f, 1.f, "%.1f");
-		ImGui::InputFloat("Rectangle Height Length", &m_rect_h, 0.1f, 1.f, "%.1f");
-		ImGui::InputFloat("Rectangle Inner Radius", &m_rect_inner_radius, 0.1f, 1.f, "%.1f");
-		ImGui::InputFloat("Rectangle Rounding", &m_rect_rounding, 0.1f, 1.f, "%.1f");
+		ImGui::InputReal("Rectangle Base Length", &m_rect_b, 0.1, 1.0, "%.1f");
+		ImGui::InputReal("Rectangle Height Length", &m_rect_h, 0.1, 1.0, "%.1f");
+		ImGui::InputReal("Rectangle Inner Radius", &m_rect_inner_radius, 0.1, 1.0, "%.1f");
+		ImGui::InputReal("Rectangle Rounding", &m_rect_rounding, 0.1, 1.0, "%.1f");
 		if (ImGui::Button("Create Solid Rectangle") && m_paused) {
 			m_createRectState = true;
 		}
 
-		ImGui::InputFloat("Isosceles Triangle Base Length", &m_iso_tri_b, 0.1f, 1.f, "%.1f");
-		ImGui::InputFloat("Isosceles Height Length", &m_iso_tri_h, 0.1f, 1.f, "%.1f");
-		ImGui::InputFloat("Isosceles Triangle Inner Radius", &m_iso_tri_inner_radius, 0.1f, 1.f, "%.1f");
-		ImGui::InputFloat("Isosceles Triangle Rounding", &m_iso_tri_rounding, 0.1f, 1.f, "%.1f");
+		ImGui::InputReal("Isosceles Triangle Base Length", &m_iso_tri_b, 0.1, 1.0, "%.1f");
+		ImGui::InputReal("Isosceles Height Length", &m_iso_tri_h, 0.1, 1.0, "%.1f");
+		ImGui::InputReal("Isosceles Triangle Inner Radius", &m_iso_tri_inner_radius, 0.1, 1.0, "%.1f");
+		ImGui::InputReal("Isosceles Triangle Rounding", &m_iso_tri_rounding, 0.1, 1.0, "%.1f");
 		if (ImGui::Button("Create Solid Triangle") && m_paused) {
 			m_createIsoTriState = true;
 		}
@@ -460,16 +456,16 @@ void mpm::MpmEngine::HandleInput()
 
 		m_circleCount++;
 		//sdf::sdFunc dCircle(sdf::DemoCircle);
-		sdf::Circle shape(glm::vec2(m_mousePos.x * GRID_SIZE_X, m_mousePos.y * GRID_SIZE_Y), m_circle_r);
+		sdf::Circle shape(vec2(m_mousePos.x * GRID_SIZE_X, m_mousePos.y * GRID_SIZE_Y), m_circle_r);
 		std::string circleID = "circle" + std::to_string(m_circleCount);
 
-		glm::vec4 color = glm::vec4(m_color[0], m_color[1], m_color[2], m_color[3]);
+		glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
 		/*color.x = (float)glm::clamp(m_color[0], 0, 255) / 255.f;
 		color.y = (float)glm::clamp(m_color[1], 0, 255) / 255.f;
 		color.z = (float)glm::clamp(m_color[2], 0, 255) / 255.f;*/
 
-		float inner_rounding = m_circle_r - m_circle_inner_radius;
-		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(circleID, shape, GRID_SIZE_X, GRID_SIZE_Y, m_particleSpacing, m_density, inner_rounding, m_circle_rounding, m_youngMod, m_poisson, m_crit_c, m_crit_s, m_hardening, m_comodel, glm::vec2(0.f, 0.f), color);
+		real inner_rounding = m_circle_r - m_circle_inner_radius;
+		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(circleID, shape, GRID_SIZE_X, GRID_SIZE_Y, m_particleSpacing, m_density, inner_rounding, m_circle_rounding, m_youngMod, m_poisson, m_crit_c, m_crit_s, m_hardening, m_comodel, vec2(0.0, 0.0), color);
 
 		t2 = high_resolution_clock::now();
 
@@ -492,14 +488,14 @@ void mpm::MpmEngine::HandleInput()
 
 		m_rectCount++;
 		//sdf::sdFunc dCircle(sdf::DemoCircle);
-		sdf::Rectangle shape(glm::vec2(m_mousePos.x * GRID_SIZE_X, m_mousePos.y * GRID_SIZE_Y), m_rect_b, m_rect_h);
+		sdf::Rectangle shape(vec2(m_mousePos.x * GRID_SIZE_X, m_mousePos.y * GRID_SIZE_Y), m_rect_b, m_rect_h);
 		std::string rectID = "rect" + std::to_string(m_rectCount);
 
-		glm::vec4 color = glm::vec4(m_color[0], m_color[1], m_color[2], m_color[3]);
+		glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
 		
 
-		float inner_rounding = glm::min(m_rect_b, m_rect_h) - m_rect_inner_radius;
-		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(rectID, shape, GRID_SIZE_X, GRID_SIZE_Y, m_particleSpacing, m_density, inner_rounding, m_rect_rounding, m_youngMod, m_poisson, m_crit_c, m_crit_s, m_hardening, m_comodel, glm::vec2(0.f, 0.f), color);
+		real inner_rounding = glm::min(m_rect_b, m_rect_h) - m_rect_inner_radius;
+		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(rectID, shape, GRID_SIZE_X, GRID_SIZE_Y, m_particleSpacing, m_density, inner_rounding, m_rect_rounding, m_youngMod, m_poisson, m_crit_c, m_crit_s, m_hardening, m_comodel, vec2(0.0, 0.0), color);
 
 		t2 = high_resolution_clock::now();
 
@@ -522,12 +518,12 @@ void mpm::MpmEngine::HandleInput()
 
 		m_isoTriCount++;
 		//sdf::sdFunc dCircle(sdf::DemoCircle);
-		sdf::IsoscelesTriangle shape(glm::vec2(m_mousePos.x * GRID_SIZE_X, m_mousePos.y * GRID_SIZE_Y), m_iso_tri_b, m_iso_tri_h);
+		sdf::IsoscelesTriangle shape(vec2(m_mousePos.x * GRID_SIZE_X, m_mousePos.y * GRID_SIZE_Y), m_iso_tri_b, m_iso_tri_h);
 		std::string isoTriID = "isoTri" + std::to_string(m_isoTriCount);
 
-		glm::vec4 color = glm::vec4(m_color[0], m_color[1], m_color[2], m_color[3]);
+		glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
 
-		float inner_rounding = glm::min(m_iso_tri_b, m_iso_tri_h) - m_iso_tri_inner_radius;
+		real inner_rounding = glm::min(m_iso_tri_b, m_iso_tri_h) - m_iso_tri_inner_radius;
 		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(isoTriID, shape, GRID_SIZE_X, GRID_SIZE_Y, m_particleSpacing, m_density, inner_rounding, m_iso_tri_rounding, m_youngMod, m_poisson, m_crit_c, m_crit_s, m_hardening, m_comodel, glm::vec2(0.f, 0.f), color);
 
 		t2 = high_resolution_clock::now();
@@ -553,13 +549,13 @@ void mpm::MpmEngine::UpdateNodeData()
 
 
 std::shared_ptr<PointCloud> mpm::MpmEngine::GenPointCloud(const std::string pointCloudID, sdf::Shape& shape,
-	const float gridDimX, const float gridDimY, 
-	const float particleSpacing, const float density, 
-	const float inner_rounding, const float outer_rounding,
-	const float youngMod, const float poisson,
-	const float crit_c, const float crit_s, const float hardening,
+	const real gridDimX, const real gridDimY, 
+	const real particleSpacing, const real density, 
+	const real inner_rounding, const real outer_rounding,
+	const real youngMod, const real poisson,
+	const real crit_c, const real crit_s, const real hardening,
 	const GLuint comodel,
-	glm::vec2 initialVelocity, glm::vec4 color)
+	vec2 initialVelocity, glm::highp_fvec4 color)
 {
 	std::shared_ptr<PointCloud> pointCloud = std::make_shared<PointCloud>();
 
@@ -572,27 +568,27 @@ std::shared_ptr<PointCloud> mpm::MpmEngine::GenPointCloud(const std::string poin
 	pointCloud->hardening = hardening;
 	pointCloud->comodel = comodel;
 
-	float mass = particleSpacing * particleSpacing * density;
+	real mass = particleSpacing * particleSpacing * density;
 	
 	// gen points from sdf
-	for (float x = 0.f; x < gridDimX; x += particleSpacing) {
-		for (float y = 0.f; y < gridDimY; y += particleSpacing) {
+	for (real x = 0.f; x < gridDimX; x += particleSpacing) {
+		for (real y = 0.f; y < gridDimY; y += particleSpacing) {
 			
 			glm::vec2 p(x, y);
-			float sd = shape.SdfHollow(p, inner_rounding, outer_rounding);
+			real sd = shape.SdfHollow(p, inner_rounding, outer_rounding);
 			if (sd < 0.f) {
 				MaterialPoint mp;
 				mp.x = p;
 				mp.v = initialVelocity;
 				mp.m = mass;
 				// calculate mp.vol in a compute shader (not here)
-				mp.B = glm::mat2(0.f);
-				mp.Fe = glm::mat2(1.f);
-				mp.Fp = glm::mat2(1.f);
-				mp.P = glm::mat2(0.f); // initial Piola stress tensor is 0
-				mp.FeSVD_U = glm::mat2(1.f);
-				mp.FeSVD_S = glm::mat2(1.f);
-				mp.FeSVD_V = glm::mat2(1.f);
+				mp.B = mat2(0.0);
+				mp.Fe = mat2(1.0);
+				mp.Fp = mat2(1.0);
+				mp.P = mat2(0.0); // initial Piola stress tensor is 0
+				mp.FeSVD_U = mat2(1.0);
+				mp.FeSVD_S = mat2(1.0);
+				mp.FeSVD_V = mat2(1.0);
 				
 				pointCloud->points.push_back(mp);
 			}
@@ -640,14 +636,14 @@ void mpm::MpmEngine::CalculatePointCloudVolumes(std::string pointCloudID, std::s
 	glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 	m_g2pCalcVolumes->Use();
-	int g2p_workgroups = int(glm::ceil(float(pointCloud->N) / float(G2P_WORKGROUP_SIZE)));
+	int g2p_workgroups = int(glm::ceil(real(pointCloud->N) / real(G2P_WORKGROUP_SIZE)));
 	glDispatchCompute(g2p_workgroups, 1, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 	t2 = high_resolution_clock::now();
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, 0);
 
-	std::cout << "Finished calculating initial volumes for '" << pointCloudID << "' in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
+	std::cout << "Finished calculating initial volumes for '" << pointCloudID << "' in " << duration_cast<duration<real>>(t2 - t1).count() << " seconds.\n";
 }
 
 
@@ -661,7 +657,7 @@ void mpm::MpmEngine::CreateDemo()
 	t1 = high_resolution_clock::now();
 	m_pointCloudMap.clear();
 	t2 = high_resolution_clock::now();
-	std::cout << "Clearing point clouds took" << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
+	std::cout << "Clearing point clouds took" << duration_cast<duration<real>>(t2 - t1).count() << " seconds.\n";
 
 
 	// 1. Create point clouds
@@ -674,7 +670,7 @@ void mpm::MpmEngine::CreateDemo()
 	
 	t2 = high_resolution_clock::now();
 
-	std::cout << "Finished generating " << m_pointCloudMap["circle1"]->N << " points for 'circle1' point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
+	std::cout << "Finished generating " << m_pointCloudMap["circle1"]->N << " points for 'circle1' point cloud in " << duration_cast<duration<real>>(t2 - t1).count() << " seconds.\n";
 
 	//1.5. Test point cloud
    //for (MaterialPoint mp : m_pointClouds[0].points) {
@@ -724,7 +720,7 @@ void mpm::MpmEngine::PrintGridData()
 	GridNode *data = static_cast<GridNode*>(ptr);
 	for (int i = 0; i < GRID_SIZE_X*GRID_SIZE_Y; i++) {
 		GridNode gn = data[i];
-		if (gn.m != 0.f || gn.v.x != 0.f || gn.v.y != 0.f) {
+		if (gn.m != 0.0 || gn.v.x != 0.0 || gn.v.y != 0.0) {
 			std::cout << "Grid node: [" << i / GRID_SIZE_X << ", " << i % GRID_SIZE_X << "]" << std::endl;
 			std::cout << gn << std::endl;
 		}

@@ -81,22 +81,22 @@ namespace mpm {
 	private:
 
 		//*** FUNCTIONS ***//
-		void MpmTimeStep(float dt);
-		void MpmImplictTimeCR(float dt);
+		void MpmTimeStep(real dt);
+		void MpmImplictTimeCR(real dt);
 
 		void UpdateNodeData();
-		void SetGlobalForce(glm::vec2 _globalForce) {
+		void SetGlobalForce(vec2 _globalForce) {
 			m_globalForce = _globalForce;
 		}
 
 		std::shared_ptr<PointCloud> GenPointCloud(const std::string pointCloudID, sdf::Shape& shape,
-			const float gridDimX, const float gridDimY, 
-			const float particleSpacing, const float density, 
-			const float inner_rounding, const float outer_rounding, 
-			const float youngMod, const float poisson,
-			const float crit_c, const float crit_s, const float hardening,
+			const real gridDimX, const real gridDimY, 
+			const real particleSpacing, const real density, 
+			const real inner_rounding, const real outer_rounding, 
+			const real youngMod, const real poisson,
+			const real crit_c, const real crit_s, const real hardening,
 			const GLuint comodel,
-			glm::vec2 initialVelocity, glm::vec4 color);
+			vec2 initialVelocity, glm::highp_fvec4 color);
 		void CalculatePointCloudVolumes(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
 
 		void CreateDemo();
@@ -134,22 +134,22 @@ namespace mpm {
 		
 		Grid m_grid;
 
-		float m_drag = 0.5f;
-		glm::vec2 m_globalForce = glm::vec2(0.f);
-		GLfloat m_globalForceArray[2] = { 0.f, 0.f }; // for input with imgui
-		//float m_set_dt = 1.f / 120.f;
-		float m_dt = 1.f / 120.f;
+		real m_drag = 0.5;
+		vec2 m_globalForce = vec2(0.0);
+		GLreal m_globalForceArray[2] = { 0.0, 0.0 }; // for input with imgui
+		//real m_set_dt = 1.0 / 120.0;
+		real m_dt = 1.0 / 120.0;
 		bool m_paused = true;
 		bool m_implicit = false;
-		float m_implicit_ratio = 1.f;
+		real m_implicit_ratio = 1.0;
 		int m_max_conj_res_iter = 30;
 
 		//int m_pointCloudSelect = 0;
 		int m_timeStep = 0;
-		float m_time = 0.f;
+		real m_time = 0.0;
 		bool m_rt = true;
 
-		GLfloat m_mousePower = 25.f;
+		GLreal m_mousePower = 25.0;
 
 
 		// Reorganize this stuff
@@ -161,36 +161,36 @@ namespace mpm {
 		std::unordered_map<std::string, std::shared_ptr<PointCloud>> m_pointCloudMap;
 		std::vector<char> m_pointCloudSelect;
 		
-		float m_youngMod = 400.f;
-		float m_poisson = 0.3f;
+		real m_youngMod = 400.0;
+		real m_poisson = 0.3;
 
-		float m_particleSpacing = 0.25f;
-		float m_density = 0.16f;
+		real m_particleSpacing = 0.25;
+		real m_density = 0.16;
 		
-		float m_crit_c = 0.025f;
-		float m_crit_s = 0.0075f;
-		float m_hardening = 10.f;
+		real m_crit_c = 0.025;
+		real m_crit_s = 0.0075;
+		real m_hardening = 10.0;
 
 		GLuint m_comodel = 1;
 
-		float m_color[4] = { 1.f, 0.f, 0.f, 1.0f};
+		float m_color[4] = { 1.0f, 0.0f, 0.0f, 1.0f}; // color needs to be float
 		
 		bool m_createCircleState = false;
-		float m_circle_r = 5.f;
-		float m_circle_inner_radius = 0.f;
-		float m_circle_rounding = 0.f;
+		real m_circle_r = 5.0;
+		real m_circle_inner_radius = 0.0;
+		real m_circle_rounding = 0.0;
 
 		bool m_createRectState = false;
-		float m_rect_b = 3.f;
-		float m_rect_h = 3.f;
-		float m_rect_inner_radius = 0.f;
-		float m_rect_rounding = 2.f;
+		real m_rect_b = 3.0;
+		real m_rect_h = 3.0;
+		real m_rect_inner_radius = 0.0;
+		real m_rect_rounding = 2.0;
 
 		bool m_createIsoTriState = false;
-		float m_iso_tri_b = 3.f;
-		float m_iso_tri_h = 3.f;
-		float m_iso_tri_inner_radius = 0.f;
-		float m_iso_tri_rounding = 2.f;
+		real m_iso_tri_b = 3.0;
+		real m_iso_tri_h = 3.0;
+		real m_iso_tri_inner_radius = 0.0;
+		real m_iso_tri_rounding = 2.0;
 
 		// imgui stuff
 		bool m_renderGUI = true;

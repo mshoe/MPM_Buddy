@@ -9,20 +9,20 @@ namespace sdf {
 	struct Shape {
 	public:
 
-		virtual float Sdf(glm::vec2 p) = 0;
+		virtual real Sdf(vec2 p) = 0;
 
-		float SdfRounded(glm::vec2 p, float r) {
+		real SdfRounded(vec2 p, real r) {
 			return Sdf(p) - r;
 		}
 
-		float SdfHollow(glm::vec2 p, float r1, float r2) {
+		real SdfHollow(vec2 p, real r1, real r2) {
 			// r1 is inner rounding, r2 is outer rounding
 			// r1 = 0 and r2 = 0 => the point cloud is empty
 			// r1 can at most be the min distance to the center-line/skeleton of the shape
 			return glm::max(-SdfRounded(p, -r1), SdfRounded(p, r2));
 		}
 
-		glm::vec2 pos;
+		vec2 pos;
 	};
 
 	struct Circle : public Shape {
@@ -30,80 +30,61 @@ namespace sdf {
 		Circle() {}
 
 	public:
-		Circle(glm::vec2 _pos, float _r) {
+		Circle(vec2 _pos, real _r) {
 			pos = _pos;
 			r = _r;
 		}
 
-		float Sdf(glm::vec2 p) {
+		real Sdf(vec2 p) {
 			return glm::length(p - pos) - r;
 		}
 
-		float r;
+		real r;
 	};
-
-	//struct Donut : public Shape {
-	//private:
-	//	Donut() {}
-	//public:
-	//	Donut(glm::vec2 _pos, float _r1, float _r2) {
-	//		pos = _pos;
-	//		r1 = _r1;
-	//		r2 = _r2;
-	//	}
-
-	//	float Sdf(glm::vec2 p) {
-	//		float d = glm::length(p - pos);
-	//		return glm::max(d - r2, r1 - d);
-	//	}
-
-	//	float r1; // inner radius
-	//	float r2; // outer radius
-	//};
 
 	struct Rectangle : public Shape {
 	private:
 		Rectangle() {}
 	public:
-		Rectangle(glm::vec2 _pos, float _b, float _h) {
+		Rectangle(vec2 _pos, real _b, real _h) {
 			pos = _pos;
 			b = _b;
 			h = _h;
 		}
 
-		float Sdf(glm::vec2 p) {
-			glm::vec2 d = glm::abs(p - pos) - glm::vec2(b/2.f, h/2.f);
+		real Sdf(vec2 p) {
+			vec2 d = glm::abs(p - pos) - vec2(b/2.0, h/2.0);
 
-			return glm::length(glm::max(d, glm::vec2(0.f))) + glm::min(glm::max(d.x, d.y), 0.0f);
+			return glm::length(glm::max(d, vec2(0.0))) + glm::min(glm::max(d.x, d.y), 0.0);
 		}
 
-		float b, h; // b = horizontal base length, h = vertical height length;
+		real b, h; // b = horizontal base length, h = vertical height length;
 	};
 
 	struct IsoscelesTriangle : public Shape {
 	private:
 		IsoscelesTriangle() {}
 	public:
-		IsoscelesTriangle(glm::vec2 _pos, float _b, float _h) {
+		IsoscelesTriangle(vec2 _pos, real _b, real _h) {
 			pos = _pos;
 			b = _b;
 			h = _h;
 		}
 
-		float Sdf(glm::vec2 p) {
+		real Sdf(vec2 p) {
 			p = p - pos;
 
-			glm::vec2 q = glm::vec2(glm::abs(b/2.f), -glm::abs(h));
+			vec2 q = vec2(glm::abs(b/2.0), -glm::abs(h));
 			p.x = abs(p.x);
-			glm::vec2 a = p - q * glm::clamp(glm::dot(p, q) / glm::dot(q, q), 0.0f, 1.0f);
-			glm::vec2 b = p - q * glm::vec2(glm::clamp(p.x / q.x, 0.0f, 1.0f), 1.0f);
-			float s = -glm::sign(q.y);
-			glm::vec2 d = min(glm::vec2(dot(a, a), s * (p.x * q.y - p.y * q.x)),
-				glm::vec2(glm::dot(b, b), s * (p.y - q.y)));
+			vec2 a = p - q * glm::clamp(glm::dot(p, q) / glm::dot(q, q), 0.0, 1.0);
+			vec2 b = p - q * vec2(glm::clamp(p.x / q.x, 0.0, 1.0), 1.0);
+			real s = -glm::sign(q.y);
+			vec2 d = min(vec2(dot(a, a), s * (p.x * q.y - p.y * q.x)),
+				vec2(glm::dot(b, b), s * (p.y - q.y)));
 			return -sqrt(d.x) * glm::sign(d.y);
 		}
 
-		float b, h;
+		real b, h;
 	};
 
 	//enum BOOLEAN_GEOMETRY_NODE_TYPE {

@@ -40,30 +40,54 @@ public:
 	{
 		glUniform1ui(glGetUniformLocation(m_ID, name.c_str()), value);
 	}
-	// ------------------------------------------------------------------------
-	void SetFloat(const std::string &name, float value) const
-	{
-		glUniform1f(glGetUniformLocation(m_ID, name.c_str()), value);
-	}
-	void SetVec(const std::string &name, glm::vec2 vec) const
-	{
-		glUniform2f(glGetUniformLocation(m_ID, name.c_str()), vec.x, vec.y);
-	}
-	void SetVec(const std::string &name, glm::vec3 vec) const
-	{
-		glUniform3f(glGetUniformLocation(m_ID, name.c_str()), vec.x, vec.y, vec.z);
-	}
-	void SetVec(const std::string &name, glm::vec4 vec) const
-	{
-		glUniform4f(glGetUniformLocation(m_ID, name.c_str()), vec.x, vec.y, vec.z, vec.w);
-	}
-	void SetVec(const std::string &name, glm::uvec4 vec) const
+	void SetVec(const std::string& name, glm::uvec4 vec) const
 	{
 		glUniform4ui(glGetUniformLocation(m_ID, name.c_str()), vec.x, vec.y, vec.z, vec.w);
 	}
-	void SetMat(const std::string &name, glm::mat4 mat) const
+	// ------------------------------------------------------------------------
+
+	// floats
+	void SetReal(const std::string& name, float value) const
+	{
+		glUniform1f(glGetUniformLocation(m_ID, name.c_str()), value);
+	}
+	void SetVec(const std::string &name, glm::highp_fvec2 vec) const
+	{
+		glUniform2f(glGetUniformLocation(m_ID, name.c_str()), vec.x, vec.y);
+	}
+	void SetVec(const std::string &name, glm::highp_fvec3 vec) const
+	{
+		glUniform3f(glGetUniformLocation(m_ID, name.c_str()), vec.x, vec.y, vec.z);
+	}
+	void SetVec(const std::string &name, glm::highp_fvec4 vec) const
+	{
+		glUniform4f(glGetUniformLocation(m_ID, name.c_str()), vec.x, vec.y, vec.z, vec.w);
+	}
+	void SetMat(const std::string &name, glm::highp_fmat4 mat) const
 	{
 		glUniformMatrix4fv(glGetUniformLocation(m_ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(mat));
+	}
+
+	// doubles
+	void SetReal(const std::string& name, double value) const
+	{
+		glUniform1d(glGetUniformLocation(m_ID, name.c_str()), value);
+	}
+	void SetVec(const std::string& name, glm::highp_dvec2 vec) const
+	{
+		glUniform2d(glGetUniformLocation(m_ID, name.c_str()), vec.x, vec.y);
+	}
+	void SetVec(const std::string& name, glm::highp_dvec3 vec) const
+	{
+		glUniform3d(glGetUniformLocation(m_ID, name.c_str()), vec.x, vec.y, vec.z);
+	}
+	void SetVec(const std::string& name, glm::highp_dvec4 vec) const
+	{
+		glUniform4d(glGetUniformLocation(m_ID, name.c_str()), vec.x, vec.y, vec.z, vec.w);
+	}
+	void SetMat(const std::string& name, glm::highp_dmat4 mat) const
+	{
+		glUniformMatrix4dv(glGetUniformLocation(m_ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(mat));
 	}
 
 	GLuint ID() const

@@ -37,6 +37,15 @@
     <Filter Include="Resource Files\Shaders\compute\implicit">
       <UniqueIdentifier>{eb996653-418c-4163-ab42-5f4cf227edbd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\glad">
+      <UniqueIdentifier>{e10dda54-62fc-4391-93fd-d80961d32947}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\glad\include">
+      <UniqueIdentifier>{a4a6c096-1ae2-43ae-8a1a-d86941a2a7dc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\glad\src">
+      <UniqueIdentifier>{aa7cc8e8-ac18-4d35-b3bd-9da5f009cc1f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -63,11 +72,14 @@
     <ClCompile Include="imgui\imgui_impl_glfw.cpp">
       <Filter>Resource Files\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="glad.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="MpmEngine.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Constants.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="glad\src\glad.c">
+      <Filter>Resource Files\glad\src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -157,15 +169,6 @@
     <None Include="shaders\graphics\pointCloud.vs">
       <Filter>Resource Files\Shaders\graphics</Filter>
     </None>
-    <None Include="shaders\graphics\gridShader.fs">
-      <Filter>Resource Files\Shaders\graphics</Filter>
-    </None>
-    <None Include="shaders\graphics\gridShader.vs">
-      <Filter>Resource Files\Shaders\graphics</Filter>
-    </None>
-    <None Include="shaders\graphics\mainShader.fs">
-      <Filter>Resource Files\Shaders\graphics</Filter>
-    </None>
     <None Include="shaders\graphics\mouseShader.fs">
       <Filter>Resource Files\Shaders\graphics</Filter>
     </None>
@@ -174,12 +177,6 @@
     </None>
     <None Include="shaders\compute\mpm_header.comp">
       <Filter>Resource Files\Shaders\headers</Filter>
-    </None>
-    <None Include="shaders\graphics\sdf.fs">
-      <Filter>Resource Files\Shaders\graphics</Filter>
-    </None>
-    <None Include="shaders\graphics\sdf.vs">
-      <Filter>Resource Files\Shaders\graphics</Filter>
     </None>
     <None Include="shaders\compute\implicit\g2p2gDeltaForce.comp">
       <Filter>Resource Files\Shaders\compute\implicit</Filter>

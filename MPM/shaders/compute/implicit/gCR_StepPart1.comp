@@ -4,18 +4,14 @@ layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
 /*** HEADER ***/
 
-uniform vec2 mousePos; // this is normalized w.r.t. screen
-
-uniform float mousePower;
-
 void main() {
 	uvec2 node = uvec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
 
 	nodes[node.x][node.y].rkArk = dot(nodes[node.x][node.y].rk, nodes[node.x][node.y].Ark); // store this so we can use it in Part2
 
 	// this is now calculating for k + 1 instead of k
-	float pkApk = dot(nodes[node.x][node.y].Apk, nodes[node.x][node.y].Apk);
-	float alpha = (pkApk == 0.0) ? 0.0 : nodes[node.x][node.y].rkArk / pkApk; // if 0, it means it converged
+	double pkApk = dot(nodes[node.x][node.y].Apk, nodes[node.x][node.y].Apk);
+	double alpha = (pkApk == 0.0) ? 0.0 : nodes[node.x][node.y].rkArk / pkApk; // if 0, it means it converged
 	nodes[node.x][node.y].xk = nodes[node.x][node.y].xk + alpha*nodes[node.x][node.y].pk;
 	nodes[node.x][node.y].rk = nodes[node.x][node.y].rk - alpha*nodes[node.x][node.y].Apk;
 }

@@ -3,38 +3,38 @@ const int GRID_SIZE_X = 32*4;
 const int GRID_SIZE_Y = 32*4;
 
 struct materialPoint {
-	vec2 x;
-	vec2 v;
-	float m;
-	float vol;
-	mat2 B;
-	mat2 Fe;
-	mat2 Fp;
-	mat2 P;
+	dvec2 x;
+	dvec2 v;
+	double m;
+	double vol;
+	dmat2 B;
+	dmat2 Fe;
+	dmat2 Fp;
+	dmat2 P;
 
 	// extra not neccessary to store, but useful for debugging
-	mat2 FeSVD_U;
-	mat2 FeSVD_S;
-	mat2 FeSVD_V;
+	dmat2 FeSVD_U;
+	dmat2 FeSVD_S;
+	dmat2 FeSVD_V;
 };
 
 struct gridNode {
-	float m;
-	float opengl_padding;
-	vec2 v;
-	vec2 momentum;
-	vec2 force;
+	double m;
+	double opengl_padding;
+	dvec2 v;
+	dvec2 momentum;
+	dvec2 force;
 
 	// for implicit time step / conjugate residuals	
-	vec2 deltaForce;
-	vec2 xk; // velocity guess
-	vec2 rk;
-	vec2 pk;
-	vec2 Ark;
-	vec2 Apk;
+	dvec2 deltaForce;
+	dvec2 xk; // velocity guess
+	dvec2 rk;
+	dvec2 pk;
+	dvec2 Ark;
+	dvec2 Apk;
 
-	float rkArk;
-	float glsl_padding2;
+	double rkArk;
+	double glsl_padding2;
 };
 
 layout (std430, binding = 1) buffer pointCloud {
@@ -46,33 +46,33 @@ layout (std430, binding = 2) buffer particleGrid {
 	gridNode nodes[GRID_SIZE_X][GRID_SIZE_Y];
 };
 
-float QuadBSpline(in float x) {
+double QuadBSpline(in double x) {
 	x = abs(x);
 	return (x < 0.5) ? 	step(0.0, x)*(0.75 - x*x) :
 						step(x, 1.5)*0.5*(1.5 - x)*(1.5-x);
 }
 
-float QuadBSplineSlope(in float x) {
-	float absx = abs(x);
+double QuadBSplineSlope(in double x) {
+	double absx = abs(x);
 	return (absx < 0.5) ? 	step(0.0, absx)*(-2*x) : 
 						step(absx, 1.5)*(x - 1.5*x/absx);
 }
 
-float BSpline(in float x) {
+double BSpline(in double x) {
 	x = abs(x);
 	return (x < 1.0) ? 	step(0.0, x)*(0.5*x*x*x - x*x + 2.0/3.0) :
 						step(x, 2.0)*(2.0-x)*(2.0-x)*(2.0-x)/6.0;
 }
 
-float BSplineSlope(in float x) {
-	float absx = abs(x);
+double BSplineSlope(in double x) {
+	double absx = abs(x);
 	return (absx < 1.0) ? 	step(0.0, absx)*(1.5*x*absx-2*x) : 
 						step(absx, 2.0)*(-x*absx/2 + 2*x - 2*x/absx);
 }
 
-void InBounds(inout int i, inout int j, out float inbounds) {
-	float r1 = float(int((0 <= i) && (i < GRID_SIZE_X)));
-	float r2 = float(int((0 <= j) && (j < GRID_SIZE_Y)));
+void InBounds(inout int i, inout int j, out double inbounds) {
+	double r1 = double(int((0 <= i) && (i < GRID_SIZE_X)));
+	double r2 = double(int((0 <= j) && (j < GRID_SIZE_Y)));
 	inbounds = r1 * r2;
 
 	// also sets i and j to 0 if they are out of bounds, 
@@ -81,24 +81,24 @@ void InBounds(inout int i, inout int j, out float inbounds) {
 	j = (inbounds != 0.0) ? j : 0;
 }
 
-void PolarDecomp(in mat2 F, out mat2 R, out mat2 S) {
+void PolarDecomp(in dmat2 F, out dmat2 R, out dmat2 S) {
 	// calculate the polar decomposition F = RS.
 
-	float x = F[0][0] + F[1][1];
-	float y = F[0][1] - F[1][0]; // glsl is column major. This is really F_21 - F_12 in row major notation
+	double x = F[0][0] + F[1][1];
+	double y = F[0][1] - F[1][0]; // glsl is column major. This is really F_21 - F_12 in row major notation
 
-	float d = sqrt(x*x + y*y);
+	double d = sqrt(x*x + y*y);
 
-	float c = x/d;
-	float s = -y/d;
+	double c = x/d;
+	double s = -y/d;
 	R = (d == 0.0) ? mat2(1.0, 0.0, 0.0, 1.0) : mat2(c, -s, s, c);
 	S = transpose(R) * F;
 }
 
-void SVD(in mat2 R, in mat2 S, out mat2 U, out float sig1, out float sig2, out mat2 V) {
+void SVD(in dmat2 R, in dmat2 S, out dmat2 U, out double sig1, out double sig2, out dmat2 V) {
 
 	// check if S is diagonal (S is symmetric for sure)
-	float c_hat, s_hat;
+	double c_hat, s_hat;
 	
 	if (S[1][0] == 0) {
 		c_hat = 1;
@@ -106,19 +106,19 @@ void SVD(in mat2 R, in mat2 S, out mat2 U, out float sig1, out float sig2, out m
 		sig1 = S[0][0];
 		sig2 = S[1][1];
 	} else {
-		float tau = 0.5 * (S[0][0] - S[1][1]);
-		float w = sqrt(tau*tau + S[1][0]*S[1][0]);
-		float t = (tau > 0) ? S[1][0]/(tau + w) : S[1][0]/(tau - w);
+		double tau = 0.5 * (S[0][0] - S[1][1]);
+		double w = sqrt(tau*tau + S[1][0]*S[1][0]);
+		double t = (tau > 0) ? S[1][0]/(tau + w) : S[1][0]/(tau - w);
 		c_hat = 1.0 / sqrt(tau*tau + 1);
 		s_hat = -t * c_hat;
 		sig1 = c_hat*c_hat*S[0][0] - 2*c_hat*s_hat*S[1][0] + s_hat*s_hat*S[1][1];
 		sig2 = s_hat*s_hat*S[0][0] + 2*c_hat*s_hat*S[1][0] + c_hat*c_hat*S[1][1];
 	}
 
-	float c, s;
+	double c, s;
 	if (sig1 < sig2) {
 		// swap the singular values so sig1 > sig2
-		float temp = sig1;
+		double temp = sig1;
 		sig1 = sig2;
 		sig2 = temp;
 		c = -s_hat;
@@ -131,43 +131,43 @@ void SVD(in mat2 R, in mat2 S, out mat2 U, out float sig1, out float sig2, out m
 	U = R*V;
 }
 
-mat2 cofactorMatrix(in mat2 X) {
+mat2 cofactorMatrix(in dmat2 X) {
 	return mat2(X[1][1], -X[1][0], // column 1
 				-X[0][1], X[0][0]); // column 2
 }
 
-float innerProduct(in mat2 X, in mat2 Y) {
+double innerProduct(in dmat2 X, in dmat2 Y) {
 	return X[0][0]*Y[0][0] + X[1][0]*Y[1][0] + X[0][1]*Y[0][1] + X[1][1]*Y[1][1];
 }
 
-bool isnanVec2(in vec2 v) {
+bool isnanVec2(in dvec2 v) {
 	return isnan(v.x) || isnan(v.y);
 }
 
-bool isinfVec2(in vec2 v) {
+bool isinfVec2(in dvec2 v) {
 	return isinf(v.x) || isinf(v.y);
 }
 
-uniform float dt = 1/60.0;
+uniform double dt = 1/60.0;
 
-uniform mat2 Dp_inv = 3 * mat2(1.0); // 3 * dx^2 * I
-uniform vec2 gravity = vec2(0.0, -9.8);
-uniform vec2 globalForce = vec2(0.0, 0.0);
+uniform dmat2 Dp_inv = 3 * dmat2(1.0); // 3 * dx^2 * I
+uniform dvec2 gravity = dvec2(0.0, -9.8);
+uniform dvec2 globalForce = dvec2(0.0, 0.0);
 
-uniform float mew = 41.6667;
-uniform float lam = 27.7778;
+uniform double mew = 41.6667;
+uniform double lam = 27.7778;
 
 const uint NEO_HOOKEAN = 0;
 const uint FIXED_COROTATED = 1;
 const uint SIMPLE_SNOW = 2;
 uniform uint comodel = 1; //FIXED_COROTATED;
 
-uniform float IMPLICIT_RATIO = 1.0;
-uniform float drag = 0.005;
+uniform double IMPLICIT_RATIO = 1.0;
+uniform double drag = 0.005;
 
-uniform float crit_c = 0.025;
-uniform float crit_s = 0.0075;
-uniform float hardening = 10.0;
+uniform double crit_c = 0.025;
+uniform double crit_s = 0.0075;
+uniform double hardening = 10.0;
 
 
 /* end MPM shaders header */

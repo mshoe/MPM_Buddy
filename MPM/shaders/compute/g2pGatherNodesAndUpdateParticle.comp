@@ -12,30 +12,30 @@ void main() {
 		return;
 	}
 	
-	vec2 xp = points[pid].x;
+	dvec2 xp = points[pid].x;
 
 	int botLeftNode_i = int(floor(xp.x)) - 1;
 	int botLeftNode_j = int(floor(xp.y)) - 1;
 
-	vec2 vp = vec2(0.0);
-	mat2 bp = mat2(0.0);
-	mat2 dfp = mat2(1.0);
+	dvec2 vp = dvec2(0.0);
+	dmat2 bp = dmat2(0.0);
+	dmat2 dfp = dmat2(1.0);
 
 	for (int i = 0; i <= 3; ++i) {
 		for (int j = 0; j <= 3; ++j) {
 			int curNode_i = botLeftNode_i + i;
 			int curNode_j = botLeftNode_j + j;
-			float inb = 1.0;
+			double inb = 1.0;
 			InBounds(curNode_i, curNode_j, inb);
 
-			vec2 dpg = vec2(curNode_i, curNode_j) - xp;
-			float dx = -dpg.x; // sign matters for gradient
-			float dy = -dpg.y;
-			float wpg = BSpline(dx) * BSpline(dy);
-			vec2 wpgGrad = vec2(BSplineSlope(dx) * BSpline(dy),
+			dvec2 dpg = dvec2(curNode_i, curNode_j) - xp;
+			double dx = -dpg.x; // sign matters for gradient
+			double dy = -dpg.y;
+			double wpg = BSpline(dx) * BSpline(dy);
+			dvec2 wpgGrad = dvec2(BSplineSlope(dx) * BSpline(dy),
 								BSpline(dx) * BSplineSlope(dy));
 
-			vec2 vg = nodes[curNode_i][curNode_j].v*inb; // if inb is 0, then no data is changed
+			dvec2 vg = nodes[curNode_i][curNode_j].v*inb; // if inb is 0, then no data is changed
 			dfp += dt*outerProduct(vg, wpgGrad)*inb;
 			vp += wpg*vg*inb;
 			bp += wpg*outerProduct(vg, dpg)*inb;
@@ -44,68 +44,69 @@ void main() {
 
 	points[pid].v = vp;
 	points[pid].B = bp;
-	points[pid].x += dt*vp;//dt*(vec2(0.0, -9.8));
+	points[pid].x += dt*vp;//dt*(dvec2(0.0, -9.8));
 
 	// THIS IS WHERE DIFFERENT CONSTITUTIVE MODELS ARE EVALUATED
 
 	// forced only come from elastic deformation gradient
-	if (comodel == NEO_HOOKEAN) {
-		points[pid].Fe = dfp*points[pid].Fe;
-		mat2 Fe = points[pid].Fe;
-		mat2 Fit = transpose(inverse(points[pid].Fe));
-		float J = determinant(Fe);
-		points[pid].P = mew*(Fe - Fit) + lam*log(J)*Fit;
-	} else if (comodel == FIXED_COROTATED) {
+	// if (comodel == NEO_HOOKEAN) {
+	// 	// points[pid].Fe = dfp*points[pid].Fe;
+	// 	// dmat2 Fe = points[pid].Fe;
+	// 	// dmat2 Fit = transpose(inverse(points[pid].Fe));
+	// 	// double J = determinant(Fe);
+	// 	// points[pid].P = mew*(Fe - Fit) + lam*log(J)*Fit;
+	// } else 
+	if (comodel == FIXED_COROTATED) {
 		
 		points[pid].Fe = dfp*points[pid].Fe;
-		mat2 Fe = points[pid].Fe;
-		mat2 Fit = transpose(inverse(points[pid].Fe));
-		float J = determinant(Fe);
+		dmat2 Fe = points[pid].Fe;
+		dmat2 Fit = transpose(inverse(points[pid].Fe));
+		double J = determinant(Fe);
 		
 		// calculate the polar decomposition F = RU.
 		// Then calculate P using F and R
-		mat2 R;
-		mat2 S;
+		dmat2 R;
+		dmat2 S;
 
 		PolarDecomp(Fe, R, S);
 
 
 		// Just computing the SVD here to see if it is done correctly
-		mat2 U;
-		float sig1;
-		float sig2;
-		mat2 V;
+		dmat2 U;
+		double sig1;
+		double sig2;
+		dmat2 V;
 		SVD(R, S, U, sig1, sig2, V);
 		points[pid].FeSVD_U = U;
-		points[pid].FeSVD_S = mat2(sig1, 0.0, 0.0, sig2);
+		points[pid].FeSVD_S = dmat2(sig1, 0.0, 0.0, sig2);
 		points[pid].FeSVD_V = V;
 
 		points[pid].P = 2.0*mew*(Fe - R) + lam*(J - 1.0)*J*Fit;
 	} else if (comodel == SIMPLE_SNOW) {
 
 		// temporarilly update the Fe
-		mat2 Fe = dfp*points[pid].Fe;
-		mat2 Fp = points[pid].Fp;
+		dmat2 Fe = dfp*points[pid].Fe;
+		dmat2 Fp = points[pid].Fp;
 
-		mat2 F_total = Fe*Fp;
+		dmat2 F_total = Fe*Fp;
 		
 		// calculate the polar decomposition Fe = RU.
 		// then use polar decomp to calculate SVD of Fe
-		mat2 R;
-		mat2 S;
+		dmat2 R;
+		dmat2 S;
 
 		PolarDecomp(Fe, R, S);
 
-		mat2 U;
-		float sig1;
-		float sig2;
-		mat2 V;
+		dmat2 U;
+		double sig1;
+		double sig2;
+		dmat2 V;
 		SVD(R, S, U, sig1, sig2, V);
 
 		sig1 = clamp(sig1, 1.0 - crit_c, 1.0 + crit_s);
 		sig2 = clamp(sig2, 1.0 - crit_c, 1.0 + crit_s);
 
-		mat2 sigMat = mat2(sig1, 0.0, 0.0, sig2);
+		dmat2 sigMat = dmat2(sig1, 0.0, 0.0, sig2);
 
 		
 		// finally calculate Fe and Fp
@@ -121,14 +122,16 @@ void main() {
 		// Computing SVD again for debugging purposes
 		SVD(R, S, U, sig1, sig2, V);
 		points[pid].FeSVD_U = U;
-		points[pid].FeSVD_S = mat2(sig1, 0.0, 0.0, sig2);
+		points[pid].FeSVD_S = dmat2(sig1, 0.0, 0.0, sig2);
 		points[pid].FeSVD_V = V;
 
-		mat2 Feit = transpose(inverse(Fe));
-		float Je = determinant(Fe);
-		float Jp = determinant(Fp);
+		dmat2 Feit = transpose(inverse(Fe));
+		double Je = determinant(Fe);
+		double Jp = determinant(Fp);
 
-		float pcof = exp(hardening*(1.0-Jp));
+		// need to find a workaround for exp(double)
+		double pcof = 1.0;
+		//double pcof = exp(hardening*(1.0-Jp));
 
 		points[pid].P = 2.0*mew*(Fe - R) + lam*(Je - 1.0)*Je*Feit;
 		points[pid].P *= pcof;

@@ -6,19 +6,19 @@
 #include <vector>
 
 struct MaterialPoint {
-	glm::vec2 x;
-	glm::vec2 v;
-	float m;
-	float vol; // initial volume
-	glm::mat2 B;
-	glm::mat2 Fe;
-	glm::mat2 Fp;
-	glm::mat2 P;
+	vec2 x;
+	vec2 v;
+	GLreal m;
+	GLreal vol; // initial volume
+	mat2 B;
+	mat2 Fe;
+	mat2 Fp;
+	mat2 P;
 
 	// extra not neccessary to store, but useful for debugging:
-	glm::mat2 FeSVD_U;
-	glm::mat2 FeSVD_S;
-	glm::mat2 FeSVD_V;
+	mat2 FeSVD_U;
+	mat2 FeSVD_S;
+	mat2 FeSVD_V;
 
 	friend std::ostream & operator << (std::ostream &out, const MaterialPoint &c) {
 		out << "x: " << glm::to_string(c.x) << "\n";
@@ -46,14 +46,14 @@ struct PointCloud {
 
 	size_t N;
 	std::vector<MaterialPoint> points;
-	glm::vec4 color = glm::vec4(1.f, 0.f, 0.f, 1.f);
+	glm::highp_fvec4 color = glm::highp_fvec4(1.f, 0.f, 0.f, 1.f);
 
-	float mew;
-	float lam;
+	real mew;
+	real lam;
 
-	float crit_c;
-	float crit_s;
-	float hardening;
+	real crit_c;
+	real crit_s;
+	real hardening;
 	GLuint comodel = 1;
 
 	GLuint ssbo;

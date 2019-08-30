@@ -115,7 +115,7 @@ bool MainEngine::Init()
 	ImGui::StyleColorsDark();
 
 	// Rendering space
-	m_camera = std::make_unique<Camera>(glm::vec3(0.f, 0.f, 50.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 1.f, 0.f));
+	//m_camera = std::make_unique<Camera>(glm::vec3(0.f, 0.f, 50.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 1.f, 0.f));
 
 
 	InitShaderPipeline();
@@ -154,6 +154,7 @@ bool MainEngine::InitShaderPipeline()
 bool MainEngine::InitScreen()
 {
 	// Create screen on the right half of window
+	// ** VERTICES need to be float in glsl ** //
 	float vertices[] = {
 		1.f,  1.f, // top right
 		1.f, -1.f, // bottom right
@@ -201,12 +202,12 @@ void MainEngine::Loop()
 {
 	using namespace std::chrono;
 	steady_clock::time_point t1 = steady_clock::now();
-	float lag = 0.f;
+	double lag = 0.0;
 
 	while (!glfwWindowShouldClose(m_window))
 	{
 		steady_clock::time_point t2 = steady_clock::now();
-		float dt = duration_cast<duration<float>>(t2 - t1).count();
+		real dt = duration_cast<duration<real>>(t2 - t1).count();
 		t1 = t2;
 		lag += dt;
 		m_time += dt;
@@ -217,27 +218,27 @@ void MainEngine::Loop()
 			lag -= S_PER_UPDATE;
 		}
 
-		double xpos, ypos, left_click, right_click;
+		real xpos, ypos, left_click, right_click;
 		glfwGetCursorPos(m_window, &xpos, &ypos);
-		left_click = (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) ? 1.0f : 0.0f;
-		right_click = (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) ? 1.0f : 0.0f;
+		left_click = (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) ? 1.0 : 0.0;
+		right_click = (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) ? 1.0 : 0.0;
 
 		
-		double mpm_xpos = (xpos - (double)SRC_WIDTH/2.0) / (double) SRC_WIDTH * 2.0;
+		real mpm_xpos = (xpos - (real)SRC_WIDTH/2.0) / (real) SRC_WIDTH * 2.0;
 		// normalize mouse coordinates
-		xpos = xpos / (double)SRC_WIDTH;
-		ypos = ypos / (double)SRC_HEIGHT;
+		xpos = xpos / (real)SRC_WIDTH;
+		ypos = ypos / (real)SRC_HEIGHT;
 
 		// y value is given inverted
 		// since mpm engine occurs on right half of screen, xpos needs to be mapped there
-		m_mpmEngine->SetMouseValues(glm::vec2(mpm_xpos, 1.f - ypos), left_click, right_click);
+		m_mpmEngine->SetMouseValues(vec2(mpm_xpos, 1.0 - ypos), left_click, right_click);
 		m_mpmEngine->HandleInput();
 
 		m_mouseShader->Use();
-		m_mouseShader->SetMat("iCamera", m_camera->lookat());
-		m_mouseShader->SetVec("iResolution", glm::vec2(SRC_WIDTH, SRC_HEIGHT));
-		m_mouseShader->SetVec("iMouse", glm::vec4(mpm_xpos, ypos, left_click, right_click));
-		m_mouseShader->SetFloat("iTime", m_time);
+		//m_mouseShader->SetMat("iCamera", m_camera->lookat());
+		m_mouseShader->SetVec("iResolution", vec2(SRC_WIDTH, SRC_HEIGHT));
+		m_mouseShader->SetVec("iMouse", vec4(mpm_xpos, ypos, left_click, right_click));
+		m_mouseShader->SetReal("iTime", m_time);
 
 		Render();
 
@@ -245,7 +246,7 @@ void MainEngine::Loop()
 	}
 }
 
-void MainEngine::ProcessInput(GLFWwindow * window, float lag)
+void MainEngine::ProcessInput(GLFWwindow * window, real lag)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
@@ -272,7 +273,7 @@ void MainEngine::ProcessInput(GLFWwindow * window, float lag)
 	}
 }
 
-void MainEngine::Update(float lag)
+void MainEngine::Update(real lag)
 {
 }
 
