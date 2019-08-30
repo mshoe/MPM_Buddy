@@ -1,6 +1,6 @@
 #pragma once
 
-#define GLM_ENABLE_EXPERIMENTAL
+#include "Constants.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>

@@ -15,7 +15,7 @@ void main() {
 	vec2 nodeForce = nodes[node.x][node.y].force;
 
 	vec2 mouseForce = mousePower * normalize(vec2(mousePos.x * GRID_SIZE_X - node.x, mousePos.y * GRID_SIZE_Y - node.y));
-	nodes[node.x][node.y].v = (nodeMass == 0.0) ? vec2(0.0) : nodeMomentum/nodeMass -drag*nodeMomentum/nodeMass + dt*(nodeForce/nodeMass + globalForce + mouseForce);
+	nodes[node.x][node.y].v = (nodeMass == 0.0) ? vec2(0.0) : nodeMomentum/nodeMass -dt*drag*nodeMomentum/nodeMass + dt*(nodeForce/nodeMass + globalForce + mouseForce);
 
 
 }

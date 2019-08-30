@@ -46,13 +46,13 @@ void main() {
 		}
 	}
 
-	mat2 F = points[pid].F;
-	mat2 Fit = transpose(inverse(F));
-	float J = determinant(F);
+	mat2 Fe = points[pid].Fe;
+	mat2 Fit = transpose(inverse(Fe));
+	float J = determinant(Fe);
 	mat2 R;
 	mat2 S;
-	PolarDecomp(F, R, S);
-	dF = dF * F;
+	PolarDecomp(Fe, R, S);
+	dF = dF * Fe;
 
 	mat2 A = mat2(0.0);
 

@@ -153,11 +153,12 @@ bool MainEngine::InitShaderPipeline()
 
 bool MainEngine::InitScreen()
 {
+	// Create screen on the right half of window
 	float vertices[] = {
 		1.f,  1.f, // top right
 		1.f, -1.f, // bottom right
-		-1.f, -1.f, // bottom left
-		-1.f,  1.f, // top left 
+		0.f, -1.f, // bottom left
+		0.f,  1.f, // top left 
 	};
 	unsigned int indices[] = {
 		0, 1, 3,   // first triangle
@@ -222,19 +223,20 @@ void MainEngine::Loop()
 		right_click = (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) ? 1.0f : 0.0f;
 
 		
-
+		double mpm_xpos = (xpos - (double)SRC_WIDTH/2.0) / (double) SRC_WIDTH * 2.0;
 		// normalize mouse coordinates
 		xpos = xpos / (double)SRC_WIDTH;
 		ypos = ypos / (double)SRC_HEIGHT;
 
 		// y value is given inverted
-		m_mpmEngine->SetMouseValues(glm::vec2(xpos, 1.f - ypos), left_click, right_click);
+		// since mpm engine occurs on right half of screen, xpos needs to be mapped there
+		m_mpmEngine->SetMouseValues(glm::vec2(mpm_xpos, 1.f - ypos), left_click, right_click);
 		m_mpmEngine->HandleInput();
 
 		m_mouseShader->Use();
 		m_mouseShader->SetMat("iCamera", m_camera->lookat());
 		m_mouseShader->SetVec("iResolution", glm::vec2(SRC_WIDTH, SRC_HEIGHT));
-		m_mouseShader->SetVec("iMouse", glm::vec4(xpos, ypos, left_click, right_click));
+		m_mouseShader->SetVec("iMouse", glm::vec4(mpm_xpos, ypos, left_click, right_click));
 		m_mouseShader->SetFloat("iTime", m_time);
 
 		Render();
@@ -247,9 +249,6 @@ void MainEngine::ProcessInput(GLFWwindow * window, float lag)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
-
-	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-		std::cout << "E pressed" << std::endl;
 
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
 		m_mpmEngine->SetPausedState(true);

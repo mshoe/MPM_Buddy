@@ -8,8 +8,14 @@ struct materialPoint {
 	float m;
 	float vol;
 	mat2 B;
-	mat2 F;
+	mat2 Fe;
+	mat2 Fp;
 	mat2 P;
+
+	// extra not neccessary to store, but useful for debugging
+	mat2 FeSVD_U;
+	mat2 FeSVD_S;
+	mat2 FeSVD_V;
 };
 
 struct gridNode {
@@ -89,6 +95,42 @@ void PolarDecomp(in mat2 F, out mat2 R, out mat2 S) {
 	S = transpose(R) * F;
 }
 
+void SVD(in mat2 R, in mat2 S, out mat2 U, out float sig1, out float sig2, out mat2 V) {
+
+	// check if S is diagonal (S is symmetric for sure)
+	float c_hat, s_hat;
+	
+	if (S[1][0] == 0) {
+		c_hat = 1;
+		s_hat = 0;
+		sig1 = S[0][0];
+		sig2 = S[1][1];
+	} else {
+		float tau = 0.5 * (S[0][0] - S[1][1]);
+		float w = sqrt(tau*tau + S[1][0]*S[1][0]);
+		float t = (tau > 0) ? S[1][0]/(tau + w) : S[1][0]/(tau - w);
+		c_hat = 1.0 / sqrt(tau*tau + 1);
+		s_hat = -t * c_hat;
+		sig1 = c_hat*c_hat*S[0][0] - 2*c_hat*s_hat*S[1][0] + s_hat*s_hat*S[1][1];
+		sig2 = s_hat*s_hat*S[0][0] + 2*c_hat*s_hat*S[1][0] + c_hat*c_hat*S[1][1];
+	}
+
+	float c, s;
+	if (sig1 < sig2) {
+		// swap the singular values so sig1 > sig2
+		float temp = sig1;
+		sig1 = sig2;
+		sig2 = temp;
+		c = -s_hat;
+		s = c_hat;
+	} else {
+		c = c_hat;
+		s = s_hat;
+	}
+	V = mat2(c, -s, s, c);
+	U = R*V;
+}
+
 mat2 cofactorMatrix(in mat2 X) {
 	return mat2(X[1][1], -X[1][0], // column 1
 				-X[0][1], X[0][0]); // column 2
@@ -108,7 +150,7 @@ bool isinfVec2(in vec2 v) {
 
 uniform float dt = 1/60.0;
 
-uniform mat2 Dp_inv = 3 * mat2(1.0); // Should be 4 for quadratic B-Spline, but 3 is giving me more realistic results
+uniform mat2 Dp_inv = 3 * mat2(1.0); // 3 * dx^2 * I
 uniform vec2 gravity = vec2(0.0, -9.8);
 uniform vec2 globalForce = vec2(0.0, 0.0);
 
@@ -117,9 +159,15 @@ uniform float lam = 27.7778;
 
 const uint NEO_HOOKEAN = 0;
 const uint FIXED_COROTATED = 1;
+const uint SIMPLE_SNOW = 2;
 uniform uint comodel = 1; //FIXED_COROTATED;
 
 uniform float IMPLICIT_RATIO = 1.0;
 uniform float drag = 0.005;
+
+uniform float crit_c = 0.025;
+uniform float crit_s = 0.0075;
+uniform float hardening = 10.0;
+
 
 /* end MPM shaders header */

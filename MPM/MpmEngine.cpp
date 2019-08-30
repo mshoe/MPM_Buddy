@@ -29,7 +29,7 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 	// first compile shaders
 	m_gReset = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\gResetNodes.comp"}, "shaders\\compute\\mpm_header.comp");
 	m_p2gScatter = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\p2gScatterParticleAndUpdateNodes.comp"}, "shaders\\compute\\mpm_header.comp");
-	m_p2gGather = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\p2gGatherParticlesAndUpdateNode.comp"}, "shaders\\compute\\mpm_header.comp");
+	//m_p2gGather = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\p2gGatherParticlesAndUpdateNode.comp"}, "shaders\\compute\\mpm_header.comp");
 	m_gUpdate = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\gUpdateNodes.comp"}, "shaders\\compute\\mpm_header.comp");
 
 	m_g2pGather = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\g2pGatherNodesAndUpdateParticle.comp"}, "shaders\\compute\\mpm_header.comp");
@@ -64,7 +64,6 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 		&(m_grid.nodes[0].m),
 		GL_MAP_READ_BIT
 	);
-
 
 	//CreateDemo();
 
@@ -128,6 +127,10 @@ void mpm::MpmEngine::MpmTimeStep(float dt)
 		m_g2pGather->SetFloat("dt", dt);
 		m_g2pGather->SetFloat("lam", pointCloudPair.second->lam);
 		m_g2pGather->SetFloat("mew", pointCloudPair.second->mew);
+		m_g2pGather->SetFloat("crit_c", pointCloudPair.second->crit_c);
+		m_g2pGather->SetFloat("crit_s", pointCloudPair.second->crit_s);
+		m_g2pGather->SetFloat("hardening", pointCloudPair.second->hardening);
+		m_g2pGather->SetuInt("comodel", pointCloudPair.second->comodel);
 		int g2p_workgroups = int(glm::ceil(float(pointCloudPair.second->N) / float(G2P_WORKGROUP_SIZE)));
 		glDispatchCompute(g2p_workgroups, 1, 1);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
@@ -266,7 +269,17 @@ void mpm::MpmEngine::MpmImplictTimeCR(float dt)
 void mpm::MpmEngine::Render()
 {
 	if (!m_paused) {
-		MpmTimeStep(m_dt);
+		if (!m_rt) {
+			MpmTimeStep(m_dt);
+		}
+		else {
+			float curr_dt = 0.f;
+			float rt_dt = 1.f / 60.f;
+			while (curr_dt < rt_dt) {
+				MpmTimeStep(m_dt);
+				curr_dt += m_dt;
+			}
+		}
 	}
 	m_pPointCloudShader->Use();
 	glBindVertexArray(VisualizeVAO);
@@ -285,7 +298,7 @@ void mpm::MpmEngine::RenderGUI()
 		ImGui::Begin("MPM Grid Data", &m_renderGUI);
 
 		
-		ImGui::InputFloat("drag", &m_drag, 0.001f, 0.01f, "%.3f");
+		ImGui::InputFloat("drag", &m_drag, 0.0001f, 0.01f, "%.4f");
 
 		if (ImGui::Button("Set global force")) {
 			m_globalForce.x = m_globalForceArray[0];
@@ -298,6 +311,8 @@ void mpm::MpmEngine::RenderGUI()
 		ImGui::Text(std::to_string(m_time).c_str());
 		ImGui::Text(std::to_string(m_timeStep).c_str());
 		ImGui::InputFloat("dt", &m_dt, 0.001f, 1.f/60.f, "%.6f");
+
+		ImGui::Checkbox("Realtime Rendering", &m_rt);
 
 		/*ImGui::InputFloat2("circle init x", m_circle_x, "%.3f");
 		ImGui::InputFloat2("circle init v", m_circle_v, "%.3f");
@@ -335,12 +350,27 @@ void mpm::MpmEngine::RenderGUI()
 
 		ImGui::Begin("Geometry Editor");
 
-		ImGui::InputInt3("Color", m_color);
+		//ImGui::Color
+		ImGui::ColorEdit4("Color", m_color);
+		//ImGui::InputInt3("Color", m_color);
 
 		ImGui::InputFloat("Young's Modulus", &m_youngMod, 1.f, 10.f, "%.1f");
 		ImGui::InputFloat("Poisson's Ratio", &m_poisson, 0.005f, 0.05f, "%.3f");
 		ImGui::InputFloat("Point Spacing", &m_particleSpacing, 0.01f, 0.1f, "%.2f");
 		ImGui::InputFloat("Density", &m_density, 0.01f, 0.1f, "%.2f");
+		ImGui::InputFloat("Critical Compression", &m_crit_c, 0.001f, 0.01f, "%.4f");
+		ImGui::InputFloat("Critical Stretch", &m_crit_s, 0.001f, 0.01f, "%.4f");
+		ImGui::InputFloat("Hardening", &m_hardening, 0.001f, 0.01f, "%.4f");
+
+		if (ImGui::Button("Fixed Corotated Elasticity")) {
+			m_comodel = 1;
+		}
+		if (ImGui::Button("Stovakhim Snow (2013)")) {
+			m_comodel = 2;
+		}
+		std::string comodelStr = "constitutive model: " + std::to_string(m_comodel);
+		ImGui::Text(comodelStr.c_str());
+
 
 
 		ImGui::InputFloat("Circle Radius", &m_circle_r, 0.1f, 1.f, "%.1f");
@@ -371,21 +401,37 @@ void mpm::MpmEngine::RenderGUI()
 
 		ImGui::End();
 
-		/*ImGui::Begin("Material Point View");
-		if (ImGui::Button("View Particles") && m_paused) {
-			void *ptr = glMapNamedBuffer(pointCloudSSBO[m_pointCloudSelect], GL_READ_ONLY);
-			MaterialPoint *data = static_cast<MaterialPoint*>(ptr);
-			std::ostringstream pointsViewStr;
-			for (size_t i = 0; i < m_pointClouds[m_pointCloudSelect].N; ++i) {
-				pointsViewStr << "Material Point " << i << ":" << std::endl;
-				pointsViewStr << data[i] << std::endl;
-			}
-			m_pointsViewStr = pointsViewStr.str();
-			glUnmapNamedBuffer(pointCloudSSBO[m_pointCloudSelect]);
-		}
-		ImGui::Text(m_pointsViewStr.c_str());
+		ImGui::Begin("Material Point View");
 
-		ImGui::End();*/
+
+		
+		if (ImGui::CollapsingHeader("Point Clouds")) {
+			for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+				ImGui::Text(pointCloudPair.first.c_str());
+			}
+		}
+		m_pointCloudSelect.resize(30);
+		ImGui::InputText("Check point cloud", m_pointCloudSelect.data(), 30);
+		std::string pointCloudSelectStr = std::string(m_pointCloudSelect.data());
+
+		if (ImGui::Button("View Particles") && m_paused) {
+			if (m_pointCloudMap.count(pointCloudSelectStr)) {
+				void* ptr = glMapNamedBuffer(m_pointCloudMap[pointCloudSelectStr]->ssbo, GL_READ_ONLY);
+				MaterialPoint* data = static_cast<MaterialPoint*>(ptr);
+				std::ostringstream pointsViewStr;
+				for (size_t i = 0; i < m_pointCloudMap[pointCloudSelectStr]->N; ++i) {
+					pointsViewStr << "Material Point " << i << ":" << std::endl;
+					pointsViewStr << data[i] << std::endl;
+				}
+				m_pointsViewStr = pointsViewStr.str();
+				glUnmapNamedBuffer(m_pointCloudMap[pointCloudSelectStr]->ssbo);
+			}
+		}
+		if (ImGui::CollapsingHeader("Material Points")) {
+			ImGui::Text(m_pointsViewStr.c_str());
+		}
+
+		ImGui::End();
 	}
 }
 
@@ -417,13 +463,13 @@ void mpm::MpmEngine::HandleInput()
 		sdf::Circle shape(glm::vec2(m_mousePos.x * GRID_SIZE_X, m_mousePos.y * GRID_SIZE_Y), m_circle_r);
 		std::string circleID = "circle" + std::to_string(m_circleCount);
 
-		glm::vec3 color;
-		color.x = (float)glm::clamp(m_color[0], 0, 255) / 255.f;
+		glm::vec4 color = glm::vec4(m_color[0], m_color[1], m_color[2], m_color[3]);
+		/*color.x = (float)glm::clamp(m_color[0], 0, 255) / 255.f;
 		color.y = (float)glm::clamp(m_color[1], 0, 255) / 255.f;
-		color.z = (float)glm::clamp(m_color[2], 0, 255) / 255.f;
+		color.z = (float)glm::clamp(m_color[2], 0, 255) / 255.f;*/
 
 		float inner_rounding = m_circle_r - m_circle_inner_radius;
-		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(circleID, shape, GRID_SIZE_X, GRID_SIZE_Y, m_particleSpacing, m_density, inner_rounding, m_circle_rounding, m_youngMod, m_poisson, glm::vec2(0.f, 0.f), color);
+		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(circleID, shape, GRID_SIZE_X, GRID_SIZE_Y, m_particleSpacing, m_density, inner_rounding, m_circle_rounding, m_youngMod, m_poisson, m_crit_c, m_crit_s, m_hardening, m_comodel, glm::vec2(0.f, 0.f), color);
 
 		t2 = high_resolution_clock::now();
 
@@ -449,13 +495,11 @@ void mpm::MpmEngine::HandleInput()
 		sdf::Rectangle shape(glm::vec2(m_mousePos.x * GRID_SIZE_X, m_mousePos.y * GRID_SIZE_Y), m_rect_b, m_rect_h);
 		std::string rectID = "rect" + std::to_string(m_rectCount);
 
-		glm::vec3 color;
-		color.x = (float)glm::clamp(m_color[0], 0, 255) / 255.f;
-		color.y = (float)glm::clamp(m_color[1], 0, 255) / 255.f;
-		color.z = (float)glm::clamp(m_color[2], 0, 255) / 255.f;
+		glm::vec4 color = glm::vec4(m_color[0], m_color[1], m_color[2], m_color[3]);
+		
 
 		float inner_rounding = glm::min(m_rect_b, m_rect_h) - m_rect_inner_radius;
-		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(rectID, shape, GRID_SIZE_X, GRID_SIZE_Y, m_particleSpacing, m_density, inner_rounding, m_rect_rounding, m_youngMod, m_poisson, glm::vec2(0.f, 0.f), color);
+		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(rectID, shape, GRID_SIZE_X, GRID_SIZE_Y, m_particleSpacing, m_density, inner_rounding, m_rect_rounding, m_youngMod, m_poisson, m_crit_c, m_crit_s, m_hardening, m_comodel, glm::vec2(0.f, 0.f), color);
 
 		t2 = high_resolution_clock::now();
 
@@ -481,13 +525,10 @@ void mpm::MpmEngine::HandleInput()
 		sdf::IsoscelesTriangle shape(glm::vec2(m_mousePos.x * GRID_SIZE_X, m_mousePos.y * GRID_SIZE_Y), m_iso_tri_b, m_iso_tri_h);
 		std::string isoTriID = "isoTri" + std::to_string(m_isoTriCount);
 
-		glm::vec3 color;
-		color.x = (float)glm::clamp(m_color[0], 0, 255) / 255.f;
-		color.y = (float)glm::clamp(m_color[1], 0, 255) / 255.f;
-		color.z = (float)glm::clamp(m_color[2], 0, 255) / 255.f;
+		glm::vec4 color = glm::vec4(m_color[0], m_color[1], m_color[2], m_color[3]);
 
 		float inner_rounding = glm::min(m_iso_tri_b, m_iso_tri_h) - m_iso_tri_inner_radius;
-		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(isoTriID, shape, GRID_SIZE_X, GRID_SIZE_Y, m_particleSpacing, m_density, inner_rounding, m_iso_tri_rounding, m_youngMod, m_poisson, glm::vec2(0.f, 0.f), color);
+		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(isoTriID, shape, GRID_SIZE_X, GRID_SIZE_Y, m_particleSpacing, m_density, inner_rounding, m_iso_tri_rounding, m_youngMod, m_poisson, m_crit_c, m_crit_s, m_hardening, m_comodel, glm::vec2(0.f, 0.f), color);
 
 		t2 = high_resolution_clock::now();
 
@@ -516,7 +557,9 @@ std::shared_ptr<PointCloud> mpm::MpmEngine::GenPointCloud(const std::string poin
 	const float particleSpacing, const float density, 
 	const float inner_rounding, const float outer_rounding,
 	const float youngMod, const float poisson,
-	glm::vec2 initialVelocity, glm::vec3 color)
+	const float crit_c, const float crit_s, const float hardening,
+	const GLuint comodel,
+	glm::vec2 initialVelocity, glm::vec4 color)
 {
 	std::shared_ptr<PointCloud> pointCloud = std::make_shared<PointCloud>();
 
@@ -524,6 +567,10 @@ std::shared_ptr<PointCloud> mpm::MpmEngine::GenPointCloud(const std::string poin
 
 	pointCloud->mew = youngMod / (2.f + 2.f*poisson);
 	pointCloud->lam = youngMod * poisson / ((1.f + poisson) * (1.f - 2.f * poisson));
+	pointCloud->crit_c = crit_c;
+	pointCloud->crit_s = crit_s;
+	pointCloud->hardening = hardening;
+	pointCloud->comodel = comodel;
 
 	float mass = particleSpacing * particleSpacing * density;
 	
@@ -540,9 +587,12 @@ std::shared_ptr<PointCloud> mpm::MpmEngine::GenPointCloud(const std::string poin
 				mp.m = mass;
 				// calculate mp.vol in a compute shader (not here)
 				mp.B = glm::mat2(0.f);
-				mp.F = glm::mat2(1.f);
+				mp.Fe = glm::mat2(1.f);
+				mp.Fp = glm::mat2(1.f);
 				mp.P = glm::mat2(0.f); // initial Piola stress tensor is 0
-				
+				mp.FeSVD_U = glm::mat2(1.f);
+				mp.FeSVD_S = glm::mat2(1.f);
+				mp.FeSVD_V = glm::mat2(1.f);
 				
 				pointCloud->points.push_back(mp);
 			}

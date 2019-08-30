@@ -116,9 +116,6 @@
     <ClInclude Include="Grid.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ModelingEngine.h">
-      <Filter>Header Files\apps</Filter>
-    </ClInclude>
     <ClInclude Include="Engine.h">
       <Filter>Header Files\apps</Filter>
     </ClInclude>
@@ -184,13 +181,25 @@
     <None Include="shaders\graphics\sdf.vs">
       <Filter>Resource Files\Shaders\graphics</Filter>
     </None>
-    <None Include="shaders\compute\implicit\gConjugateResidualsInitPart1.comp">
-      <Filter>Resource Files\Shaders\compute\implicit</Filter>
-    </None>
-    <None Include="shaders\compute\implicit\gConjugateResidualsStepPart1.comp">
-      <Filter>Resource Files\Shaders\compute\implicit</Filter>
-    </None>
     <None Include="shaders\compute\implicit\g2p2gDeltaForce.comp">
+      <Filter>Resource Files\Shaders\compute\implicit</Filter>
+    </None>
+    <None Include="shaders\compute\implicit\gCR_InitPart2.comp">
+      <Filter>Resource Files\Shaders\compute\implicit</Filter>
+    </None>
+    <None Include="shaders\compute\implicit\gCR_InitPart3.comp">
+      <Filter>Resource Files\Shaders\compute\implicit</Filter>
+    </None>
+    <None Include="shaders\compute\implicit\gCR_StepPart1.comp">
+      <Filter>Resource Files\Shaders\compute\implicit</Filter>
+    </None>
+    <None Include="shaders\compute\implicit\gCR_StepPart2.comp">
+      <Filter>Resource Files\Shaders\compute\implicit</Filter>
+    </None>
+    <None Include="shaders\compute\implicit\gCR_InitPart1.comp">
+      <Filter>Resource Files\Shaders\compute\implicit</Filter>
+    </None>
+    <None Include="shaders\compute\implicit\gCR_Conclusion.comp">
       <Filter>Resource Files\Shaders\compute\implicit</Filter>
     </None>
   </ItemGroup>

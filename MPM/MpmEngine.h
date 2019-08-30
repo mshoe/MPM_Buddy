@@ -1,7 +1,9 @@
 #pragma once
-#include "Engine.h"
 
 #include "Constants.h"
+
+#include "Engine.h"
+
 #include "Shader.h"
 #include "Shape.h"
 #include "PointCloud.h"
@@ -9,9 +11,6 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 #include <iostream>
 #include <chrono>
@@ -95,7 +94,9 @@ namespace mpm {
 			const float particleSpacing, const float density, 
 			const float inner_rounding, const float outer_rounding, 
 			const float youngMod, const float poisson,
-			glm::vec2 initialVelocity, glm::vec3 color);
+			const float crit_c, const float crit_s, const float hardening,
+			const GLuint comodel,
+			glm::vec2 initialVelocity, glm::vec4 color);
 		void CalculatePointCloudVolumes(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
 
 		void CreateDemo();
@@ -133,19 +134,20 @@ namespace mpm {
 		
 		Grid m_grid;
 
-		float m_drag = 0.005f;
+		float m_drag = 0.5f;
 		glm::vec2 m_globalForce = glm::vec2(0.f);
 		GLfloat m_globalForceArray[2] = { 0.f, 0.f }; // for input with imgui
-		float m_set_dt = 1.f / 60.f;
-		float m_dt = 1.f / 60.f;
+		//float m_set_dt = 1.f / 120.f;
+		float m_dt = 1.f / 120.f;
 		bool m_paused = true;
 		bool m_implicit = false;
 		float m_implicit_ratio = 1.f;
 		int m_max_conj_res_iter = 30;
 
-		int m_pointCloudSelect = 0;
+		//int m_pointCloudSelect = 0;
 		int m_timeStep = 0;
 		float m_time = 0.f;
+		bool m_rt = true;
 
 		GLfloat m_mousePower = 25.f;
 
@@ -157,22 +159,21 @@ namespace mpm {
 
 		//std::vector<PointCloud> m_pointClouds;
 		std::unordered_map<std::string, std::shared_ptr<PointCloud>> m_pointCloudMap;
-		//GLuint pointCloudSSBO[20];
-		/*GLfloat m_circle_x[2] = { 35.f, 10.f };
-		GLfloat m_circle_v[2] = { -3.f, 0.f };
-		
-		GLfloat m_donut_x[2] = { 15.f, 10.f };
-		GLfloat m_donut_v[2] = { 3.f, 0.f };
-		glm::vec2 m_cx = glm::vec2(30.f, 10.f);*/
+		std::vector<char> m_pointCloudSelect;
 		
 		float m_youngMod = 400.f;
 		float m_poisson = 0.3f;
 
 		float m_particleSpacing = 0.25f;
 		float m_density = 0.16f;
+		
+		float m_crit_c = 0.025f;
+		float m_crit_s = 0.0075f;
+		float m_hardening = 10.f;
 
-		int m_color[3] = { 255, 0, 0};
-		//sdf::Circle m_circlePrototype;
+		GLuint m_comodel = 1;
+
+		float m_color[4] = { 1.f, 0.f, 0.f, 1.0f};
 		
 		bool m_createCircleState = false;
 		float m_circle_r = 5.f;

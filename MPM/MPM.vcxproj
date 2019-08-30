@@ -137,7 +137,6 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="Engine.h" />
-    <ClInclude Include="ModelingEngine.h" />
     <ClInclude Include="Grid.h" />
     <ClInclude Include="imgui\imconfig.h" />
     <ClInclude Include="imgui\imgui.h" />
@@ -161,8 +160,12 @@
     <None Include="shaders\compute\gResetNodes.comp" />
     <None Include="shaders\compute\gUpdateNodes.comp" />
     <None Include="shaders\compute\implicit\g2p2gDeltaForce.comp" />
-    <None Include="shaders\compute\implicit\gConjugateResidualsInitPart1.comp" />
-    <None Include="shaders\compute\implicit\gConjugateResidualsStepPart1.comp" />
+    <None Include="shaders\compute\implicit\gCR_Conclusion.comp" />
+    <None Include="shaders\compute\implicit\gCR_InitPart1.comp" />
+    <None Include="shaders\compute\implicit\gCR_InitPart2.comp" />
+    <None Include="shaders\compute\implicit\gCR_InitPart3.comp" />
+    <None Include="shaders\compute\implicit\gCR_StepPart1.comp" />
+    <None Include="shaders\compute\implicit\gCR_StepPart2.comp" />
     <None Include="shaders\compute\mpm_header.comp" />
     <None Include="shaders\compute\p2gCalculateVolumes.comp" />
     <None Include="shaders\compute\p2gGatherParticlesAndUpdateNode.comp" />

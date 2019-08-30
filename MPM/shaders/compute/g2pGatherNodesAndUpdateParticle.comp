@@ -42,32 +42,96 @@ void main() {
 		}
 	}
 
-
-
-	points[pid].F = dfp*points[pid].F;
 	points[pid].v = vp;
 	points[pid].B = bp;
 	points[pid].x += dt*vp;//dt*(vec2(0.0, -9.8));
-	mat2 F = points[pid].F;
-	mat2 Fit = transpose(inverse(points[pid].F));
-	float J = determinant(F);
 
+	// THIS IS WHERE DIFFERENT CONSTITUTIVE MODELS ARE EVALUATED
+
+	// forced only come from elastic deformation gradient
 	if (comodel == NEO_HOOKEAN) {
-		points[pid].P = mew*(F - Fit) + lam*log(J)*Fit;
+		points[pid].Fe = dfp*points[pid].Fe;
+		mat2 Fe = points[pid].Fe;
+		mat2 Fit = transpose(inverse(points[pid].Fe));
+		float J = determinant(Fe);
+		points[pid].P = mew*(Fe - Fit) + lam*log(J)*Fit;
 	} else if (comodel == FIXED_COROTATED) {
+		
+		points[pid].Fe = dfp*points[pid].Fe;
+		mat2 Fe = points[pid].Fe;
+		mat2 Fit = transpose(inverse(points[pid].Fe));
+		float J = determinant(Fe);
+		
 		// calculate the polar decomposition F = RU.
 		// Then calculate P using F and R
+		mat2 R;
+		mat2 S;
 
-		float x = F[0][0] + F[1][1];
-		float y = F[0][1] - F[1][0]; // glsl is column major. This is really F_21 - F_12 in row major notation
+		PolarDecomp(Fe, R, S);
 
-		float d = sqrt(x*x + y*y);
 
-		float c = x/d;
-		float s = -y/d;
-		mat2 R = (d == 0.0) ? mat2(1.0, 0.0, 0.0, 1.0) : mat2(c, -s, s, c);
+		// Just computing the SVD here to see if it is done correctly
+		mat2 U;
+		float sig1;
+		float sig2;
+		mat2 V;
+		SVD(R, S, U, sig1, sig2, V);
+		points[pid].FeSVD_U = U;
+		points[pid].FeSVD_S = mat2(sig1, 0.0, 0.0, sig2);
+		points[pid].FeSVD_V = V;
 
-		points[pid].P = 2.0*mew*(F - R) + lam*(J - 1.0)*J*Fit;
+		points[pid].P = 2.0*mew*(Fe - R) + lam*(J - 1.0)*J*Fit;
+	} else if (comodel == SIMPLE_SNOW) {
+
+		// temporarilly update the Fe
+		mat2 Fe = dfp*points[pid].Fe;
+		mat2 Fp = points[pid].Fp;
+
+		mat2 F_total = Fe*Fp;
+		
+		// calculate the polar decomposition Fe = RU.
+		// then use polar decomp to calculate SVD of Fe
+		mat2 R;
+		mat2 S;
+
+		PolarDecomp(Fe, R, S);
+
+		mat2 U;
+		float sig1;
+		float sig2;
+		mat2 V;
+		SVD(R, S, U, sig1, sig2, V);
+
+		sig1 = clamp(sig1, 1.0 - crit_c, 1.0 + crit_s);
+		sig2 = clamp(sig2, 1.0 - crit_c, 1.0 + crit_s);
+
+		mat2 sigMat = mat2(sig1, 0.0, 0.0, sig2);
+
+		
+		// finally calculate Fe and Fp
+		Fe = U*sigMat*transpose(V);
+		Fp = V*inverse(sigMat)*transpose(U)*F_total;
+
+		points[pid].Fe = Fe;
+		points[pid].Fp = Fp;
+
+		// update R since Fe is updated
+		PolarDecomp(Fe, R, S);
+
+		// Computing SVD again for debugging purposes
+		SVD(R, S, U, sig1, sig2, V);
+		points[pid].FeSVD_U = U;
+		points[pid].FeSVD_S = mat2(sig1, 0.0, 0.0, sig2);
+		points[pid].FeSVD_V = V;
+
+		mat2 Feit = transpose(inverse(Fe));
+		float Je = determinant(Fe);
+		float Jp = determinant(Fp);
+
+		float pcof = exp(hardening*(1.0-Jp));
+
+		points[pid].P = 2.0*mew*(Fe - R) + lam*(Je - 1.0)*Je*Feit;
+		points[pid].P *= pcof;
 	}
 
 }

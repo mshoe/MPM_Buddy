@@ -42,7 +42,7 @@ void main() {
 
 			barrier();
 
-			vec2 forceAdd = -points[pid].vol * points[pid].P * transpose(points[pid].F) * wpgGrad;
+			vec2 forceAdd = -points[pid].vol * points[pid].P * transpose(points[pid].Fe) * wpgGrad;
 			atomicAdd(nodes[curNode_i][curNode_j].force.x, forceAdd.x);
 			atomicAdd(nodes[curNode_i][curNode_j].force.y, forceAdd.y);
 

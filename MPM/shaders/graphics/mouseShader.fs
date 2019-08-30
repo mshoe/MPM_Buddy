@@ -19,7 +19,9 @@ uniform int nodeJ;
 	
 void main() {
 	float radius = 0.05;
-	vec2 norm_pixel = vec2(gl_FragCoord.x / iResolution.x, 1.0 - gl_FragCoord.y / iResolution.y);
+
+	// pixel.x is 0 at the middle, -1 at left, +1 at right
+	vec2 norm_pixel = vec2((gl_FragCoord.x - iResolution.x/2.0)/ iResolution.x * 2.0, 1.0 - gl_FragCoord.y / iResolution.y);
 
 
 	float dist_to_mouse = length(iMouse.xy - norm_pixel);

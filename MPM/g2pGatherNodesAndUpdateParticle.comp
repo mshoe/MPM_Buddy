@@ -46,22 +46,22 @@ void main() {
 
 	// THIS IS WHERE DIFFERENT CONSTITUTIVE MODELS ARE EVALUATED
 
-	points[pid].F = dfp*points[pid].F;
+	points[pid].Fe = dfp*points[pid].Fe;
 	points[pid].v = vp;
 	points[pid].B = bp;
 	points[pid].x += dt*vp;//dt*(vec2(0.0, -9.8));
-	mat2 F = points[pid].F;
-	mat2 Fit = transpose(inverse(points[pid].F));
+	mat2 Fe = points[pid].Fe;
+	mat2 Fit = transpose(inverse(points[pid].Fe));
 	float J = determinant(F);
 
 	if (comodel == NEO_HOOKEAN) {
-		points[pid].P = mew*(F - Fit) + lam*log(J)*Fit;
+		points[pid].P = mew*(Fe - Fit) + lam*log(J)*Fit;
 	} else if (comodel == FIXED_COROTATED) {
 		// calculate the polar decomposition F = RU.
 		// Then calculate P using F and R
 
-		float x = F[0][0] + F[1][1];
-		float y = F[0][1] - F[1][0]; // glsl is column major. This is really F_21 - F_12 in row major notation
+		float x = Fe[0][0] + Fe[1][1];
+		float y = Fe[0][1] - Fe[1][0]; // glsl is column major. This is really F_21 - F_12 in row major notation
 
 		float d = sqrt(x*x + y*y);
 
@@ -69,7 +69,7 @@ void main() {
 		float s = -y/d;
 		mat2 R = (d == 0.0) ? mat2(1.0, 0.0, 0.0, 1.0) : mat2(c, -s, s, c);
 
-		points[pid].P = 2.0*mew*(F - R) + lam*(J - 1.0)*J*Fit;
+		points[pid].P = 2.0*mew*(Fe - R) + lam*(J - 1.0)*J*Fit;
 	}
 
 }
