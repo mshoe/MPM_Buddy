@@ -90,11 +90,9 @@ namespace mpm {
 		}
 
 		std::shared_ptr<PointCloud> GenPointCloud(const std::string pointCloudID, sdf::Shape& shape,
-			const real gridDimX, const real gridDimY, 
-			const real particleSpacing, const real density, 
+			const real gridDimX, const real gridDimY,
 			const real inner_rounding, const real outer_rounding, 
-			const real youngMod, const real poisson,
-			const real crit_c, const real crit_s, const real hardening,
+			const MaterialParameters &parameters,
 			const GLuint comodel,
 			vec2 initialVelocity, glm::highp_fvec4 color);
 		void CalculatePointCloudVolumes(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
@@ -160,18 +158,18 @@ namespace mpm {
 		//std::vector<PointCloud> m_pointClouds;
 		std::unordered_map<std::string, std::shared_ptr<PointCloud>> m_pointCloudMap;
 		std::vector<char> m_pointCloudSelect;
-		
-		real m_youngMod = 400.0;
-		real m_poisson = 0.3;
 
-		real m_particleSpacing = 0.25;
-		real m_density = 0.16;
+		// selecting material points
+		MaterialPoint m_mp;
 		
-		real m_crit_c = 0.025;
-		real m_crit_s = 0.0075;
-		real m_hardening = 10.0;
+		MaterialParameters m_mpParameters;
+		MaterialParameters m_fixedCorotatedParameters;
+		MaterialParameters m_simpleSnowParameters;
 
-		GLuint m_comodel = 1;
+
+		GLuint m_comodel = FIXED_COROTATIONAL_ELASTICITY;
+		void ChangeMaterialParameters(GLuint);
+		
 
 		float m_color[4] = { 1.0f, 0.0f, 0.0f, 1.0f}; // color needs to be float
 		

@@ -67,8 +67,9 @@ void main() {
 		// Then calculate P using F and R
 		dmat2 R;
 		dmat2 S;
-
 		PolarDecomp(Fe, R, S);
+		points[pid].FePolar_R = R;
+		points[pid].FePolar_S = S;
 
 
 		// Just computing the SVD here to see if it is done correctly
@@ -118,6 +119,8 @@ void main() {
 
 		// update R since Fe is updated
 		PolarDecomp(Fe, R, S);
+		points[pid].FePolar_R = R;
+		points[pid].FePolar_S = S;
 
 		// Computing SVD again for debugging purposes
 		SVD(R, S, U, sig1, sig2, V);
@@ -130,8 +133,10 @@ void main() {
 		double Jp = determinant(Fp);
 
 		// need to find a workaround for exp(double)
-		double pcof = 1.0;
-		//double pcof = exp(hardening*(1.0-Jp));
+		//double pcof = 1.0;
+
+		// exp does not work for doubles, so this is a sacrifice we will make for now
+		double pcof = double(exp(float(hardening*(1.0-Jp))));
 
 		points[pid].P = 2.0*mew*(Fe - R) + lam*(Je - 1.0)*Je*Feit;
 		points[pid].P *= pcof;

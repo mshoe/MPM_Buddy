@@ -13,9 +13,14 @@ struct materialPoint {
 	dmat2 P;
 
 	// extra not neccessary to store, but useful for debugging
+	dmat2 FePolar_R;
+	dmat2 FePolar_S;
 	dmat2 FeSVD_U;
 	dmat2 FeSVD_S;
 	dmat2 FeSVD_V;
+
+	double opengl_padding;
+	double opengl_padding2;
 };
 
 struct gridNode {
@@ -91,7 +96,7 @@ void PolarDecomp(in dmat2 F, out dmat2 R, out dmat2 S) {
 
 	double c = x/d;
 	double s = -y/d;
-	R = (d == 0.0) ? mat2(1.0, 0.0, 0.0, 1.0) : mat2(c, -s, s, c);
+	R = (d == 0.0) ? dmat2(1.0, 0.0, 0.0, 1.0) : dmat2(c, -s, s, c);
 	S = transpose(R) * F;
 }
 
@@ -101,18 +106,18 @@ void SVD(in dmat2 R, in dmat2 S, out dmat2 U, out double sig1, out double sig2, 
 	double c_hat, s_hat;
 	
 	if (S[1][0] == 0) {
-		c_hat = 1;
-		s_hat = 0;
+		c_hat = 1.0;
+		s_hat = 0.0;
 		sig1 = S[0][0];
 		sig2 = S[1][1];
 	} else {
 		double tau = 0.5 * (S[0][0] - S[1][1]);
 		double w = sqrt(tau*tau + S[1][0]*S[1][0]);
 		double t = (tau > 0) ? S[1][0]/(tau + w) : S[1][0]/(tau - w);
-		c_hat = 1.0 / sqrt(tau*tau + 1);
+		c_hat = 1.0 / sqrt(t*t + 1.0);
 		s_hat = -t * c_hat;
-		sig1 = c_hat*c_hat*S[0][0] - 2*c_hat*s_hat*S[1][0] + s_hat*s_hat*S[1][1];
-		sig2 = s_hat*s_hat*S[0][0] + 2*c_hat*s_hat*S[1][0] + c_hat*c_hat*S[1][1];
+		sig1 = c_hat*c_hat*S[0][0] - 2.0*c_hat*s_hat*S[1][0] + s_hat*s_hat*S[1][1];
+		sig2 = s_hat*s_hat*S[0][0] + 2.0*c_hat*s_hat*S[1][0] + c_hat*c_hat*S[1][1];
 	}
 
 	double c, s;
@@ -127,12 +132,12 @@ void SVD(in dmat2 R, in dmat2 S, out dmat2 U, out double sig1, out double sig2, 
 		c = c_hat;
 		s = s_hat;
 	}
-	V = mat2(c, -s, s, c);
+	V = dmat2(c, -s, s, c);
 	U = R*V;
 }
 
-mat2 cofactorMatrix(in dmat2 X) {
-	return mat2(X[1][1], -X[1][0], // column 1
+dmat2 cofactorMatrix(in dmat2 X) {
+	return dmat2(X[1][1], -X[1][0], // column 1
 				-X[0][1], X[0][0]); // column 2
 }
 
@@ -151,11 +156,11 @@ bool isinfVec2(in dvec2 v) {
 uniform double dt = 1/60.0;
 
 uniform dmat2 Dp_inv = 3 * dmat2(1.0); // 3 * dx^2 * I
-uniform dvec2 gravity = dvec2(0.0, -9.8);
+uniform dvec2 gravity = dvec2(0.0, -9.81);
 uniform dvec2 globalForce = dvec2(0.0, 0.0);
 
-uniform double mew = 41.6667;
-uniform double lam = 27.7778;
+uniform double mew = 41.66666667;
+uniform double lam = 27.77777778;
 
 const uint NEO_HOOKEAN = 0;
 const uint FIXED_COROTATED = 1;

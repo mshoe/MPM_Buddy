@@ -46,6 +46,9 @@
     <Filter Include="Resource Files\glad\src">
       <UniqueIdentifier>{aa7cc8e8-ac18-4d35-b3bd-9da5f009cc1f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Utility">
+      <UniqueIdentifier>{6c17ce70-a68e-4b63-97bb-f908bb2604ff}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -133,6 +136,12 @@
     </ClInclude>
     <ClInclude Include="MpmEngine.h">
       <Filter>Header Files\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="glm_imgui.h">
+      <Filter>Header Files\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="glm_MATLAB.h">
+      <Filter>Header Files\Utility</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

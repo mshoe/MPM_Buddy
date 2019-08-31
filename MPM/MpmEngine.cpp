@@ -1,6 +1,8 @@
 #include "MpmEngine.h"
 #include "imgui/imgui.h"
 
+#include "glm_MATLAB.h"
+
 real BSpline(real x) {
 	return (x < 0.5) ? glm::step(0.0, x)*(0.75 - x * x) :
 		glm::step(x, 1.5)*0.5*(1.5 - abs(x))*(1.5 - abs(x));
@@ -67,6 +69,21 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 
 	//CreateDemo();
 
+	// initialize material parameters here for now
+	m_fixedCorotatedParameters.youngMod = 90000.0;
+	m_fixedCorotatedParameters.poisson = 0.3;
+	m_fixedCorotatedParameters.particleSpacing = 0.25;
+	m_fixedCorotatedParameters.density = 40;
+
+	m_simpleSnowParameters.youngMod = 140000.0;
+	m_simpleSnowParameters.poisson = 0.2;
+	m_simpleSnowParameters.particleSpacing = 0.25;
+	m_simpleSnowParameters.density = 40;
+	m_simpleSnowParameters.crit_c = 0.025;
+	m_simpleSnowParameters.crit_s = 0.0075;
+	m_simpleSnowParameters.hardening = 10.0;
+
+	m_mpParameters = m_fixedCorotatedParameters;
 	return true;
 }
 
@@ -127,9 +144,9 @@ void mpm::MpmEngine::MpmTimeStep(real dt)
 		m_g2pGather->SetReal("dt", dt);
 		m_g2pGather->SetReal("lam", pointCloudPair.second->lam);
 		m_g2pGather->SetReal("mew", pointCloudPair.second->mew);
-		m_g2pGather->SetReal("crit_c", pointCloudPair.second->crit_c);
-		m_g2pGather->SetReal("crit_s", pointCloudPair.second->crit_s);
-		m_g2pGather->SetReal("hardening", pointCloudPair.second->hardening);
+		m_g2pGather->SetReal("crit_c", pointCloudPair.second->parameters.crit_c);
+		m_g2pGather->SetReal("crit_s", pointCloudPair.second->parameters.crit_s);
+		m_g2pGather->SetReal("hardening", pointCloudPair.second->parameters.hardening);
 		m_g2pGather->SetuInt("comodel", pointCloudPair.second->comodel);
 		int g2p_workgroups = int(glm::ceil(real(pointCloudPair.second->N) / real(G2P_WORKGROUP_SIZE)));
 		glDispatchCompute(g2p_workgroups, 1, 1);
@@ -350,19 +367,32 @@ void mpm::MpmEngine::RenderGUI()
 		ImGui::ColorEdit4("Color", m_color);
 		//ImGui::InputInt3("Color", m_color);
 
-		ImGui::InputReal("Young's Modulus", &m_youngMod, 1.0, 10.0, "%.1f");
-		ImGui::InputReal("Poisson's Ratio", &m_poisson, 0.005, 0.05, "%.3f");
-		ImGui::InputReal("Point Spacing", &m_particleSpacing, 0.01, 0.1, "%.2f");
-		ImGui::InputReal("Density", &m_density, 0.01, 0.1, "%.2f");
-		ImGui::InputReal("Critical Compression", &m_crit_c, 0.001, 0.01, "%.4f");
-		ImGui::InputReal("Critical Stretch", &m_crit_s, 0.001, 0.01, "%.4f");
-		ImGui::InputReal("Hardening", &m_hardening, 0.001, 0.01, "%.4f");
+		switch (m_comodel) {
+		case FIXED_COROTATIONAL_ELASTICITY:
+			ImGui::InputReal("Young's Modulus", &m_mpParameters.youngMod, 1.0, 10.0, "%.1f");
+			ImGui::InputReal("Poisson's Ratio", &m_mpParameters.poisson, 0.005, 0.05, "%.3f");
+			ImGui::InputReal("Point Spacing", &m_mpParameters.particleSpacing, 0.01, 0.1, "%.2f");
+			ImGui::InputReal("Density", &m_mpParameters.density, 0.01, 0.1, "%.2f");
+			break;
+		case SIMPLE_SNOW:
+			ImGui::InputReal("Young's Modulus", &m_mpParameters.youngMod, 1.0, 10.0, "%.1f");
+			ImGui::InputReal("Poisson's Ratio", &m_mpParameters.poisson, 0.005, 0.05, "%.3f");
+			ImGui::InputReal("Point Spacing", &m_mpParameters.particleSpacing, 0.01, 0.1, "%.2f");
+			ImGui::InputReal("Density", &m_mpParameters.density, 0.01, 0.1, "%.2f");
+			ImGui::InputReal("Critical Compression", &m_mpParameters.crit_c, 0.001, 0.01, "%.4f");
+			ImGui::InputReal("Critical Stretch", &m_mpParameters.crit_s, 0.001, 0.01, "%.4f");
+			ImGui::InputReal("Hardening", &m_mpParameters.hardening, 0.001, 0.01, "%.4f");
+			break;
+		default:
+			break;
+		}
+		
 
 		if (ImGui::Button("Fixed Corotated Elasticity")) {
-			m_comodel = 1;
+			ChangeMaterialParameters(FIXED_COROTATIONAL_ELASTICITY);
 		}
 		if (ImGui::Button("Stovakhim Snow (2013)")) {
-			m_comodel = 2;
+			ChangeMaterialParameters(SIMPLE_SNOW);
 		}
 		std::string comodelStr = "constitutive model: " + std::to_string(m_comodel);
 		ImGui::Text(comodelStr.c_str());
@@ -415,16 +445,51 @@ void mpm::MpmEngine::RenderGUI()
 				void* ptr = glMapNamedBuffer(m_pointCloudMap[pointCloudSelectStr]->ssbo, GL_READ_ONLY);
 				MaterialPoint* data = static_cast<MaterialPoint*>(ptr);
 				std::ostringstream pointsViewStr;
-				for (size_t i = 0; i < m_pointCloudMap[pointCloudSelectStr]->N; ++i) {
+				for (size_t i = 0; i < 1/*m_pointCloudMap[pointCloudSelectStr]->N*/; ++i) {
 					pointsViewStr << "Material Point " << i << ":" << std::endl;
 					pointsViewStr << data[i] << std::endl;
 				}
 				m_pointsViewStr = pointsViewStr.str();
+
+				// set the material point
+				m_mp = data[0];
 				glUnmapNamedBuffer(m_pointCloudMap[pointCloudSelectStr]->ssbo);
 			}
 		}
 		if (ImGui::CollapsingHeader("Material Points")) {
+			
 			ImGui::Text(m_pointsViewStr.c_str());
+			if (ImGui::BeginPopupContextItem("mp item menu")) {
+				if (ImGui::Button("Copy")) {
+					ImGui::SetClipboardText(m_pointsViewStr.c_str());
+					ImGui::CloseCurrentPopup();
+				}
+				if (ImGui::Button("Copy Fe")) {
+					ImGui::SetClipboardText(glmToMATLAB::MatStr(m_mp.Fe).c_str());
+					ImGui::CloseCurrentPopup();
+				}
+				if (ImGui::Button("Copy FePolar_R")) {
+					ImGui::SetClipboardText(glmToMATLAB::MatStr(m_mp.FePolar_R).c_str());
+					ImGui::CloseCurrentPopup();
+				}
+				if (ImGui::Button("Copy FePolar_S")) {
+					ImGui::SetClipboardText(glmToMATLAB::MatStr(m_mp.FePolar_S).c_str());
+					ImGui::CloseCurrentPopup();
+				}
+				if (ImGui::Button("Copy FeSVD_U")) {
+					ImGui::SetClipboardText(glmToMATLAB::MatStr(m_mp.FeSVD_U).c_str());
+					ImGui::CloseCurrentPopup();
+				}
+				if (ImGui::Button("Copy FeSVD_S")) {
+					ImGui::SetClipboardText(glmToMATLAB::MatStr(m_mp.FeSVD_S).c_str());
+					ImGui::CloseCurrentPopup();
+				}
+				if (ImGui::Button("Copy FeSVD_V")) {
+					ImGui::SetClipboardText(glmToMATLAB::MatStr(m_mp.FeSVD_V).c_str());
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::EndPopup();
+			}
 		}
 
 		ImGui::End();
@@ -465,7 +530,7 @@ void mpm::MpmEngine::HandleInput()
 		color.z = (float)glm::clamp(m_color[2], 0, 255) / 255.f;*/
 
 		real inner_rounding = m_circle_r - m_circle_inner_radius;
-		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(circleID, shape, GRID_SIZE_X, GRID_SIZE_Y, m_particleSpacing, m_density, inner_rounding, m_circle_rounding, m_youngMod, m_poisson, m_crit_c, m_crit_s, m_hardening, m_comodel, vec2(0.0, 0.0), color);
+		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(circleID, shape, GRID_SIZE_X, GRID_SIZE_Y, inner_rounding, m_circle_rounding, m_mpParameters, m_comodel, vec2(0.0, 0.0), color);
 
 		t2 = high_resolution_clock::now();
 
@@ -495,7 +560,7 @@ void mpm::MpmEngine::HandleInput()
 		
 
 		real inner_rounding = glm::min(m_rect_b, m_rect_h) - m_rect_inner_radius;
-		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(rectID, shape, GRID_SIZE_X, GRID_SIZE_Y, m_particleSpacing, m_density, inner_rounding, m_rect_rounding, m_youngMod, m_poisson, m_crit_c, m_crit_s, m_hardening, m_comodel, vec2(0.0, 0.0), color);
+		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(rectID, shape, GRID_SIZE_X, GRID_SIZE_Y, inner_rounding, m_rect_rounding, m_mpParameters, m_comodel, vec2(0.0, 0.0), color);
 
 		t2 = high_resolution_clock::now();
 
@@ -524,7 +589,7 @@ void mpm::MpmEngine::HandleInput()
 		glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
 
 		real inner_rounding = glm::min(m_iso_tri_b, m_iso_tri_h) - m_iso_tri_inner_radius;
-		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(isoTriID, shape, GRID_SIZE_X, GRID_SIZE_Y, m_particleSpacing, m_density, inner_rounding, m_iso_tri_rounding, m_youngMod, m_poisson, m_crit_c, m_crit_s, m_hardening, m_comodel, glm::vec2(0.f, 0.f), color);
+		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(isoTriID, shape, GRID_SIZE_X, GRID_SIZE_Y, inner_rounding, m_iso_tri_rounding, m_mpParameters, m_comodel, glm::vec2(0.f, 0.f), color);
 
 		t2 = high_resolution_clock::now();
 
@@ -550,29 +615,25 @@ void mpm::MpmEngine::UpdateNodeData()
 
 std::shared_ptr<PointCloud> mpm::MpmEngine::GenPointCloud(const std::string pointCloudID, sdf::Shape& shape,
 	const real gridDimX, const real gridDimY, 
-	const real particleSpacing, const real density, 
 	const real inner_rounding, const real outer_rounding,
-	const real youngMod, const real poisson,
-	const real crit_c, const real crit_s, const real hardening,
+	const MaterialParameters &parameters,
 	const GLuint comodel,
 	vec2 initialVelocity, glm::highp_fvec4 color)
 {
 	std::shared_ptr<PointCloud> pointCloud = std::make_shared<PointCloud>();
 
 	pointCloud->color = color;
+	pointCloud->parameters = parameters;
+	pointCloud->mew = parameters.youngMod / (2.f + 2.f* parameters.poisson);
+	pointCloud->lam = parameters.youngMod * parameters.poisson / ((1.f + parameters.poisson) * (1.f - 2.f * parameters.poisson));
 
-	pointCloud->mew = youngMod / (2.f + 2.f*poisson);
-	pointCloud->lam = youngMod * poisson / ((1.f + poisson) * (1.f - 2.f * poisson));
-	pointCloud->crit_c = crit_c;
-	pointCloud->crit_s = crit_s;
-	pointCloud->hardening = hardening;
 	pointCloud->comodel = comodel;
 
-	real mass = particleSpacing * particleSpacing * density;
+	real mass = parameters.particleSpacing * parameters.particleSpacing * parameters.density;
 	
 	// gen points from sdf
-	for (real x = 0.f; x < gridDimX; x += particleSpacing) {
-		for (real y = 0.f; y < gridDimY; y += particleSpacing) {
+	for (real x = 0.f; x < gridDimX; x += parameters.particleSpacing) {
+		for (real y = 0.f; y < gridDimY; y += parameters.particleSpacing) {
 			
 			glm::vec2 p(x, y);
 			real sd = shape.SdfHollow(p, inner_rounding, outer_rounding);
@@ -586,6 +647,8 @@ std::shared_ptr<PointCloud> mpm::MpmEngine::GenPointCloud(const std::string poin
 				mp.Fe = mat2(1.0);
 				mp.Fp = mat2(1.0);
 				mp.P = mat2(0.0); // initial Piola stress tensor is 0
+				mp.FePolar_R = mat2(1.0);
+				mp.FePolar_S = mat2(1.0);
 				mp.FeSVD_U = mat2(1.0);
 				mp.FeSVD_S = mat2(1.0);
 				mp.FeSVD_V = mat2(1.0);
@@ -734,4 +797,30 @@ void mpm::MpmEngine::PrintGridData()
 	//	//}
 	//}
 	glUnmapNamedBuffer(gridSSBO);
+}
+
+void mpm::MpmEngine::ChangeMaterialParameters(GLuint comodel)
+{
+	// save the current material parameters
+	switch (m_comodel) {
+	case FIXED_COROTATIONAL_ELASTICITY:
+		m_fixedCorotatedParameters = m_mpParameters;
+		break;
+	case SIMPLE_SNOW:
+		m_simpleSnowParameters = m_mpParameters;
+		break;
+	default:
+		break;
+	}
+	m_comodel = comodel;
+	switch (m_comodel) {
+	case FIXED_COROTATIONAL_ELASTICITY:
+		m_mpParameters = m_fixedCorotatedParameters;
+		break;
+	case SIMPLE_SNOW:
+		m_mpParameters = m_simpleSnowParameters;
+		break;
+	default:
+		break;
+	}
 }
