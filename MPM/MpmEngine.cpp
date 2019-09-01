@@ -2,6 +2,7 @@
 #include "imgui/imgui.h"
 
 #include "glm_MATLAB.h"
+#include "glm_imgui.h"
 
 real BSpline(real x) {
 	return (x < 0.5) ? glm::step(0.0, x)*(0.75 - x * x) :
@@ -333,13 +334,6 @@ void mpm::MpmEngine::RenderGUI()
 		ImGui::Checkbox("Realtime Rendering", &m_rt);
 		
 		
-		ImGui::Checkbox("Node Selection Graphics", &m_nodeGraphicsActive);
-		if (ImGui::Button("Get node data") && m_paused) {
-			UpdateNodeData();
-		}
-		ImGui::InputInt2("Grid Node:", m_node);
-		ImGui::Text(m_nodeText.c_str());
-		
 		ImGui::Checkbox("Implicit Time Integration", &m_implicit);
 		ImGui::InputReal("Implict Ratio", &m_implicit_ratio);
 
@@ -348,6 +342,18 @@ void mpm::MpmEngine::RenderGUI()
 		}
 		if (ImGui::Button("Advance") && m_paused) {
 			MpmTimeStep(m_dt);
+			UpdateNodeData();
+		}
+		if (ImGui::Button("Advance 10") && m_paused) {
+			for (int i = 0; i < 10; i++) {
+				MpmTimeStep(m_dt);
+			}
+			UpdateNodeData();
+		}
+		if (ImGui::Button("Advance 100") && m_paused) {
+			for (int i = 0; i < 100; i++) {
+				MpmTimeStep(m_dt);
+			}
 			UpdateNodeData();
 		}
 
@@ -361,139 +367,157 @@ void mpm::MpmEngine::RenderGUI()
 
 		ImGui::End();
 
-		ImGui::Begin("Geometry Editor");
-
-		//ImGui::Color
-		ImGui::ColorEdit4("Color", m_color);
-		//ImGui::InputInt3("Color", m_color);
-
-		switch (m_comodel) {
-		case FIXED_COROTATIONAL_ELASTICITY:
-			ImGui::InputReal("Young's Modulus", &m_mpParameters.youngMod, 1.0, 10.0, "%.1f");
-			ImGui::InputReal("Poisson's Ratio", &m_mpParameters.poisson, 0.005, 0.05, "%.3f");
-			ImGui::InputReal("Point Spacing", &m_mpParameters.particleSpacing, 0.01, 0.1, "%.2f");
-			ImGui::InputReal("Density", &m_mpParameters.density, 0.01, 0.1, "%.2f");
-			break;
-		case SIMPLE_SNOW:
-			ImGui::InputReal("Young's Modulus", &m_mpParameters.youngMod, 1.0, 10.0, "%.1f");
-			ImGui::InputReal("Poisson's Ratio", &m_mpParameters.poisson, 0.005, 0.05, "%.3f");
-			ImGui::InputReal("Point Spacing", &m_mpParameters.particleSpacing, 0.01, 0.1, "%.2f");
-			ImGui::InputReal("Density", &m_mpParameters.density, 0.01, 0.1, "%.2f");
-			ImGui::InputReal("Critical Compression", &m_mpParameters.crit_c, 0.001, 0.01, "%.4f");
-			ImGui::InputReal("Critical Stretch", &m_mpParameters.crit_s, 0.001, 0.01, "%.4f");
-			ImGui::InputReal("Hardening", &m_mpParameters.hardening, 0.001, 0.01, "%.4f");
-			break;
-		default:
-			break;
-		}
-		
-
-		if (ImGui::Button("Fixed Corotated Elasticity")) {
-			ChangeMaterialParameters(FIXED_COROTATIONAL_ELASTICITY);
-		}
-		if (ImGui::Button("Stovakhim Snow (2013)")) {
-			ChangeMaterialParameters(SIMPLE_SNOW);
-		}
-		std::string comodelStr = "constitutive model: " + std::to_string(m_comodel);
-		ImGui::Text(comodelStr.c_str());
-
-
-
-		ImGui::InputReal("Circle Radius", &m_circle_r, 0.1, 1.0, "%.1f");
-		ImGui::InputReal("Circle Inner Radius", &m_circle_inner_radius, 0.1, 1.0, "%.1f");
-		ImGui::InputReal("Circle Rounding", &m_circle_rounding, 0.1, 1.0, "%.1f");
-		if (ImGui::Button("Create Solid Circle") && m_paused) {
-			m_createCircleState = true;
-		}
-
-
-		ImGui::InputReal("Rectangle Base Length", &m_rect_b, 0.1, 1.0, "%.1f");
-		ImGui::InputReal("Rectangle Height Length", &m_rect_h, 0.1, 1.0, "%.1f");
-		ImGui::InputReal("Rectangle Inner Radius", &m_rect_inner_radius, 0.1, 1.0, "%.1f");
-		ImGui::InputReal("Rectangle Rounding", &m_rect_rounding, 0.1, 1.0, "%.1f");
-		if (ImGui::Button("Create Solid Rectangle") && m_paused) {
-			m_createRectState = true;
-		}
-
-		ImGui::InputReal("Isosceles Triangle Base Length", &m_iso_tri_b, 0.1, 1.0, "%.1f");
-		ImGui::InputReal("Isosceles Height Length", &m_iso_tri_h, 0.1, 1.0, "%.1f");
-		ImGui::InputReal("Isosceles Triangle Inner Radius", &m_iso_tri_inner_radius, 0.1, 1.0, "%.1f");
-		ImGui::InputReal("Isosceles Triangle Rounding", &m_iso_tri_rounding, 0.1, 1.0, "%.1f");
-		if (ImGui::Button("Create Solid Triangle") && m_paused) {
-			m_createIsoTriState = true;
-		}
-
-
-
-		ImGui::End();
-
-		ImGui::Begin("Material Point View");
-
+		RenderGeometryEditor();
+		RenderGridNodeViewer();
+		RenderMaterialPointViewer();
 
 		
-		if (ImGui::CollapsingHeader("Point Clouds")) {
-			for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
-				ImGui::Text(pointCloudPair.first.c_str());
-			}
-		}
-		m_pointCloudSelect.resize(30);
-		ImGui::InputText("Check point cloud", m_pointCloudSelect.data(), 30);
-		std::string pointCloudSelectStr = std::string(m_pointCloudSelect.data());
-
-		if (ImGui::Button("View Particles") && m_paused) {
-			if (m_pointCloudMap.count(pointCloudSelectStr)) {
-				void* ptr = glMapNamedBuffer(m_pointCloudMap[pointCloudSelectStr]->ssbo, GL_READ_ONLY);
-				MaterialPoint* data = static_cast<MaterialPoint*>(ptr);
-				std::ostringstream pointsViewStr;
-				for (size_t i = 0; i < 1/*m_pointCloudMap[pointCloudSelectStr]->N*/; ++i) {
-					pointsViewStr << "Material Point " << i << ":" << std::endl;
-					pointsViewStr << data[i] << std::endl;
-				}
-				m_pointsViewStr = pointsViewStr.str();
-
-				// set the material point
-				m_mp = data[0];
-				glUnmapNamedBuffer(m_pointCloudMap[pointCloudSelectStr]->ssbo);
-			}
-		}
-		if (ImGui::CollapsingHeader("Material Points")) {
-			
-			ImGui::Text(m_pointsViewStr.c_str());
-			if (ImGui::BeginPopupContextItem("mp item menu")) {
-				if (ImGui::Button("Copy")) {
-					ImGui::SetClipboardText(m_pointsViewStr.c_str());
-					ImGui::CloseCurrentPopup();
-				}
-				if (ImGui::Button("Copy Fe")) {
-					ImGui::SetClipboardText(glmToMATLAB::MatStr(m_mp.Fe).c_str());
-					ImGui::CloseCurrentPopup();
-				}
-				if (ImGui::Button("Copy FePolar_R")) {
-					ImGui::SetClipboardText(glmToMATLAB::MatStr(m_mp.FePolar_R).c_str());
-					ImGui::CloseCurrentPopup();
-				}
-				if (ImGui::Button("Copy FePolar_S")) {
-					ImGui::SetClipboardText(glmToMATLAB::MatStr(m_mp.FePolar_S).c_str());
-					ImGui::CloseCurrentPopup();
-				}
-				if (ImGui::Button("Copy FeSVD_U")) {
-					ImGui::SetClipboardText(glmToMATLAB::MatStr(m_mp.FeSVD_U).c_str());
-					ImGui::CloseCurrentPopup();
-				}
-				if (ImGui::Button("Copy FeSVD_S")) {
-					ImGui::SetClipboardText(glmToMATLAB::MatStr(m_mp.FeSVD_S).c_str());
-					ImGui::CloseCurrentPopup();
-				}
-				if (ImGui::Button("Copy FeSVD_V")) {
-					ImGui::SetClipboardText(glmToMATLAB::MatStr(m_mp.FeSVD_V).c_str());
-					ImGui::CloseCurrentPopup();
-				}
-				ImGui::EndPopup();
-			}
-		}
-
-		ImGui::End();
 	}
+}
+
+void mpm::MpmEngine::RenderGeometryEditor()
+{
+	ImGui::Begin("Geometry Editor");
+
+	//ImGui::Color
+	ImGui::ColorEdit4("Color", m_color);
+	//ImGui::InputInt3("Color", m_color);
+
+	switch (m_comodel) {
+	case FIXED_COROTATIONAL_ELASTICITY:
+		ImGui::InputReal("Young's Modulus", &m_mpParameters.youngMod, 1.0, 10.0, "%.1f");
+		ImGui::InputReal("Poisson's Ratio", &m_mpParameters.poisson, 0.005, 0.05, "%.3f");
+		ImGui::InputReal("Point Spacing", &m_mpParameters.particleSpacing, 0.01, 0.1, "%.2f");
+		ImGui::InputReal("Density", &m_mpParameters.density, 0.01, 0.1, "%.2f");
+		break;
+	case SIMPLE_SNOW:
+		ImGui::InputReal("Young's Modulus", &m_mpParameters.youngMod, 1.0, 10.0, "%.1f");
+		ImGui::InputReal("Poisson's Ratio", &m_mpParameters.poisson, 0.005, 0.05, "%.3f");
+		ImGui::InputReal("Point Spacing", &m_mpParameters.particleSpacing, 0.01, 0.1, "%.2f");
+		ImGui::InputReal("Density", &m_mpParameters.density, 0.01, 0.1, "%.2f");
+		ImGui::InputReal("Critical Compression", &m_mpParameters.crit_c, 0.001, 0.01, "%.4f");
+		ImGui::InputReal("Critical Stretch", &m_mpParameters.crit_s, 0.001, 0.01, "%.4f");
+		ImGui::InputReal("Hardening", &m_mpParameters.hardening, 0.001, 0.01, "%.4f");
+		break;
+	default:
+		break;
+	}
+
+
+	if (ImGui::Button("Fixed Corotated Elasticity")) {
+		ChangeMaterialParameters(FIXED_COROTATIONAL_ELASTICITY);
+	}
+	if (ImGui::Button("Stovakhim Snow (2013)")) {
+		ChangeMaterialParameters(SIMPLE_SNOW);
+	}
+	std::string comodelStr = "constitutive model: " + std::to_string(m_comodel);
+	ImGui::Text(comodelStr.c_str());
+
+
+
+	ImGui::InputReal("Circle Radius", &m_circle_r, 0.1, 1.0, "%.1f");
+	ImGui::InputReal("Circle Inner Radius", &m_circle_inner_radius, 0.1, 1.0, "%.1f");
+	ImGui::InputReal("Circle Rounding", &m_circle_rounding, 0.1, 1.0, "%.1f");
+	if (ImGui::Button("Create Solid Circle") && m_paused) {
+		m_createCircleState = true;
+	}
+
+
+	ImGui::InputReal("Rectangle Base Length", &m_rect_b, 0.1, 1.0, "%.1f");
+	ImGui::InputReal("Rectangle Height Length", &m_rect_h, 0.1, 1.0, "%.1f");
+	ImGui::InputReal("Rectangle Inner Radius", &m_rect_inner_radius, 0.1, 1.0, "%.1f");
+	ImGui::InputReal("Rectangle Rounding", &m_rect_rounding, 0.1, 1.0, "%.1f");
+	if (ImGui::Button("Create Solid Rectangle") && m_paused) {
+		m_createRectState = true;
+	}
+
+	ImGui::InputReal("Isosceles Triangle Base Length", &m_iso_tri_b, 0.1, 1.0, "%.1f");
+	ImGui::InputReal("Isosceles Height Length", &m_iso_tri_h, 0.1, 1.0, "%.1f");
+	ImGui::InputReal("Isosceles Triangle Inner Radius", &m_iso_tri_inner_radius, 0.1, 1.0, "%.1f");
+	ImGui::InputReal("Isosceles Triangle Rounding", &m_iso_tri_rounding, 0.1, 1.0, "%.1f");
+	if (ImGui::Button("Create Solid Triangle") && m_paused) {
+		m_createIsoTriState = true;
+	}
+
+
+
+	ImGui::End();
+}
+
+void mpm::MpmEngine::RenderGridNodeViewer()
+{
+	ImGui::Begin("Grid Node Viewer");
+	
+	ImGui::Checkbox("Node Selection Graphics", &m_nodeGraphicsActive);
+	if (ImGui::Button("Select Node")) {
+		m_selectNodeState = true;
+	}
+	ImGui::InputInt2("Grid Node:", m_node);
+	if (ImGui::Button("Get node data") && m_paused) {
+		UpdateNodeData();
+	}
+	if (ImGui::CollapsingHeader("Grid Node Data")) {
+		glm::highp_fvec4 min_color = glm::highp_fvec4(1.0, 0.0, 0.0, 1.0);
+		glm::highp_fvec4 max_color = glm::highp_fvec4(0.0, 1.0, 0.0, 1.0);
+		ImGui::DisplayNamedGlmRealColor("m", m_gn.m, max_color);
+		ImGui::DisplayNamedGlmVecMixColor("v", m_gn.v, min_color, max_color);
+		ImGui::DisplayNamedGlmVecMixColor("mv", m_gn.momentum, min_color, max_color);
+		ImGui::DisplayNamedGlmVecMixColor("f", m_gn.force, min_color, max_color);
+		ImGui::DisplayNamedGlmVecMixColor("df", m_gn.deltaForce, min_color, max_color);
+		ImGui::DisplayNamedGlmVecMixColor("rk", m_gn.rk, min_color, max_color);
+		ImGui::DisplayNamedGlmVecMixColor("xk", m_gn.xk, min_color, max_color);
+		ImGui::DisplayNamedGlmVecMixColor("pk", m_gn.pk, min_color, max_color);
+		ImGui::DisplayNamedGlmVecMixColor("Ark", m_gn.Ark, min_color, max_color);
+		ImGui::DisplayNamedGlmVecMixColor("Apk", m_gn.Apk, min_color, max_color);
+		ImGui::DisplayNamedGlmRealColor("rkArk", m_gn.rkArk, max_color);
+	}
+	ImGui::End();
+}
+
+void mpm::MpmEngine::RenderMaterialPointViewer()
+{
+	ImGui::Begin("Material Point View");
+
+
+
+	if (ImGui::CollapsingHeader("Point Clouds")) {
+		for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+			ImGui::Text(pointCloudPair.first.c_str());
+		}
+	}
+	m_pointCloudSelect.resize(30);
+	ImGui::InputText("Check point cloud", m_pointCloudSelect.data(), 30);
+	std::string pointCloudSelectStr = std::string(m_pointCloudSelect.data());
+
+	if (ImGui::Button("View Particles") && m_paused) {
+		if (m_pointCloudMap.count(pointCloudSelectStr)) {
+			void* ptr = glMapNamedBuffer(m_pointCloudMap[pointCloudSelectStr]->ssbo, GL_READ_ONLY);
+			MaterialPoint* data = static_cast<MaterialPoint*>(ptr);
+			m_mp = data[0];
+			glUnmapNamedBuffer(m_pointCloudMap[pointCloudSelectStr]->ssbo);
+		}
+	}
+	if (ImGui::CollapsingHeader("Material Point")) {
+		glm::highp_fvec4 min_color = glm::highp_fvec4(1.0, 0.0, 0.0, 1.0);
+		glm::highp_fvec4 max_color = glm::highp_fvec4(0.0, 1.0, 0.0, 1.0);
+
+		ImGui::DisplayNamedGlmVecMixColor("x", m_mp.x, min_color, max_color);
+		ImGui::DisplayNamedGlmVecMixColor("v", m_mp.v, min_color, max_color);
+		ImGui::DisplayNamedGlmRealColor("m", m_mp.m, max_color);
+		ImGui::DisplayNamedGlmRealColor("vol", m_mp.vol, max_color);
+		ImGui::DisplayNamedGlmMatrixMixColor("B", m_mp.B, min_color, max_color);
+		ImGui::DisplayNamedGlmMatrixMixColor("Fe", m_mp.Fe, min_color, max_color);
+		ImGui::DisplayNamedGlmMatrixMixColor("Fp", m_mp.Fp, min_color, max_color);
+		ImGui::DisplayNamedGlmMatrixMixColor("P", m_mp.P, min_color, max_color);
+		ImGui::DisplayNamedGlmMatrixMixColor("FePolar_R", m_mp.FePolar_R, min_color, max_color);
+		ImGui::DisplayNamedGlmMatrixMixColor("FePolar_S", m_mp.FePolar_S, min_color, max_color);
+		ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_U", m_mp.FeSVD_U, min_color, max_color);
+		ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_S", m_mp.FeSVD_S, min_color, max_color);
+		ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_V", m_mp.FeSVD_V, min_color, max_color);
+		
+	}
+
+	ImGui::End();
 }
 
 void mpm::MpmEngine::HandleInput()
@@ -505,6 +529,7 @@ void mpm::MpmEngine::HandleInput()
 	if (m_paused && m_rightButtonDown) {
 		m_createCircleState = false;
 		m_createRectState = false;
+		m_createIsoTriState = false;
 	}
 
 	if (m_paused && m_createCircleState && m_leftButtonDown)
@@ -596,19 +621,15 @@ void mpm::MpmEngine::HandleInput()
 
 		std::cout << "Finished generating " << pointCloud->N << " points for '" << isoTriID << "' point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
 	}
-}
 
+	if (m_paused && m_selectNodeState && m_leftButtonDown) {
+		m_selectNodeState = false;
 
-void mpm::MpmEngine::UpdateNodeData()
-{
-	if (0 <= m_node[0] && m_node[0] < GRID_SIZE_X && 0 <= m_node[1] && m_node[1] < GRID_SIZE_Y) {
-		void *ptr = glMapNamedBuffer(gridSSBO, GL_READ_ONLY);
-		GridNode *data = static_cast<GridNode*>(ptr);
-		GridNode gn = data[m_node[0] * GRID_SIZE_X + m_node[1]];
-		std::ostringstream nodeText;
-		nodeText << gn << std::endl;
-		m_nodeText = nodeText.str();
-		glUnmapNamedBuffer(gridSSBO);
+		real mouseX = glm::clamp(m_mousePos.x, 0.0, 1.0);
+		real mouseY = glm::clamp(m_mousePos.y, 0.0, 1.0);
+
+		m_node[0] = glm::clamp((int)(mouseX * GRID_SIZE_X), 0, GRID_SIZE_X - 1);
+		m_node[1] = glm::clamp((int)(mouseY * GRID_SIZE_Y), 0, GRID_SIZE_Y - 1);
 	}
 }
 
@@ -797,6 +818,16 @@ void mpm::MpmEngine::PrintGridData()
 	//	//}
 	//}
 	glUnmapNamedBuffer(gridSSBO);
+}
+
+void mpm::MpmEngine::UpdateNodeData()
+{
+	if (0 <= m_node[0] && m_node[0] < GRID_SIZE_X && 0 <= m_node[1] && m_node[1] < GRID_SIZE_Y) {
+		void* ptr = glMapNamedBuffer(gridSSBO, GL_READ_ONLY);
+		GridNode* data = static_cast<GridNode*>(ptr);
+		m_gn = data[m_node[0] * GRID_SIZE_X + m_node[1]];
+		glUnmapNamedBuffer(gridSSBO);
+	}
 }
 
 void mpm::MpmEngine::ChangeMaterialParameters(GLuint comodel)

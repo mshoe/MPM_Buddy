@@ -271,6 +271,10 @@ void MainEngine::ProcessInput(GLFWwindow * window, real lag)
 	if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
 		m_mpmEngine->SetCreateIsoTriState(m_mpmEngine->GetPausedState());
 	}
+
+	if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS) {
+		m_mpmEngine->m_selectNodeState = true;
+	}
 }
 
 void MainEngine::Update(real lag)

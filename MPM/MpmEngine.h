@@ -33,6 +33,10 @@ namespace mpm {
 		void Render();
 		void RenderGUI();
 
+		void RenderGeometryEditor();
+		void RenderGridNodeViewer();
+		void RenderMaterialPointViewer();
+
 		void HandleInput();
 
 		//void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
@@ -71,6 +75,11 @@ namespace mpm {
 		std::shared_ptr<StandardShader> m_nodeShader = nullptr;
 		int m_node[2] = { 26, 8 };
 
+		// selecting grid node
+		GridNode m_gn;
+		bool m_selectNodeState = false;
+		void UpdateNodeData();
+
 		std::shared_ptr<StandardShader> GetNodeShader() {
 			return m_nodeShader;
 		}
@@ -84,7 +93,6 @@ namespace mpm {
 		void MpmTimeStep(real dt);
 		void MpmImplictTimeCR(real dt);
 
-		void UpdateNodeData();
 		void SetGlobalForce(vec2 _globalForce) {
 			m_globalForce = _globalForce;
 		}
@@ -158,6 +166,8 @@ namespace mpm {
 		//std::vector<PointCloud> m_pointClouds;
 		std::unordered_map<std::string, std::shared_ptr<PointCloud>> m_pointCloudMap;
 		std::vector<char> m_pointCloudSelect;
+
+
 
 		// selecting material points
 		MaterialPoint m_mp;

@@ -124,6 +124,8 @@
   <ItemGroup>
     <ClCompile Include="Constants.cpp" />
     <ClCompile Include="glad\src\glad.c" />
+    <ClCompile Include="glm_imgui.cpp" />
+    <ClCompile Include="glm_MATLAB.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
     <ClCompile Include="imgui\imgui_demo.cpp" />
     <ClCompile Include="imgui\imgui_draw.cpp" />
