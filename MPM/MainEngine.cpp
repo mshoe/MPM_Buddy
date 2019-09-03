@@ -251,6 +251,11 @@ void MainEngine::ProcessInput(GLFWwindow * window, real lag)
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
+	// don't process keyboard input when writing into imgui textboxes
+	if (ImGui::GetIO().WantTextInput) {
+		return;
+	}
+
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
 		m_mpmEngine->SetPausedState(true);
 

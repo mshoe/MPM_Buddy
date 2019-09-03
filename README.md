@@ -3,11 +3,16 @@
 This program was made using C++ and OpenGL compute shaders.
 It also uses OpenGL for rendering and ImGui for GUI.
 
+Changing Reference Configuration Demo:
+https://youtu.be/NqJg0TZ9T1s
+
 Snow Demo:
 https://youtu.be/BUgUbNJmPB8
 
 Circle Tool Demo:
 https://youtu.be/fhKNuo9MTek
+
+![gif](MPM/gifs/energyDonut.gif)
 
 ![pic](MPM/pics/rectanglesCirclesSnowElastic.PNG)
 

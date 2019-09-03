@@ -83,6 +83,10 @@ void main() {
 		points[pid].FeSVD_V = V;
 
 		points[pid].P = 2.0*mew*(Fe - R) + lam*(J - 1.0)*J*Fit;
+
+		// Also update energy for visualization purposes
+		points[pid].energy = mew * ((sig1 - 1.0)*(sig1 - 1.0) + (sig2 - 1.0)*(sig2 - 1.0)) + 0.5 * lam * (J - 1.0)*(J - 1.0);
+		points[pid].energy *= points[pid].vol;
 	} else if (comodel == SIMPLE_SNOW) {
 
 		// temporarilly update the Fe
@@ -140,6 +144,10 @@ void main() {
 
 		points[pid].P = 2.0*mew*(Fe - R) + lam*(Je - 1.0)*Je*Feit;
 		points[pid].P *= pcof;
+
+		// Also update energy for visualization purposes
+		points[pid].energy = mew * ((sig1 - 1.0)*(sig1 - 1.0) + (sig2 - 1.0)*(sig2 - 1.0)) + 0.5 * lam * (Je - 1.0)*(Je - 1.0);
+		points[pid].energy *= pcof * points[pid].vol;
 	}
 
 }

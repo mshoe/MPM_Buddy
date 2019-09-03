@@ -28,7 +28,7 @@ struct MaterialPoint {
 	mat2 FeSVD_S;
 	mat2 FeSVD_V;
 
-	real opengl_padding = 0.1234567898765432;
+	real energy = 0.0;
 	real opengl_padding2 = 0.696942080086969;
 
 	friend std::ostream & operator << (std::ostream &out, const MaterialPoint &c) {
@@ -47,7 +47,7 @@ struct MaterialPoint {
 		out << "FeSVD_U: " << glm::to_string(c.FeSVD_U) << "\n";
 		out << "FeSVD_S: " << glm::to_string(c.FeSVD_S) << "\n";
 		out << "FeSVD_V: " << glm::to_string(c.FeSVD_V) << "\n";
-		out << "opengl_padding: " << c.opengl_padding << "\n";
+		out << "energy: " << c.energy << "\n";
 		out << "opengl_padding2: " << c.opengl_padding2 << "\n";
 		return out;
 	}

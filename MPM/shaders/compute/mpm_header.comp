@@ -19,7 +19,7 @@ struct materialPoint {
 	dmat2 FeSVD_S;
 	dmat2 FeSVD_V;
 
-	double opengl_padding;
+	double energy;
 	double opengl_padding2;
 };
 

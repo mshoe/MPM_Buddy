@@ -254,6 +254,14 @@ void mpm::MpmEngine::RenderMaterialPointViewer()
 			glUnmapNamedBuffer(m_pointCloudMap[pointCloudSelectStr]->ssbo);
 		}
 	}
+	ImGui::InputReal("Max energy clamp (for coloring)", &m_maxEnergyClamp, 1.0, 1000.0, "%.1f");
+	ImGui::InputReal("Min energy clamp (for coloring)", &m_minEnergyClamp, 1.0, 1000.0, "%.1f");
+	ImGui::Checkbox("Visualize Energy", &m_visualizeEnergy);
+
+	if (ImGui::Button("Set Reference Configuration")) {
+		SetReferenceConfig(pointCloudSelectStr);
+	}
+
 	if (ImGui::CollapsingHeader("Material Point")) {
 		glm::highp_fvec4 min_color = glm::highp_fvec4(1.0, 0.0, 0.0, 1.0);
 		glm::highp_fvec4 max_color = glm::highp_fvec4(0.0, 1.0, 0.0, 1.0);
@@ -271,6 +279,7 @@ void mpm::MpmEngine::RenderMaterialPointViewer()
 		ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_U", m_mp.FeSVD_U, min_color, max_color);
 		ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_S", m_mp.FeSVD_S, min_color, max_color);
 		ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_V", m_mp.FeSVD_V, min_color, max_color);
+		ImGui::DisplayNamedGlmRealColor("energy", m_mp.energy, max_color);
 	}
 
 	ImGui::End();

@@ -39,6 +39,8 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 	m_p2gCalcVolumes = std::make_unique<ComputeShader>(std::vector<std::string> {"shaders\\compute\\p2gCalculateVolumes.comp"}, "shaders\\compute\\mpm_header.comp");
 	m_g2pCalcVolumes = std::make_unique<ComputeShader>(std::vector<std::string> {"shaders\\compute\\g2pCalculateVolumes.comp"}, "shaders\\compute\\mpm_header.comp");
 
+	m_pSetReferenceConfig = std::make_unique<ComputeShader>(std::vector<std::string> {"shaders\\compute\\pSetReferenceConfig.comp"}, "shaders\\compute\\mpm_header.comp");
+
 	// implict time integration shaders
 	m_p2g2pDeltaForce = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\implicit\\g2p2gDeltaForce.comp"}, "shaders\\compute\\mpm_header.comp");
 	m_gConjugateResidualsInitPart1 = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\implicit\\gCR_InitPart1.comp"}, "shaders\\compute\\mpm_header.comp");
@@ -110,6 +112,9 @@ void mpm::MpmEngine::Render()
 		}
 	}
 	m_pPointCloudShader->Use();
+	m_pPointCloudShader->SetReal("maxEnergyClamp", m_maxEnergyClamp);
+	m_pPointCloudShader->SetReal("minEnergyClamp", m_minEnergyClamp);
+	m_pPointCloudShader->SetBool("visualizeEnergy", m_visualizeEnergy);
 	glBindVertexArray(VisualizeVAO);
 	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
 		m_pPointCloudShader->SetVec("pointCloudColor", pointCloudPair.second->color);
@@ -125,7 +130,7 @@ void mpm::MpmEngine::HandleInput()
 	using namespace std::chrono;
 	time_point<high_resolution_clock> t1;
 	time_point<high_resolution_clock> t2;
-
+	
 	if (m_paused && m_rightButtonDown) {
 		m_createCircleState = false;
 		m_createRectState = false;

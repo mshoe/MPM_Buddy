@@ -95,6 +95,7 @@ namespace mpm {
 		bool MpmCRStep(real dt);
 		void MpmCREnd(real dt);
 		void CalculatePointCloudVolumes(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
+		void SetReferenceConfig(std::string pointCloudID);
 
 		//*** GUI FUNCTIONS ***//
 		void RenderTimeIntegrator();
@@ -125,6 +126,8 @@ namespace mpm {
 
 		std::unique_ptr<ComputeShader> m_p2gCalcVolumes = nullptr;
 		std::unique_ptr<ComputeShader> m_g2pCalcVolumes = nullptr;
+
+		std::unique_ptr<ComputeShader> m_pSetReferenceConfig = nullptr;
 
 		std::unique_ptr<StandardShader> m_pPointCloudShader = nullptr;
 
@@ -176,6 +179,10 @@ namespace mpm {
 
 		// selecting material points
 		MaterialPoint m_mp;
+
+		double m_maxEnergyClamp = 100.0;
+		double m_minEnergyClamp = 0.0;
+		bool m_visualizeEnergy = false;
 		
 		MaterialParameters m_mpParameters;
 		MaterialParameters m_fixedCorotatedParameters;
