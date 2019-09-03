@@ -18,4 +18,6 @@ void main() {
 	nodes[node.x][node.y].Ark = dvec2(0.0);
 	nodes[node.x][node.y].Apk = dvec2(0.0);
 	nodes[node.x][node.y].rkArk = 0.0;
+
+	nodes[node.x][node.y].converged = false;
 }

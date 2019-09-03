@@ -29,7 +29,9 @@ struct GridNode {
 	vec2 Apk = vec2(3.0);
 
 	GLreal rkArk = 0.1;
-	GLreal glsl_padding2 = 0.0;
+	//GLreal glsl_padding2 = 0.0;
+	bool converged = true;
+
 
 	friend std::ostream & operator << (std::ostream &out, const GridNode &c) {
 		out << "m: " << c.m << "\n";
@@ -44,7 +46,7 @@ struct GridNode {
 		out << "Ark: " << glm::to_string(c.Ark) << "\n";
 		out << "Apk: " << glm::to_string(c.Apk) << "\n";
 		out << "rkArk: " << c.rkArk << "\n";
-		out << "padding2: " << c.glsl_padding2 << "\n";
+		//out << "padding2: " << c.glsl_padding2 << "\n";
 		return out;
 	}
 };

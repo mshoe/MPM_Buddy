@@ -1,0 +1,18 @@
+#version 450 core
+
+layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+
+/*** HEADER ***/
+
+// This gpu shader performs parallel reduction AND...
+// It's output will be true if all elements in the 2D array are true, otherwise it will be false.
+
+// For our MPM case of gridsize = (32 * 4) x (32 * 4),
+// we will need to dispatch this shader 4 times for each of the 4 (32 * 2) x (32 * 2) quadrants.
+// Then the c++ program can AND the results of the four quadrants.
+
+void main() {
+    
+    
+
+}

@@ -7,7 +7,7 @@
 #include <sstream>
 namespace ImGui {
 
-
+	void DisplayNamedBoolColor(std::string name, bool value, glm::highp_fvec4 true_color, glm::highp_fvec4 false_color);
 	void DisplayGlmRealColor(real value, glm::highp_fvec4 color);
 	void DisplayNamedGlmRealColor(std::string name, real value, glm::highp_fvec4 color);
 	void DisplayGlmRealMixColor(real value, real min_element, real max_element, glm::highp_fvec4 min_color, glm::highp_fvec4 max_color);

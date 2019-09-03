@@ -33,10 +33,6 @@ namespace mpm {
 		void Render();
 		void RenderGUI();
 
-		void RenderGeometryEditor();
-		void RenderGridNodeViewer();
-		void RenderMaterialPointViewer();
-
 		void HandleInput();
 
 		//void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
@@ -89,23 +85,32 @@ namespace mpm {
 
 	private:
 
-		//*** FUNCTIONS ***//
+		//*** MPM FUNCTIONS ***//
 		void MpmTimeStep(real dt);
-		void MpmImplictTimeCR(real dt);
+		void MpmTimeStepP2G(real dt);
+		void MpmTimeStepExplicitGridUpdate(real dt);
+		void MpmTimeStepSemiImplicitGridUpdate(real dt);
+		void MpmTimeStepG2P(real dt);
+		void MpmCRInit(real dt);
+		bool MpmCRStep(real dt);
+		void MpmCREnd(real dt);
+		void CalculatePointCloudVolumes(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
 
-		void SetGlobalForce(vec2 _globalForce) {
-			m_globalForce = _globalForce;
-		}
+		//*** GUI FUNCTIONS ***//
+		void RenderTimeIntegrator();
+		void RenderForceController();
+		void RenderGeometryEditor();
+		void RenderGridNodeViewer();
+		void RenderMaterialPointViewer();
 
+		//*** GEOMETRY EDITOR FUNCTIONS ***//
 		std::shared_ptr<PointCloud> GenPointCloud(const std::string pointCloudID, sdf::Shape& shape,
 			const real gridDimX, const real gridDimY,
 			const real inner_rounding, const real outer_rounding, 
 			const MaterialParameters &parameters,
 			const GLuint comodel,
 			vec2 initialVelocity, glm::highp_fvec4 color);
-		void CalculatePointCloudVolumes(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
 
-		void CreateDemo();
 		
 		void PrintGridData();
 
@@ -142,13 +147,13 @@ namespace mpm {
 
 		real m_drag = 0.5;
 		vec2 m_globalForce = vec2(0.0);
-		GLreal m_globalForceArray[2] = { 0.0, 0.0 }; // for input with imgui
 		//real m_set_dt = 1.0 / 120.0;
 		real m_dt = 1.0 / 120.0;
 		bool m_paused = true;
 		bool m_implicit = false;
 		real m_implicit_ratio = 1.0;
-		int m_max_conj_res_iter = 30;
+		int m_max_conj_res_iter = 30;// GRID_SIZE_X* GRID_SIZE_Y;
+		int m_cr_step = 0;
 
 		//int m_pointCloudSelect = 0;
 		int m_timeStep = 0;

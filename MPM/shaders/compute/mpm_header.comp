@@ -39,7 +39,7 @@ struct gridNode {
 	dvec2 Apk;
 
 	double rkArk;
-	double glsl_padding2;
+	bool converged;
 };
 
 layout (std430, binding = 1) buffer pointCloud {
@@ -174,5 +174,6 @@ uniform double crit_c = 0.025;
 uniform double crit_s = 0.0075;
 uniform double hardening = 10.0;
 
+uniform double semi_implicit_eps = 0.00001;
 
 /* end MPM shaders header */

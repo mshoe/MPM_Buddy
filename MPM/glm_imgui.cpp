@@ -1,5 +1,20 @@
 #include "glm_imgui.h"
 
+void ImGui::DisplayNamedBoolColor(std::string name, bool value, glm::highp_fvec4 true_color, glm::highp_fvec4 false_color)
+{
+	std::string beginStr = name + " = ";
+	ImGui::Text(beginStr.c_str());
+	ImGui::SameLine();
+	if (value) {
+		ImVec4 imcolor = ImVec4(true_color.x, true_color.y, true_color.z, true_color.w);
+		ImGui::TextColored(imcolor, "true");
+	}
+	else {
+		ImVec4 imcolor = ImVec4(false_color.x, false_color.y, false_color.z, false_color.w);
+		ImGui::TextColored(imcolor, "false");
+	}
+}
+
 void ImGui::DisplayGlmRealColor(real value, glm::highp_fvec4 color)
 {
 	std::ostringstream numStream;

@@ -55,6 +55,12 @@
     <Filter Include="Header Files\Utility\src">
       <UniqueIdentifier>{d47f7dab-339c-4dbe-a3bb-47d8d2ed646e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\apps\MPM">
+      <UniqueIdentifier>{4d452e6f-e999-4a81-9d88-99c88ac9890b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\MPM">
+      <UniqueIdentifier>{6a3abc4d-cabb-4cc8-a4e9-e7236d2a548a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -81,9 +87,6 @@
     <ClCompile Include="imgui\imgui_impl_glfw.cpp">
       <Filter>Resource Files\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="MpmEngine.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Constants.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -95,6 +98,15 @@
     </ClCompile>
     <ClCompile Include="glm_MATLAB.cpp">
       <Filter>Header Files\Utility\src</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmEngine.cpp">
+      <Filter>Source Files\MPM</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmAlgorithm.cpp">
+      <Filter>Source Files\MPM</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmImGui.cpp">
+      <Filter>Source Files\MPM</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -146,14 +158,14 @@
     <ClInclude Include="Engine.h">
       <Filter>Header Files\apps</Filter>
     </ClInclude>
-    <ClInclude Include="MpmEngine.h">
-      <Filter>Header Files\apps</Filter>
-    </ClInclude>
     <ClInclude Include="glm_MATLAB.h">
       <Filter>Header Files\Utility\include</Filter>
     </ClInclude>
     <ClInclude Include="glm_imgui.h">
       <Filter>Header Files\Utility\include</Filter>
+    </ClInclude>
+    <ClInclude Include="MpmEngine.h">
+      <Filter>Header Files\apps\MPM</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

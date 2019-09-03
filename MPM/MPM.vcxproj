@@ -134,7 +134,9 @@
     <ClCompile Include="imgui\imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainEngine.cpp" />
+    <ClCompile Include="MpmAlgorithm.cpp" />
     <ClCompile Include="MpmEngine.cpp" />
+    <ClCompile Include="MpmImGui.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />

@@ -14,4 +14,10 @@ void main() {
 	double alpha = (pkApk == 0.0) ? 0.0 : nodes[node.x][node.y].rkArk / pkApk; // if 0, it means it converged
 	nodes[node.x][node.y].xk = nodes[node.x][node.y].xk + alpha*nodes[node.x][node.y].pk;
 	nodes[node.x][node.y].rk = nodes[node.x][node.y].rk - alpha*nodes[node.x][node.y].Apk;
+
+	//bool converged_before = nodes[node.x][node.y].converged;
+
+	nodes[node.x][node.y].converged = dot(nodes[node.x][node.y].rk, nodes[node.x][node.y].rk) < 0.0001;
+
+	//bool converged_after = nodes[node.x][node.y].converged;
 }
