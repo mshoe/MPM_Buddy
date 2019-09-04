@@ -9,6 +9,8 @@
 #include "PointCloud.h"
 #include "Grid.h"
 
+#include "OpenGLScreen.h"
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -33,55 +35,20 @@ namespace mpm {
 		void Render();
 		void RenderGUI();
 
-		void HandleInput();
+		void ProcessKeyboardInput(GLFWwindow* window, real lag);
+		void ProcessMouseInput(GLFWwindow* window, real lag);
+		void HandleStates();
 
 		//void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 
-		void SetPausedState(bool state) { m_paused = state; }
-		bool GetPausedState() { return m_paused; }
-
-		void SetCreateCircleState(bool state) {
-			if (state) {
-				m_createRectState = false;
-				m_createIsoTriState = false;
-			}
-			m_createCircleState = state; 
-		}
-
-
-		void SetCreateRectState(bool state) {
-			if (state) {
-				m_createCircleState = false;
-				m_createIsoTriState = false;
-			}
-			m_createRectState = state;
-		}
-
-		void SetCreateIsoTriState(bool state) {
-			if (state) {
-				m_createCircleState = false;
-				m_createRectState = false;
-			}
-			m_createIsoTriState = state;
-		}
-
-
 		// temporarily putting node stuff here
 		bool m_nodeGraphicsActive = false;
-		std::shared_ptr<StandardShader> m_nodeShader = nullptr;
 		int m_node[2] = { 26, 8 };
 
 		// selecting grid node
 		GridNode m_gn;
 		bool m_selectNodeState = false;
 		void UpdateNodeData();
-
-		std::shared_ptr<StandardShader> GetNodeShader() {
-			return m_nodeShader;
-		}
-		bool GetNodeShaderActive() {
-			return m_nodeGraphicsActive;
-		}
 
 	private:
 
@@ -104,6 +71,11 @@ namespace mpm {
 		void RenderGridNodeViewer();
 		void RenderMaterialPointViewer();
 
+		void InitZoomWindow();
+		GLuint m_zoom_VAO, m_zoom_VBO, m_zoom_EBO;
+		vec2 m_zoomWindowPos;
+		vec2 m_zoomWindowDims; // (width, height)
+
 		//*** GEOMETRY EDITOR FUNCTIONS ***//
 		std::shared_ptr<PointCloud> GenPointCloud(const std::string pointCloudID, sdf::Shape& shape,
 			const real gridDimX, const real gridDimY,
@@ -111,8 +83,14 @@ namespace mpm {
 			const MaterialParameters &parameters,
 			const GLuint comodel,
 			vec2 initialVelocity, glm::highp_fvec4 color);
-
+		void ClearCreateStates() {
+			m_createCircleState = false;
+			m_createRectState = false;
+			m_createIsoTriState = false;
+		}
 		
+
+
 		void PrintGridData();
 
 
@@ -129,7 +107,14 @@ namespace mpm {
 
 		std::unique_ptr<ComputeShader> m_pSetReferenceConfig = nullptr;
 
+		// RENDERING
 		std::unique_ptr<StandardShader> m_pPointCloudShader = nullptr;
+		std::unique_ptr<StandardShader> m_mouseShader = nullptr;
+
+		std::unique_ptr<OpenGLScreen> m_openGLScreen = nullptr;
+		vec4 m_mouse = vec4(0.0);
+		bool m_leftButtonDown = false;
+		bool m_rightButtonDown = false;
 
 		
 

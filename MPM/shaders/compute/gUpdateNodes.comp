@@ -4,7 +4,7 @@ layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
 /*** HEADER ***/
 
-uniform dvec2 mousePos; // this is normalized w.r.t. screen
+uniform dvec4 iMouse; // this is normalized w.r.t. screen
 
 uniform double mousePower;
 
@@ -14,7 +14,7 @@ void main() {
 	dvec2 nodeMomentum = nodes[node.x][node.y].momentum;
 	dvec2 nodeForce = nodes[node.x][node.y].force;
 
-	dvec2 mouseForce = mousePower * normalize(dvec2(mousePos.x * GRID_SIZE_X - node.x, mousePos.y * GRID_SIZE_Y - node.y));
+	dvec2 mouseForce = mousePower * iMouse.w * normalize(dvec2(iMouse.x * GRID_SIZE_X - node.x, iMouse.y * GRID_SIZE_Y - node.y));
 	nodes[node.x][node.y].v = (nodeMass == 0.0) ? dvec2(0.0) : nodeMomentum/nodeMass -dt*drag*nodeMomentum/nodeMass + dt*(nodeForce/nodeMass + globalForce + mouseForce);
 
 

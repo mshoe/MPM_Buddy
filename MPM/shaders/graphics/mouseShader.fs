@@ -1,14 +1,14 @@
 #version 450 core
 
 uniform dvec2 iResolution;
-uniform dmat4 iCamera;
+// uniform dmat4 iCamera;
 uniform dvec4 iMouse;
-uniform double iTime;
+// uniform double iTime;
 
-const dvec3 camera_from = iCamera[3].xyz;
-const dvec3 camera_dir = -iCamera[2].xyz;
-const dvec3 camera_right = iCamera[0].xyz;
-const dvec3 camera_up = iCamera[1].xyz;
+// const dvec3 camera_from = iCamera[3].xyz;
+// const dvec3 camera_dir = -iCamera[2].xyz;
+// const dvec3 camera_right = iCamera[0].xyz;
+// const dvec3 camera_up = iCamera[1].xyz;
 
 const int GRID_SIZE_X = 32*4;
 const int GRID_SIZE_Y = 32*4;
@@ -21,7 +21,7 @@ void main() {
 	double radius = 0.05;
 
 	// pixel.x is 0 at the middle, -1 at left, +1 at right
-	dvec2 norm_pixel = dvec2((gl_FragCoord.x - iResolution.x/2.0)/ iResolution.x * 2.0, 1.0 - gl_FragCoord.y / iResolution.y);
+	dvec2 norm_pixel = dvec2((gl_FragCoord.x - iResolution.x/2.0)/ iResolution.x * 2.0, gl_FragCoord.y / iResolution.y);
 
 
 	double dist_to_mouse = length(iMouse.xy - norm_pixel);

@@ -108,6 +108,9 @@
     <ClCompile Include="MpmImGui.cpp">
       <Filter>Source Files\MPM</Filter>
     </ClCompile>
+    <ClCompile Include="OpenGLScreen.cpp">
+      <Filter>Header Files\Utility\src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainEngine.h">
@@ -152,9 +155,6 @@
     <ClInclude Include="Shape.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
-    <ClInclude Include="Grid.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Engine.h">
       <Filter>Header Files\apps</Filter>
     </ClInclude>
@@ -166,6 +166,12 @@
     </ClInclude>
     <ClInclude Include="MpmEngine.h">
       <Filter>Header Files\apps\MPM</Filter>
+    </ClInclude>
+    <ClInclude Include="Grid.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenGLScreen.h">
+      <Filter>Header Files\Utility\include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

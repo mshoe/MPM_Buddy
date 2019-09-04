@@ -49,12 +49,9 @@ void mpm::MpmEngine::MpmTimeStepExplicitGridUpdate(real dt)
 	m_gUpdate->Use();
 	m_gUpdate->SetReal("dt", dt);
 	m_gUpdate->SetVec("globalForce", m_globalForce);
-	m_gUpdate->SetVec("mousePos", m_mousePos);
+	m_gUpdate->SetVec("iMouse", m_mouse);
 	m_gUpdate->SetReal("drag", m_drag);
-	if (m_rightButtonDown)
-		m_gUpdate->SetReal("mousePower", m_mousePower);
-	else
-		m_gUpdate->SetReal("mousePower", 0.0);
+	m_gUpdate->SetReal("mousePower", m_mousePower);
 	glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }

@@ -28,30 +28,17 @@ public:
 	MainEngine();
 	~MainEngine();
 
-	bool InitShaderPipeline();
-	bool InitScreen();
-	bool InitMPM();
-
 	void Loop();
 	void ProcessInput(GLFWwindow *window, real lag);
-	void Update(real lag);
 	void Render();
 
 private:
 	GLFWwindow *m_window;
-	bool m_cameraImgui = true;
 
-	std::shared_ptr<StandardShader> m_mouseShader;
-	//std::unique_ptr<Camera> m_camera;
 	std::shared_ptr<mpm::MpmEngine> m_mpmEngine;
 
 	std::shared_ptr<Engine> m_currentEngine;
 
 	real m_time = 0.f;
-
-	// Rendering stuff
-	GLuint VAO;
-	GLuint VBO;
-	GLuint EBO;
 };
 

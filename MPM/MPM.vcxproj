@@ -132,6 +132,7 @@
     <ClCompile Include="imgui\imgui_impl_glfw.cpp" />
     <ClCompile Include="imgui\imgui_impl_opengl3.cpp" />
     <ClCompile Include="imgui\imgui_widgets.cpp" />
+    <ClCompile Include="OpenGLScreen.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainEngine.cpp" />
     <ClCompile Include="MpmAlgorithm.cpp" />
@@ -155,6 +156,7 @@
     <ClInclude Include="imgui\imstb_truetype.h" />
     <ClInclude Include="MainEngine.h" />
     <ClInclude Include="MpmEngine.h" />
+    <ClInclude Include="OpenGLScreen.h" />
     <ClInclude Include="PointCloud.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Shape.h" />

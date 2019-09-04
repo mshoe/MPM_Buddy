@@ -54,9 +54,10 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 	glCreateVertexArrays(1, &VisualizeVAO);
 
 	m_pPointCloudShader = std::make_unique<StandardShader>(std::vector<std::string>{"shaders\\graphics\\pointCloud.vs"}, std::vector<std::string>{"shaders\\graphics\\pointCloud.fs"}, "shaders\\compute\\mpm_header.comp");
-	m_mouseShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\mouseShader.vs"}, std::vector<std::string>{"shaders\\graphics\\mouseShader.fs"}, "shaders\\compute\\mpm_header.comp");
+	m_mouseShader = std::make_unique<StandardShader>(std::vector<std::string>{"shaders\\graphics\\mouseShader.vs"}, std::vector<std::string>{"shaders\\graphics\\mouseShader.fs"}, "shaders\\compute\\mpm_header.comp");
 	//m_nodeShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\nodeSelectionShader.vs"}, std::vector<std::string>{"shaders\\graphics\\nodeSelectionShader.fs"}, "shaders\\compute\\mpm_header.comp");
 
+	m_openGLScreen = std::make_unique<OpenGLScreen>();
 
 	// Initialize the grid SSBO on the GPU
 	m_grid = Grid(GRID_SIZE_X, GRID_SIZE_Y);
@@ -87,13 +88,17 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 	m_mpParameters = m_fixedCorotatedParameters;
 	return true;
 }
+
 bool mpm::MpmEngine::CleanupComputeShaderPipeline()
 {
 	m_pointCloudMap.clear();
 	glDeleteBuffers(1, &gridSSBO);
 	glDeleteVertexArrays(1, &VisualizeVAO);
-
 	return false;
+}
+
+void mpm::MpmEngine::InitZoomWindow() {
+
 }
 
 void mpm::MpmEngine::Render()
@@ -111,6 +116,16 @@ void mpm::MpmEngine::Render()
 			}
 		}
 	}
+	// RENDER MOUSE SHADER
+	m_mouseShader->Use();
+	m_mouseShader->SetVec("iMouse", m_mouse);
+	m_mouseShader->SetVec("iResolution", vec2(SRC_WIDTH, SRC_HEIGHT));
+	m_mouseShader->SetBool("nodeGraphicsActive", m_nodeGraphicsActive);
+	m_mouseShader->SetInt("nodeI", m_node[0]);
+	m_mouseShader->SetInt("nodeJ", m_node[1]);
+	m_openGLScreen->Render();
+
+	// RENDER POINT CLOUD
 	m_pPointCloudShader->Use();
 	m_pPointCloudShader->SetReal("maxEnergyClamp", m_maxEnergyClamp);
 	m_pPointCloudShader->SetReal("minEnergyClamp", m_minEnergyClamp);
@@ -125,23 +140,79 @@ void mpm::MpmEngine::Render()
 	glBindVertexArray(0);
 }
 
-void mpm::MpmEngine::HandleInput()
+void mpm::MpmEngine::ProcessKeyboardInput(GLFWwindow* window, real lag)
+{
+	// don't process keyboard input when writing into imgui textboxes
+	if (ImGui::GetIO().WantTextInput) {
+		return;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+		m_paused = true;
+
+	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+			m_paused = false;
+		}
+	}
+
+	if (m_paused) {
+		if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
+			ClearCreateStates();
+			m_createCircleState = true;
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+			ClearCreateStates();
+			m_createRectState = true;
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
+			ClearCreateStates();
+			m_createIsoTriState = true;
+		}
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS) {
+		m_selectNodeState = true;
+	}
+}
+
+void mpm::MpmEngine::ProcessMouseInput(GLFWwindow* window, real lag)
+{
+	real xpos, ypos, left_click, right_click;
+	glfwGetCursorPos(window, &xpos, &ypos);
+	left_click = (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) ? 1.0 : 0.0;
+	right_click = (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) ? 1.0 : 0.0;
+
+	// since mpm engine occurs on right half of screen, xpos needs to be mapped there
+	real mpm_xpos = (xpos - (real)SRC_WIDTH / 2.0) / (real)SRC_WIDTH * 2.0;
+
+	// normalize mouse coordinates
+	xpos = xpos / (real)SRC_WIDTH;
+	ypos = ypos / (real)SRC_HEIGHT;
+
+	m_leftButtonDown = (bool)left_click;
+	m_rightButtonDown = (bool)right_click;
+	// y value is given inverted
+	m_mouse = vec4(mpm_xpos, 1.0 - ypos, left_click, right_click);
+}
+
+void mpm::MpmEngine::HandleStates()
 {
 	using namespace std::chrono;
 	time_point<high_resolution_clock> t1;
 	time_point<high_resolution_clock> t2;
 	
 	if (m_paused && m_rightButtonDown) {
-		m_createCircleState = false;
-		m_createRectState = false;
-		m_createIsoTriState = false;
+		ClearCreateStates();
 	}
 
 	if (m_paused && m_createCircleState && m_leftButtonDown)
 	{
 		m_createCircleState = false;
 
-		std::cout << "Mouse position is at (" << m_mousePos.x << ", " << m_mousePos.y << ")" << std::endl;
+		std::cout << "Mouse position is at (" << m_mouse.x << ", " << m_mouse.y << ")" << std::endl;
 
 		// 1. Create point clouds
 		std::cout << "Generating point cloud...\n";
@@ -151,7 +222,7 @@ void mpm::MpmEngine::HandleInput()
 
 		m_circleCount++;
 		//sdf::sdFunc dCircle(sdf::DemoCircle);
-		sdf::Circle shape(vec2(m_mousePos.x * GRID_SIZE_X, m_mousePos.y * GRID_SIZE_Y), m_circle_r);
+		sdf::Circle shape(vec2(m_mouse.x * GRID_SIZE_X, m_mouse.y * GRID_SIZE_Y), m_circle_r);
 		std::string circleID = "circle" + std::to_string(m_circleCount);
 
 		glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
@@ -173,7 +244,7 @@ void mpm::MpmEngine::HandleInput()
 	{
 		m_createRectState = false;
 
-		std::cout << "Mouse position is at (" << m_mousePos.x << ", " << m_mousePos.y << ")" << std::endl;
+		std::cout << "Mouse position is at (" << m_mouse.x << ", " << m_mouse.y << ")" << std::endl;
 
 		// 1. Create point clouds
 		std::cout << "Generating point cloud...\n";
@@ -183,7 +254,7 @@ void mpm::MpmEngine::HandleInput()
 
 		m_rectCount++;
 		//sdf::sdFunc dCircle(sdf::DemoCircle);
-		sdf::Rectangle shape(vec2(m_mousePos.x * GRID_SIZE_X, m_mousePos.y * GRID_SIZE_Y), m_rect_b, m_rect_h);
+		sdf::Rectangle shape(vec2(m_mouse.x * GRID_SIZE_X, m_mouse.y * GRID_SIZE_Y), m_rect_b, m_rect_h);
 		std::string rectID = "rect" + std::to_string(m_rectCount);
 
 		glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
@@ -203,7 +274,7 @@ void mpm::MpmEngine::HandleInput()
 	{
 		m_createIsoTriState = false;
 
-		std::cout << "Mouse position is at (" << m_mousePos.x << ", " << m_mousePos.y << ")" << std::endl;
+		std::cout << "Mouse position is at (" << m_mouse.x << ", " << m_mouse.y << ")" << std::endl;
 
 		// 1. Create point clouds
 		std::cout << "Generating point cloud...\n";
@@ -213,7 +284,7 @@ void mpm::MpmEngine::HandleInput()
 
 		m_isoTriCount++;
 		//sdf::sdFunc dCircle(sdf::DemoCircle);
-		sdf::IsoscelesTriangle shape(vec2(m_mousePos.x * GRID_SIZE_X, m_mousePos.y * GRID_SIZE_Y), m_iso_tri_b, m_iso_tri_h);
+		sdf::IsoscelesTriangle shape(vec2(m_mouse.x * GRID_SIZE_X, m_mouse.y * GRID_SIZE_Y), m_iso_tri_b, m_iso_tri_h);
 		std::string isoTriID = "isoTri" + std::to_string(m_isoTriCount);
 
 		glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
@@ -230,14 +301,13 @@ void mpm::MpmEngine::HandleInput()
 	if (m_paused && m_selectNodeState && m_leftButtonDown) {
 		m_selectNodeState = false;
 
-		real mouseX = glm::clamp(m_mousePos.x, 0.0, 1.0);
-		real mouseY = glm::clamp(m_mousePos.y, 0.0, 1.0);
+		real mouseX = glm::clamp(m_mouse.x, 0.0, 1.0);
+		real mouseY = glm::clamp(m_mouse.y, 0.0, 1.0);
 
 		m_node[0] = glm::clamp((int)(mouseX * GRID_SIZE_X), 0, GRID_SIZE_X - 1);
 		m_node[1] = glm::clamp((int)(mouseY * GRID_SIZE_Y), 0, GRID_SIZE_Y - 1);
 	}
 }
-
 
 std::shared_ptr<PointCloud> mpm::MpmEngine::GenPointCloud(const std::string pointCloudID, sdf::Shape& shape,
 	const real gridDimX, const real gridDimY, 
@@ -320,14 +390,6 @@ void mpm::MpmEngine::PrintGridData()
 			std::cout << gn << std::endl;
 		}
 	}
-	//std::cout << "Reading as GLfloat: \n";
-	//GLfloat *test = static_cast<GLfloat*>(ptr);
-	//for (int i = 0; i < GRID_SIZE_X*GRID_SIZE_Y*4; i++) {
-	//	//if (test[i] != 0.f) {
-	//		std::cout << "Index: " << i << std::endl;
-	//		std::cout << test[i] << std::endl;
-	//	//}
-	//}
 	glUnmapNamedBuffer(gridSSBO);
 }
 
