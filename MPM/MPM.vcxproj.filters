@@ -238,5 +238,11 @@
     <None Include="shaders\compute\implicit\gCR_Conclusion.comp">
       <Filter>Resource Files\Shaders\compute\implicit</Filter>
     </None>
+    <None Include="shaders\graphics\zoomWindow.vs">
+      <Filter>Resource Files\Shaders\graphics</Filter>
+    </None>
+    <None Include="shaders\graphics\zoomWindow.fs">
+      <Filter>Resource Files\Shaders\graphics</Filter>
+    </None>
   </ItemGroup>
 </Project>

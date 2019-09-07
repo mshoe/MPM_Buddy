@@ -1,7 +1,7 @@
 #version 450 core
 
-uniform dvec2 iResolution;
-// uniform dmat4 iCamera;
+uniform dvec2 iSourceResolution; // should be vec2(1800, 900)
+
 uniform dvec4 iMouse;
 // uniform double iTime;
 
@@ -21,8 +21,8 @@ void main() {
 	double radius = 0.05;
 
 	// pixel.x is 0 at the middle, -1 at left, +1 at right
-	dvec2 norm_pixel = dvec2((gl_FragCoord.x - iResolution.x/2.0)/ iResolution.x * 2.0, gl_FragCoord.y / iResolution.y);
-
+	//dvec2 norm_pixel = dvec2((gl_FragCoord.x - iSourceResolution.x/2.0)/ iSourceResolution.x * 2.0, gl_FragCoord.y / iSourceResolution.y);
+	dvec2 norm_pixel = dvec2(gl_FragCoord.x/iSourceResolution.x, gl_FragCoord.y / iSourceResolution.y);
 
 	double dist_to_mouse = length(iMouse.xy - norm_pixel);
 	double intensity = iMouse.w * step(-radius, -dist_to_mouse) * (radius - dist_to_mouse) / radius;

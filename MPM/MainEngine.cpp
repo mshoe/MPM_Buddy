@@ -152,7 +152,7 @@ void MainEngine::Loop()
 
 		ProcessInput(m_window, 0.0);
 		
-
+		m_mpmEngine->Update();
 
 		Render();
 
@@ -172,8 +172,7 @@ void MainEngine::ProcessInput(GLFWwindow * window, real lag)
 
 void MainEngine::Render()
 {
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+
 
 	m_mpmEngine->Render();
 	

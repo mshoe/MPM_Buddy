@@ -32,7 +32,9 @@ namespace mpm {
 		bool InitComputeShaderPipeline();
 		bool CleanupComputeShaderPipeline();
 
+		void Update();
 		void Render();
+		void RenderPointClouds(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen);
 		void RenderGUI();
 
 		void ProcessKeyboardInput(GLFWwindow* window, real lag);
@@ -70,11 +72,19 @@ namespace mpm {
 		void RenderGeometryEditor();
 		void RenderGridNodeViewer();
 		void RenderMaterialPointViewer();
+		void RenderZoomWindow();
 
+		//*** ZOOM WINDOW ***//
 		void InitZoomWindow();
+		std::shared_ptr<ImGuiScreen> m_zoomWindow = nullptr;
 		GLuint m_zoom_VAO, m_zoom_VBO, m_zoom_EBO;
-		vec2 m_zoomWindowPos;
 		vec2 m_zoomWindowDims; // (width, height)
+		real m_zoomFactor = 1.0;
+		bool m_zoomState = false;
+		bool m_showZoomBorder = true;
+		bool m_movingZoomWindow = false;
+		vec2 m_zoomPoint = vec2(40.0, 50.0); // ZOOM POINT IN GRID SPACE
+		vec2 m_zoomDim = vec2(GRID_SIZE_X, GRID_SIZE_Y);
 
 		//*** GEOMETRY EDITOR FUNCTIONS ***//
 		std::shared_ptr<PointCloud> GenPointCloud(const std::string pointCloudID, sdf::Shape& shape,
@@ -110,8 +120,11 @@ namespace mpm {
 		// RENDERING
 		std::unique_ptr<StandardShader> m_pPointCloudShader = nullptr;
 		std::unique_ptr<StandardShader> m_mouseShader = nullptr;
+		std::unique_ptr<StandardShader> m_zoomWindowShader = nullptr;
 
-		std::unique_ptr<OpenGLScreen> m_openGLScreen = nullptr;
+
+		std::shared_ptr<OpenGLScreen> m_openGLScreen = nullptr;
+		vec4 m_mpm_mouse = vec4(0.0);
 		vec4 m_mouse = vec4(0.0);
 		bool m_leftButtonDown = false;
 		bool m_rightButtonDown = false;

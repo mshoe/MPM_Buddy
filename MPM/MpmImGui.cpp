@@ -13,7 +13,7 @@ void mpm::MpmEngine::RenderGUI()
 		RenderGeometryEditor();
 		RenderGridNodeViewer();
 		RenderMaterialPointViewer();
-
+		RenderZoomWindow();
 
 	}
 }
@@ -262,6 +262,8 @@ void mpm::MpmEngine::RenderMaterialPointViewer()
 		SetReferenceConfig(pointCloudSelectStr);
 	}
 
+	
+
 	if (ImGui::CollapsingHeader("Material Point")) {
 		glm::highp_fvec4 min_color = glm::highp_fvec4(1.0, 0.0, 0.0, 1.0);
 		glm::highp_fvec4 max_color = glm::highp_fvec4(0.0, 1.0, 0.0, 1.0);
@@ -281,6 +283,27 @@ void mpm::MpmEngine::RenderMaterialPointViewer()
 		ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_V", m_mp.FeSVD_V, min_color, max_color);
 		ImGui::DisplayNamedGlmRealColor("energy", m_mp.energy, max_color);
 	}
+
+	ImGui::End();
+}
+
+void mpm::MpmEngine::RenderZoomWindow()
+{
+	ImGui::Begin("Zoom Window");
+	ImGui::InputReal("Zoom Point x: ", &m_zoomPoint.x, 1.0, 10.0, "%.1f");
+	ImGui::InputReal("Zoom Point y: ", &m_zoomPoint.y, 1.0, 10.0, "%.1f");
+	ImGui::InputReal("Zoom Factor", &m_zoomFactor, 0.5, 2.0, "%.1f");
+	ImGui::Checkbox("Show Zoom Border", &m_showZoomBorder);
+	ImGui::Checkbox("Move Zoom Window", &m_movingZoomWindow);
+	ImGui::Image(
+		(void*)(intptr_t)m_zoomWindow->texture,
+		ImVec2((float)m_zoomWindow->screen_dimensions.x, (float)m_zoomWindow->screen_dimensions.y),
+		ImVec2(0, 1),
+		ImVec2(1, 0),
+		ImVec4(1,1,1,1),
+		ImVec4(1,1,1,1)
+	);
+
 
 	ImGui::End();
 }

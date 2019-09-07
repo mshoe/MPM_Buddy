@@ -3,7 +3,11 @@
 out vec4 stressColor;
 uniform double maxEnergyClamp = 100.0;
 uniform double minEnergyClamp = 0.0;
-
+uniform dvec2 iSourceResolution; // should be vec2(1800, 900)
+uniform dvec2 iResolution; // e.g. vec2(900, 900)
+uniform dvec2 iCenter; // e.g. vec(900, 450)
+uniform double zoomFactor;
+uniform dvec2 zoomPoint;
 /*** HEADER ***/
 
 void main() {
@@ -11,10 +15,31 @@ void main() {
 	// calculate radius
 	gl_PointSize = 2.0;
 
-	// only draw on the right half of the window screen
-	dvec2 norm_pos = (2.0 * points[gl_VertexID].x - vec2(GRID_SIZE_X, GRID_SIZE_Y))/vec2(GRID_SIZE_X, GRID_SIZE_Y);
-	norm_pos.x = norm_pos.x / 2.0;
-	norm_pos.x = norm_pos.x + 0.5;
+	// map position to (-1.0, 1.0)
+	dvec2 pos = points[gl_VertexID].x - zoomPoint;
+	pos *= zoomFactor;
+	pos += zoomPoint;
+	dvec2 norm_pos = (2.0*pos - vec2(GRID_SIZE_X, GRID_SIZE_Y))/vec2(GRID_SIZE_X, GRID_SIZE_Y);
+	
+	// original borders are x: (-1.0, 1.0), y: (-1.0, 1.0)
+
+	double left_border = (iCenter.x - iSourceResolution.x/2.0 - iResolution.x/2.0) / iSourceResolution.x * 2.0;
+	double right_border = (iCenter.x - iSourceResolution.x/2.0 + iResolution.x/2.0) / iSourceResolution.x * 2.0;
+	double bottom_border = (iCenter.y - iSourceResolution.y/2.0 - iResolution.y/2.0) / iSourceResolution.y * 2.0;
+	double top_border = (iCenter.y - iSourceResolution.y/2.0 + iResolution.y/2.0) / iSourceResolution.y * 2.0;
+
+	// first map norm_pos to (0, 1)
+	norm_pos.x = (norm_pos.x + 1.0) / 2.0;
+	norm_pos.y = (norm_pos.y + 1.0) / 2.0;
+
+	// then map to the new borders;
+
+	norm_pos.x = mix(left_border, right_border, norm_pos.x);
+	norm_pos.y = mix(bottom_border, top_border, norm_pos.y);
+	
+
+	//norm_pos.x = norm_pos.x / 2.0;
+	//norm_pos.x = norm_pos.x + 0.5;
 
 	double energy = points[gl_VertexID].energy;
 	vec3 maxColor = vec3(1.0, 0.0, 0.0);

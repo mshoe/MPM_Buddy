@@ -183,6 +183,8 @@
     <None Include="shaders\graphics\mouseShader.vs" />
     <None Include="shaders\graphics\pointCloud.fs" />
     <None Include="shaders\graphics\pointCloud.vs" />
+    <None Include="shaders\graphics\zoomWindow.fs" />
+    <None Include="shaders\graphics\zoomWindow.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
