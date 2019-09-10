@@ -15,9 +15,11 @@ https://youtu.be/fhKNuo9MTek
 Rendering points with elastic potential energy:
 ![gif](MPM/gifs/RenderingPointsWithEnergy.gif)
 
-Rendering nodes by density and with force vectors:
+Rendering nodes by density and with elastic force vectors:
 ![gif](MPM/gifs/RenderingGridDensityWithForces.gif)
 
+Rendering snow through node density (looks better this way than with points):
+![gif](MPM/gifs/RenderingSnowThroughGrid.gif)
 
 Gallery:
 ![pic](MPM/pics/rectanglesCirclesSnowElastic.PNG)
