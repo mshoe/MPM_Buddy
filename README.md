@@ -12,8 +12,14 @@ https://youtu.be/BUgUbNJmPB8
 Circle Tool Demo:
 https://youtu.be/fhKNuo9MTek
 
-![gif](MPM/gifs/energyDonut.gif)
+Rendering points with elastic potential energy:
+![gif](MPM/gifs/RenderingPointsWithEnergy.gif)
 
+Rendering nodes by density and with force vectors:
+![gif](MPM/gifs/RenderingGridDensityWithForces.gif)
+
+
+Gallery:
 ![pic](MPM/pics/rectanglesCirclesSnowElastic.PNG)
 
 ![pic](MPM/pics/snowTruss.PNG)

@@ -179,6 +179,8 @@
     <None Include="shaders\compute\p2gCalculateVolumes.comp" />
     <None Include="shaders\compute\p2gGatherParticlesAndUpdateNode.comp" />
     <None Include="shaders\compute\p2gScatterParticleAndUpdateNodes.comp" />
+    <None Include="shaders\graphics\gridShader.fs" />
+    <None Include="shaders\graphics\gridShader.vs" />
     <None Include="shaders\graphics\mouseShader.fs" />
     <None Include="shaders\graphics\mouseShader.vs" />
     <None Include="shaders\graphics\pointCloud.fs" />

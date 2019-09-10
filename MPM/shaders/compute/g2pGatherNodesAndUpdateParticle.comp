@@ -49,14 +49,34 @@ void main() {
 	// THIS IS WHERE DIFFERENT CONSTITUTIVE MODELS ARE EVALUATED
 
 	// forced only come from elastic deformation gradient
-	// if (comodel == NEO_HOOKEAN) {
-	// 	// points[pid].Fe = dfp*points[pid].Fe;
-	// 	// dmat2 Fe = points[pid].Fe;
-	// 	// dmat2 Fit = transpose(inverse(points[pid].Fe));
-	// 	// double J = determinant(Fe);
-	// 	// points[pid].P = mew*(Fe - Fit) + lam*log(J)*Fit;
-	// } else 
-	if (comodel == FIXED_COROTATED) {
+	if (comodel == NEO_HOOKEAN) {
+		points[pid].Fe = dfp*points[pid].Fe;
+		dmat2 Fe = points[pid].Fe;
+		dmat2 Fit = transpose(inverse(points[pid].Fe));
+		double J = determinant(Fe);
+		double logJ = double(log(float(J)));
+		points[pid].P = mew*(Fe - Fit) + lam*logJ*Fit;
+		dmat2 FTF = transpose(Fe) * Fe;
+		points[pid].energy = 0.5 * mew * (FTF[0][0] + FTF[1][1] - 2.0 - 2.0 * logJ) + 0.5 * lam * logJ * logJ;
+		points[pid].energy *= points[pid].vol;
+
+		// computing these for debugging purposes
+		dmat2 R;
+		dmat2 S;
+		PolarDecomp(Fe, R, S);
+		points[pid].FePolar_R = R;
+		points[pid].FePolar_S = S;
+
+		dmat2 U;
+		double sig1;
+		double sig2;
+		dmat2 V;
+		SVD(R, S, U, sig1, sig2, V);
+		points[pid].FeSVD_U = U;
+		points[pid].FeSVD_S = dmat2(sig1, 0.0, 0.0, sig2);
+		points[pid].FeSVD_V = V;
+
+	} else if (comodel == FIXED_COROTATED) {
 		
 		points[pid].Fe = dfp*points[pid].Fe;
 		dmat2 Fe = points[pid].Fe;

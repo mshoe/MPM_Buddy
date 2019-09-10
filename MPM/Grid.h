@@ -17,18 +17,18 @@ struct GridNode {
 	// With a padding, we can read GridNode structs easily.
 	GLreal glsl_padding = 0.0;
 
-	vec2 v = vec2(0.0097);
-	vec2 momentum = vec2(0.0069);
-	vec2 force = vec2(0.0042);
+	vec2 v = vec2(0.0);
+	vec2 momentum = vec2(0.0);
+	vec2 force = vec2(0.0);
 	
-	vec2 deltaForce = vec2(0.69420);
-	vec2 xk = vec2(0.1234);
-	vec2 rk = vec2(0.4321);
-	vec2 pk = vec2(0.1010);
-	vec2 Ark = vec2(2.0);
-	vec2 Apk = vec2(3.0);
+	vec2 deltaForce = vec2(0.0);
+	vec2 xk = vec2(0.0);
+	vec2 rk = vec2(0.0);
+	vec2 pk = vec2(0.0);
+	vec2 Ark = vec2(0.0);
+	vec2 Apk = vec2(0.0);
 
-	GLreal rkArk = 0.1;
+	GLreal rkArk = 0.0;
 	//GLreal glsl_padding2 = 0.0;
 	bool converged = true;
 

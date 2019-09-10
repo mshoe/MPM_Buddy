@@ -53,11 +53,16 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 
 	glCreateVertexArrays(1, &VisualizeVAO);
 
-	m_pPointCloudShader = std::make_unique<StandardShader>(std::vector<std::string>{"shaders\\graphics\\pointCloud.vs"}, std::vector<std::string>{"shaders\\graphics\\pointCloud.fs"}, "shaders\\compute\\mpm_header.comp");
-	m_mouseShader = std::make_unique<StandardShader>(std::vector<std::string>{"shaders\\graphics\\mouseShader.vs"}, std::vector<std::string>{"shaders\\graphics\\mouseShader.fs"}, "shaders\\compute\\mpm_header.comp");
+	m_pPointCloudShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\pointCloud.vs"}, std::vector<std::string>{"shaders\\graphics\\pointCloudPassThrough.gs"}, std::vector<std::string>{"shaders\\graphics\\pointCloud.fs"}, "shaders\\compute\\mpm_header.comp");
+	m_pPointCloudVectorShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\pointCloud.vs"}, std::vector<std::string>{"shaders\\graphics\\pointCloudVector.gs"}, std::vector<std::string>{"shaders\\graphics\\pointCloud.fs"}, "shaders\\compute\\mpm_header.comp");
+	//m_pPointCloudShader = std::make_unique<StandardShader>(std::vector<std::string>{"shaders\\graphics\\pointCloud.vs"}, std::vector<std::string>{}, std::vector<std::string>{"shaders\\graphics\\pointCloud.fs"}, "shaders\\compute\\mpm_header.comp");
+	m_mouseShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\mouseShader.vs"}, std::vector<std::string>{}, std::vector<std::string>{"shaders\\graphics\\mouseShader.fs"}, "shaders\\compute\\mpm_header.comp");
 	//m_nodeShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\nodeSelectionShader.vs"}, std::vector<std::string>{"shaders\\graphics\\nodeSelectionShader.fs"}, "shaders\\compute\\mpm_header.comp");
 
-	m_zoomWindowShader = std::make_unique<StandardShader>(std::vector<std::string>{"shaders\\graphics\\zoomWindow.vs"}, std::vector<std::string>{"shaders\\graphics\\zoomWindow.fs"}, "shaders\\compute\\mpm_header.comp");
+	m_zoomWindowShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\zoomWindow.vs"}, std::vector<std::string>{}, std::vector<std::string>{"shaders\\graphics\\zoomWindow.fs"}, "shaders\\compute\\mpm_header.comp");
+	m_gridShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\gridShader.vs"}, std::vector<std::string>{"shaders\\graphics\\gridShaderPassThrough.gs"}, std::vector<std::string>{"shaders\\graphics\\gridShader.fs"}, "shaders\\compute\\mpm_header.comp");
+	m_gridShaderVector = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\gridShader.vs"}, std::vector<std::string>{"shaders\\graphics\\gridShaderVector.gs"}, std::vector<std::string>{"shaders\\graphics\\gridShader.fs"}, "shaders\\compute\\mpm_header.comp");
+
 
 	m_openGLScreen = std::make_shared<OpenGLScreen>();
 	m_openGLScreen->center = vec2(1350.0, 450.0);
@@ -79,6 +84,11 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 	);
 
 	// initialize material parameters here for now
+	m_neoHookeanParameters.youngMod = 90000.0;
+	m_neoHookeanParameters.poisson = 0.3;
+	m_neoHookeanParameters.particleSpacing = 0.25;
+	m_neoHookeanParameters.density = 40;
+	
 	m_fixedCorotatedParameters.youngMod = 90000.0;
 	m_fixedCorotatedParameters.poisson = 0.3;
 	m_fixedCorotatedParameters.particleSpacing = 0.25;
@@ -139,14 +149,28 @@ void mpm::MpmEngine::Render()
 	// RENDER MOUSE SHADER
 	m_mouseShader->Use();
 	m_mouseShader->SetVec("iMouse", m_mouse);
+	m_mouseShader->SetVec("iCenter", vec2(m_openGLScreen->center.x, m_openGLScreen->screen_dimensions.y - m_openGLScreen->center.y)); // correct y for glsl
+	m_mouseShader->SetVec("iResolution", m_openGLScreen->sim_dimensions);
 	m_mouseShader->SetVec("iSourceResolution", m_openGLScreen->screen_dimensions);
 	m_mouseShader->SetBool("nodeGraphicsActive", m_nodeGraphicsActive);
-	m_mouseShader->SetInt("nodeI", m_node[0]);
-	m_mouseShader->SetInt("nodeJ", m_node[1]);
+	m_mouseShader->SetInt("selectedNodeI", m_node[0]);
+	m_mouseShader->SetInt("selectedNodeJ", m_node[1]);
 	m_openGLScreen->Render();
 
-	RenderPointClouds(m_zoomPoint, 1.0, m_openGLScreen);
-	
+	// Render material point clouds
+	if (m_viewPointClouds) {
+		RenderPointClouds(m_zoomPoint, 1.0, m_openGLScreen);
+	}
+
+	// Render grid nodes
+	if (m_viewGrid) {
+		RenderGrid(m_zoomPoint, 1.0, m_openGLScreen, m_gridShader);
+		if (m_viewGridVector) {
+			RenderGrid(m_zoomPoint, 1.0, m_openGLScreen, m_gridShaderVector);
+		}
+	}
+
+	// Render Zoom Border
 	if (m_showZoomBorder) {
 		m_zoomWindowShader->Use();
 		m_zoomWindowShader->SetVec("iSourceResolution", m_openGLScreen->screen_dimensions);
@@ -162,7 +186,15 @@ void mpm::MpmEngine::Render()
 	glViewport(0, 0, (GLsizei)m_zoomWindow->screen_dimensions.x, (GLsizei)m_zoomWindow->screen_dimensions.y);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
-	RenderPointClouds(m_zoomPoint, m_zoomFactor, m_zoomWindow);
+	if (m_viewPointClouds) {
+		RenderPointClouds(m_zoomPoint, m_zoomFactor, m_zoomWindow);
+	}
+	if (m_viewGrid) {
+		RenderGrid(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_gridShader);
+		if (m_viewGridVector) {
+			RenderGrid(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_gridShaderVector);
+		}
+	}
 	m_zoomWindow->UnbindFBO();
 
 }
@@ -189,6 +221,37 @@ void mpm::MpmEngine::RenderPointClouds(vec2 zoomPoint, real zoomFactor, std::sha
 		glDrawArrays(GL_POINTS, 0, (GLsizei)pointCloudPair.second->N);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
 	}
+	glBindVertexArray(0);
+}
+
+void mpm::MpmEngine::RenderGrid(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> gridShader)
+{
+	gridShader->Use();
+	gridShader->SetReal("zoomFactor", zoomFactor);
+	gridShader->SetVec("zoomPoint", zoomPoint);
+	// iResolution and iSourceResolution should be same for the zoom window we make, and iCenter should be the actual center
+	gridShader->SetVec("iResolution", openGLScreen->sim_dimensions);
+	gridShader->SetVec("iSourceResolution", openGLScreen->screen_dimensions);
+	gridShader->SetVec("iCenter", vec2(openGLScreen->center.x, openGLScreen->screen_dimensions.y - openGLScreen->center.y)); // correct y for glsl
+	gridShader->SetBool("viewGridMass", m_viewGridMass);
+	gridShader->SetReal("maxNodeMassClamp", m_maxNodeMassClamp);
+	gridShader->SetReal("minNodeMassClamp", m_minNodeMassClamp);
+	gridShader->SetReal("maxPointSize", m_maxNodeMassPointSize);
+	gridShader->SetReal("minNodeMassPointSize", m_minNodeMassPointSize);
+	gridShader->SetReal("maxNodeMassPointSize", m_maxNodeMassPointSize);
+	gridShader->SetInt("gridPointSizeScalingOption", m_gridPointSizeScalingOption);
+	gridShader->SetBool("nodeGraphicsActive", m_nodeGraphicsActive);
+	gridShader->SetInt("selectedNodeI", m_node[0]);
+	gridShader->SetInt("selectedNodeJ", m_node[1]);
+	gridShader->SetReal("dt", m_dt);
+	gridShader->SetInt("selectedVector", m_gridVectorOption);
+	gridShader->SetReal("maxGridVectorLength", m_maxGridVectorLength);
+	gridShader->SetReal("maxGridVectorVisualLength", m_maxGridVectorVisualLength);
+
+	glBindVertexArray(VisualizeVAO);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
+	glDrawArrays(GL_POINTS, 0, (GLsizei)(GRID_SIZE_X * GRID_SIZE_Y));
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
 	glBindVertexArray(0);
 }
 
@@ -257,6 +320,7 @@ void mpm::MpmEngine::ProcessMouseInput(GLFWwindow* window, real lag)
 	glfwGetCursorPos(window, &xpos, &ypos);
 	left_click = (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) ? 1.0 : 0.0;
 	right_click = (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) ? 1.0 : 0.0;
+	m_midButtonDown = (bool)glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE);
 
 	//std::cout << xpos << ", " << ypos << std::endl;
 
@@ -294,11 +358,19 @@ void mpm::MpmEngine::HandleStates()
 	if (m_zoomState && m_leftButtonDown) {
 		m_zoomState = false;
 		m_zoomFactor += 0.5;
+		m_zoomPoint = vec2(m_mpm_mouse.x * (real)GRID_SIZE_X, m_mpm_mouse.y * (real)GRID_SIZE_Y);
+	}
+
+	if (m_zoomState && m_midButtonDown) {
+		m_zoomState = false;
+		m_zoomPoint = vec2(m_mpm_mouse.x * (real)GRID_SIZE_X, m_mpm_mouse.y * (real)GRID_SIZE_Y);
 	}
 
 	if (m_zoomState && m_rightButtonDown) {
 		m_zoomState = false;
 		m_zoomFactor -= 0.5;
+		m_zoomFactor = glm::max(1.0, m_zoomFactor);
+		m_zoomPoint = vec2(m_mpm_mouse.x * (real)GRID_SIZE_X, m_mpm_mouse.y * (real)GRID_SIZE_Y);
 	}
 
 	if (m_paused && m_createCircleState && m_leftButtonDown)
@@ -500,6 +572,9 @@ void mpm::MpmEngine::ChangeMaterialParameters(GLuint comodel)
 {
 	// save the current material parameters
 	switch (m_comodel) {
+	case NEO_HOOKEAN_ELASTICITY:
+		m_neoHookeanParameters = m_mpParameters;
+		break;
 	case FIXED_COROTATIONAL_ELASTICITY:
 		m_fixedCorotatedParameters = m_mpParameters;
 		break;
@@ -511,6 +586,9 @@ void mpm::MpmEngine::ChangeMaterialParameters(GLuint comodel)
 	}
 	m_comodel = comodel;
 	switch (m_comodel) {
+	case NEO_HOOKEAN_ELASTICITY:
+		m_mpParameters = m_neoHookeanParameters;
+		break;
 	case FIXED_COROTATIONAL_ELASTICITY:
 		m_mpParameters = m_fixedCorotatedParameters;
 		break;

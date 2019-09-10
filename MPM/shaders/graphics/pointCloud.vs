@@ -1,6 +1,7 @@
 #version 450 core
 
-out vec4 stressColor;
+out vec4 vs_stressColor;
+out uint pointID;
 uniform double maxEnergyClamp = 100.0;
 uniform double minEnergyClamp = 0.0;
 uniform dvec2 iSourceResolution; // should be vec2(1800, 900)
@@ -14,6 +15,7 @@ void main() {
 
 	// calculate radius
 	gl_PointSize = 2.0;
+	pointID = gl_VertexID;
 
 	// map position to (-1.0, 1.0)
 	dvec2 pos = points[gl_VertexID].x - zoomPoint;
@@ -50,10 +52,10 @@ void main() {
 
 	if (normalizedEnergy > 0.5) {
 		normalizedEnergy = 2.0 * normalizedEnergy - 1.0;
-		stressColor = vec4(normalizedEnergy * maxColor + (1.0 - normalizedEnergy) * midColor, 1.0);
+		vs_stressColor = vec4(normalizedEnergy * maxColor + (1.0 - normalizedEnergy) * midColor, 1.0);
 	} else {
 		normalizedEnergy = 2.0 * normalizedEnergy;
-		stressColor = vec4(normalizedEnergy * midColor + (1.0 - normalizedEnergy) * minColor, 1.0);
+		vs_stressColor = vec4(normalizedEnergy * midColor + (1.0 - normalizedEnergy) * minColor, 1.0);
 	}
 
 	//stressColor = vec4(colorMix*maxColor + (1.0 - colorMix)*minColor, 1.0);

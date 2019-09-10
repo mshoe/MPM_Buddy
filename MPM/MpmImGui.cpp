@@ -140,6 +140,12 @@ void mpm::MpmEngine::RenderGeometryEditor()
 	//ImGui::InputInt3("Color", m_color);
 
 	switch (m_comodel) {
+	case NEO_HOOKEAN_ELASTICITY:
+		ImGui::InputReal("Young's Modulus", &m_mpParameters.youngMod, 1.0, 10.0, "%.1f");
+		ImGui::InputReal("Poisson's Ratio", &m_mpParameters.poisson, 0.005, 0.05, "%.3f");
+		ImGui::InputReal("Point Spacing", &m_mpParameters.particleSpacing, 0.01, 0.1, "%.2f");
+		ImGui::InputReal("Density", &m_mpParameters.density, 0.01, 0.1, "%.2f");
+		break;
 	case FIXED_COROTATIONAL_ELASTICITY:
 		ImGui::InputReal("Young's Modulus", &m_mpParameters.youngMod, 1.0, 10.0, "%.1f");
 		ImGui::InputReal("Poisson's Ratio", &m_mpParameters.poisson, 0.005, 0.05, "%.3f");
@@ -159,7 +165,9 @@ void mpm::MpmEngine::RenderGeometryEditor()
 		break;
 	}
 
-
+	if (ImGui::Button("Neo-Hookean Elasticity")) {
+		ChangeMaterialParameters(NEO_HOOKEAN_ELASTICITY);
+	}
 	if (ImGui::Button("Fixed Corotated Elasticity")) {
 		ChangeMaterialParameters(FIXED_COROTATIONAL_ELASTICITY);
 	}
@@ -212,6 +220,24 @@ void mpm::MpmEngine::RenderGridNodeViewer()
 	if (ImGui::Button("Get node data") && m_paused) {
 		UpdateNodeData();
 	}
+	ImGui::Checkbox("View grid", &m_viewGrid);
+	if (ImGui::CollapsingHeader("Grid Viewing Options")) {
+		ImGui::Checkbox("View grid mass", &m_viewGridMass);
+		if (ImGui::CollapsingHeader("View grid mass options")) {
+			ImGui::InputReal("max node mass clamp", &m_maxNodeMassClamp, 1.0, 10.0, "%.1f");
+			ImGui::InputReal("min node mass clamp", &m_minNodeMassClamp, 1.0, 10.0, "%.1f");
+			ImGui::InputReal("min point size", &m_minNodeMassPointSize, 0.1, 1.0, "%.2f");
+			ImGui::InputReal("max point size", &m_maxNodeMassPointSize, 0.1, 1.0, "%.2f");
+			ImGui::InputInt("point size scaling option", &m_gridPointSizeScalingOption, 1);
+			//ImGui::ListBox("Point size scaling option", &m_gpScalingOption, m_gpScalingOptions, 3);
+		}
+		ImGui::Checkbox("View grid vector", &m_viewGridVector);
+		if (ImGui::CollapsingHeader("View grid vector options")) {
+			ImGui::InputInt("vector option", &m_gridVectorOption);
+			ImGui::InputReal("Max grid vector length", &m_maxGridVectorLength, 0.5, 5.0, "%.3f");
+			ImGui::InputReal("Max grid vector visual length", &m_maxGridVectorVisualLength, 0.5, 1.0, "%.3f");
+		}
+	}
 	if (ImGui::CollapsingHeader("Grid Node Data")) {
 		glm::highp_fvec4 min_color = glm::highp_fvec4(1.0, 0.0, 0.0, 1.0);
 		glm::highp_fvec4 max_color = glm::highp_fvec4(0.0, 1.0, 0.0, 1.0);
@@ -237,6 +263,8 @@ void mpm::MpmEngine::RenderMaterialPointViewer()
 {
 	ImGui::Begin("Material Point Viewer");
 
+	ImGui::Checkbox("View point clouds", &m_viewPointClouds);
+
 	if (ImGui::CollapsingHeader("Point Clouds")) {
 		for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
 			ImGui::Text(pointCloudPair.first.c_str());
@@ -258,8 +286,13 @@ void mpm::MpmEngine::RenderMaterialPointViewer()
 	ImGui::InputReal("Min energy clamp (for coloring)", &m_minEnergyClamp, 1.0, 1000.0, "%.1f");
 	ImGui::Checkbox("Visualize Energy", &m_visualizeEnergy);
 
-	if (ImGui::Button("Set Reference Configuration")) {
+	if (ImGui::Button("Set Current Point Cloud Reference Configuration")) {
 		SetReferenceConfig(pointCloudSelectStr);
+	}
+	if (ImGui::Button("Set All Reference Configuration")) {
+		for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+			SetReferenceConfig(pointCloudPair.first);
+		}
 	}
 
 	

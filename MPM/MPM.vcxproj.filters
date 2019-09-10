@@ -244,5 +244,11 @@
     <None Include="shaders\graphics\zoomWindow.fs">
       <Filter>Resource Files\Shaders\graphics</Filter>
     </None>
+    <None Include="shaders\graphics\gridShader.vs">
+      <Filter>Resource Files\Shaders\graphics</Filter>
+    </None>
+    <None Include="shaders\graphics\gridShader.fs">
+      <Filter>Resource Files\Shaders\graphics</Filter>
+    </None>
   </ItemGroup>
 </Project>

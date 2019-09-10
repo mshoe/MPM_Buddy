@@ -35,22 +35,13 @@ namespace mpm {
 		void Update();
 		void Render();
 		void RenderPointClouds(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen);
+		void RenderGrid(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> gridShader);
 		void RenderGUI();
 
 		void ProcessKeyboardInput(GLFWwindow* window, real lag);
 		void ProcessMouseInput(GLFWwindow* window, real lag);
 		void HandleStates();
 
-		//void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
-
-		// temporarily putting node stuff here
-		bool m_nodeGraphicsActive = false;
-		int m_node[2] = { 26, 8 };
-
-		// selecting grid node
-		GridNode m_gn;
-		bool m_selectNodeState = false;
-		void UpdateNodeData();
 
 	private:
 
@@ -82,7 +73,7 @@ namespace mpm {
 		real m_zoomFactor = 1.0;
 		bool m_zoomState = false;
 		bool m_showZoomBorder = true;
-		bool m_movingZoomWindow = false;
+		bool m_movingZoomWindow = true;
 		vec2 m_zoomPoint = vec2(40.0, 50.0); // ZOOM POINT IN GRID SPACE
 		vec2 m_zoomDim = vec2(GRID_SIZE_X, GRID_SIZE_Y);
 
@@ -118,15 +109,20 @@ namespace mpm {
 		std::unique_ptr<ComputeShader> m_pSetReferenceConfig = nullptr;
 
 		// RENDERING
-		std::unique_ptr<StandardShader> m_pPointCloudShader = nullptr;
-		std::unique_ptr<StandardShader> m_mouseShader = nullptr;
-		std::unique_ptr<StandardShader> m_zoomWindowShader = nullptr;
+		std::shared_ptr<StandardShader> m_pPointCloudShader = nullptr;
+		std::shared_ptr<StandardShader> m_pPointCloudVectorShader = nullptr;
+		std::shared_ptr<StandardShader> m_mouseShader = nullptr;
+		std::shared_ptr<StandardShader> m_zoomWindowShader = nullptr;
+		std::shared_ptr<StandardShader> m_gridShader = nullptr;
+		std::shared_ptr<StandardShader> m_gridShaderVector = nullptr;
+
 
 
 		std::shared_ptr<OpenGLScreen> m_openGLScreen = nullptr;
 		vec4 m_mpm_mouse = vec4(0.0);
 		vec4 m_mouse = vec4(0.0);
 		bool m_leftButtonDown = false;
+		bool m_midButtonDown = false;
 		bool m_rightButtonDown = false;
 
 		
@@ -143,8 +139,32 @@ namespace mpm {
 		GLuint gridSSBO;
 		GLuint VisualizeVAO;
 
+		// MATERIAL POINT VISUALIZATION STUFF
+		MaterialPoint m_mp; // selecting material points
+		double m_maxEnergyClamp = 100.0;
+		double m_minEnergyClamp = 0.0;
+		bool m_visualizeEnergy = true;
+		bool m_viewPointClouds = true;
 		
+		// GRID VISUALIZATION STUFF
 		Grid m_grid;
+		bool m_nodeGraphicsActive = false;
+		int m_node[2] = { 26, 8 };
+		bool m_viewGrid = true;
+		bool m_viewGridMass = true;
+		real m_maxNodeMassClamp = 40.0;
+		real m_minNodeMassClamp = 1.0;
+		real m_minNodeMassPointSize = 0.0;
+		real m_maxNodeMassPointSize = 5.0;
+		bool m_viewGridVector = true;
+		int m_gridVectorOption = 2; // VELOCITY = 0, ACCELERATION = 1, FORCE = 2, RESIDUAL = 3
+		int m_gridPointSizeScalingOption = 0;
+		real m_maxGridVectorLength = 25.0;
+		real m_maxGridVectorVisualLength = 5.0;
+		GridNode m_gn; // selecting grid node
+		bool m_selectNodeState = false;
+		void UpdateNodeData();
+
 
 		real m_drag = 0.5;
 		vec2 m_globalForce = vec2(0.0);
@@ -175,14 +195,10 @@ namespace mpm {
 
 
 
-		// selecting material points
-		MaterialPoint m_mp;
 
-		double m_maxEnergyClamp = 100.0;
-		double m_minEnergyClamp = 0.0;
-		bool m_visualizeEnergy = false;
 		
 		MaterialParameters m_mpParameters;
+		MaterialParameters m_neoHookeanParameters;
 		MaterialParameters m_fixedCorotatedParameters;
 		MaterialParameters m_simpleSnowParameters;
 
