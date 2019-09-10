@@ -35,6 +35,9 @@ Gallery:
 
 Material Point Method (MPM) is an Eulerian-Lagrangian hybrid algorithm for simulating continuum materials.
 
+__Build Instructions for Windows__
+
+Clone this repo, open MPM/MPM.vcxproj in Visual Studio 2019, and build. This is using NVidia OpenGL extensions: GL_NV_shader_atomic_float64. A sufficient NVidia GPU that supports OpenGL 4.5 is required for the program to run properly (https://www.khronos.org/registry/OpenGL/extensions/NV/NV_shader_atomic_float64.txt).
 
 __Resources on MPM:__
 
