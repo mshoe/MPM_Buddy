@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Resource Files\imgui">
-      <UniqueIdentifier>{2e6c48b1-7949-4c94-8715-1adf82a786c3}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Resource Files\Shaders">
       <UniqueIdentifier>{0f7b815e-14ed-4c66-8562-432cae1ad37f}</UniqueIdentifier>
     </Filter>
@@ -37,15 +34,6 @@
     <Filter Include="Resource Files\Shaders\compute\implicit">
       <UniqueIdentifier>{eb996653-418c-4163-ab42-5f4cf227edbd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files\glad">
-      <UniqueIdentifier>{e10dda54-62fc-4391-93fd-d80961d32947}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Resource Files\glad\include">
-      <UniqueIdentifier>{a4a6c096-1ae2-43ae-8a1a-d86941a2a7dc}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Resource Files\glad\src">
-      <UniqueIdentifier>{aa7cc8e8-ac18-4d35-b3bd-9da5f009cc1f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Utility">
       <UniqueIdentifier>{6c17ce70-a68e-4b63-97bb-f908bb2604ff}</UniqueIdentifier>
     </Filter>
@@ -61,6 +49,12 @@
     <Filter Include="Source Files\MPM">
       <UniqueIdentifier>{6a3abc4d-cabb-4cc8-a4e9-e7236d2a548a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\glad">
+      <UniqueIdentifier>{d7a52e17-9e90-405a-9522-6b9d30ea7c38}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\imgui">
+      <UniqueIdentifier>{0d307b49-52f2-4923-9998-82104a644055}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -69,29 +63,8 @@
     <ClCompile Include="MainEngine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="imgui\imgui_impl_opengl3.cpp">
-      <Filter>Resource Files\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui\imgui_widgets.cpp">
-      <Filter>Resource Files\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui\imgui.cpp">
-      <Filter>Resource Files\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui\imgui_demo.cpp">
-      <Filter>Resource Files\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui\imgui_draw.cpp">
-      <Filter>Resource Files\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui\imgui_impl_glfw.cpp">
-      <Filter>Resource Files\imgui</Filter>
-    </ClCompile>
     <ClCompile Include="Constants.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="glad\src\glad.c">
-      <Filter>Resource Files\glad\src</Filter>
     </ClCompile>
     <ClCompile Include="glm_imgui.cpp">
       <Filter>Header Files\Utility\src</Filter>
@@ -111,34 +84,31 @@
     <ClCompile Include="OpenGLScreen.cpp">
       <Filter>Header Files\Utility\src</Filter>
     </ClCompile>
+    <ClCompile Include="external\src\glad\glad.c">
+      <Filter>Resource Files\glad</Filter>
+    </ClCompile>
+    <ClCompile Include="external\imgui\imgui_demo.cpp">
+      <Filter>Resource Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="external\imgui\imgui_draw.cpp">
+      <Filter>Resource Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="external\imgui\imgui_impl_glfw.cpp">
+      <Filter>Resource Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="external\imgui\imgui_impl_opengl3.cpp">
+      <Filter>Resource Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="external\imgui\imgui_widgets.cpp">
+      <Filter>Resource Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="external\imgui\imgui.cpp">
+      <Filter>Resource Files\imgui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainEngine.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui\imgui_impl_glfw.h">
-      <Filter>Resource Files\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui\imgui_impl_opengl3.h">
-      <Filter>Resource Files\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui\imgui_internal.h">
-      <Filter>Resource Files\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui\imstb_rectpack.h">
-      <Filter>Resource Files\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui\imstb_textedit.h">
-      <Filter>Resource Files\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui\imstb_truetype.h">
-      <Filter>Resource Files\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui\imconfig.h">
-      <Filter>Resource Files\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui\imgui.h">
-      <Filter>Resource Files\imgui</Filter>
     </ClInclude>
     <ClInclude Include="Constants.h">
       <Filter>Header Files</Filter>
@@ -173,11 +143,35 @@
     <ClInclude Include="OpenGLScreen.h">
       <Filter>Header Files\Utility\include</Filter>
     </ClInclude>
+    <ClInclude Include="external\include\glad\glad.h">
+      <Filter>Resource Files\glad</Filter>
+    </ClInclude>
+    <ClInclude Include="external\imgui\imgui.h">
+      <Filter>Resource Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="external\imgui\imgui_impl_glfw.h">
+      <Filter>Resource Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="external\imgui\imgui_impl_opengl3.h">
+      <Filter>Resource Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="external\imgui\imgui_internal.h">
+      <Filter>Resource Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="external\imgui\imstb_rectpack.h">
+      <Filter>Resource Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="external\imgui\imstb_textedit.h">
+      <Filter>Resource Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="external\imgui\imstb_truetype.h">
+      <Filter>Resource Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="external\imgui\imconfig.h">
+      <Filter>Resource Files\imgui</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="imgui\imgui.ini">
-      <Filter>Resource Files\imgui</Filter>
-    </None>
     <None Include="shaders\compute\p2gCalculateVolumes.comp">
       <Filter>Resource Files\Shaders\compute</Filter>
     </None>

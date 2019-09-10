@@ -70,9 +70,9 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\cpp\include;imgui;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\cpp\lib;$(LibraryPath)</LibraryPath>
-    <SourcePath>imgui;glad\src;$(SourcePath)</SourcePath>
+    <IncludePath>external\include;external;external\imgui;$(IncludePath)</IncludePath>
+    <LibraryPath>external\lib;$(LibraryPath)</LibraryPath>
+    <SourcePath>external\imgui;external\src\glad;$(SourcePath)</SourcePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -90,7 +90,7 @@
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -123,15 +123,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Constants.cpp" />
-    <ClCompile Include="glad\src\glad.c" />
+    <ClCompile Include="external\imgui\imgui.cpp" />
+    <ClCompile Include="external\imgui\imgui_demo.cpp" />
+    <ClCompile Include="external\imgui\imgui_draw.cpp" />
+    <ClCompile Include="external\imgui\imgui_impl_glfw.cpp" />
+    <ClCompile Include="external\imgui\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="external\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="external\src\glad\glad.c" />
     <ClCompile Include="glm_imgui.cpp" />
     <ClCompile Include="glm_MATLAB.cpp" />
-    <ClCompile Include="imgui\imgui.cpp" />
-    <ClCompile Include="imgui\imgui_demo.cpp" />
-    <ClCompile Include="imgui\imgui_draw.cpp" />
-    <ClCompile Include="imgui\imgui_impl_glfw.cpp" />
-    <ClCompile Include="imgui\imgui_impl_opengl3.cpp" />
-    <ClCompile Include="imgui\imgui_widgets.cpp" />
     <ClCompile Include="OpenGLScreen.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainEngine.cpp" />
@@ -143,17 +143,18 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="Engine.h" />
+    <ClInclude Include="external\imgui\imconfig.h" />
+    <ClInclude Include="external\imgui\imgui.h" />
+    <ClInclude Include="external\imgui\imgui_impl_glfw.h" />
+    <ClInclude Include="external\imgui\imgui_impl_opengl3.h" />
+    <ClInclude Include="external\imgui\imgui_internal.h" />
+    <ClInclude Include="external\imgui\imstb_rectpack.h" />
+    <ClInclude Include="external\imgui\imstb_textedit.h" />
+    <ClInclude Include="external\imgui\imstb_truetype.h" />
+    <ClInclude Include="external\include\glad\glad.h" />
     <ClInclude Include="glm_imgui.h" />
     <ClInclude Include="glm_MATLAB.h" />
     <ClInclude Include="Grid.h" />
-    <ClInclude Include="imgui\imconfig.h" />
-    <ClInclude Include="imgui\imgui.h" />
-    <ClInclude Include="imgui\imgui_impl_glfw.h" />
-    <ClInclude Include="imgui\imgui_impl_opengl3.h" />
-    <ClInclude Include="imgui\imgui_internal.h" />
-    <ClInclude Include="imgui\imstb_rectpack.h" />
-    <ClInclude Include="imgui\imstb_textedit.h" />
-    <ClInclude Include="imgui\imstb_truetype.h" />
     <ClInclude Include="MainEngine.h" />
     <ClInclude Include="MpmEngine.h" />
     <ClInclude Include="OpenGLScreen.h" />
@@ -162,7 +163,6 @@
     <ClInclude Include="Shape.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="imgui\imgui.ini" />
     <None Include="shaders\compute\g2pCalculateVolumes.comp" />
     <None Include="shaders\compute\g2pGatherNodesAndUpdateParticle.comp" />
     <None Include="shaders\compute\gOptimizationIntegrator.comp" />
