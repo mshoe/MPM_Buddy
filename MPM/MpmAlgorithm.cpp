@@ -37,6 +37,8 @@ void mpm::MpmEngine::MpmTimeStepP2G(real dt)
 		glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);*/
 		m_p2gScatter->Use();
 		m_p2gScatter->SetReal("dt", dt);
+		//m_p2gScatter->SetInt("selectedNodeI", m_node[0]); // for visualization
+		//m_p2gScatter->SetInt("selectedNodeJ", m_node[1]);
 		int g2p_workgroups = int(glm::ceil(real(pointCloudPair.second->N) / real(G2P_WORKGROUP_SIZE)));
 		glDispatchCompute(g2p_workgroups, 1, 1);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
@@ -59,12 +61,51 @@ void mpm::MpmEngine::MpmTimeStepExplicitGridUpdate(real dt)
 void mpm::MpmEngine::MpmTimeStepSemiImplicitGridUpdate(real dt)
 {
 	MpmCRInit(dt);
-	for (int i = 0; i < m_max_conj_res_iter; i++) {
-		bool converged = MpmCRStep(dt);
-		if (converged) {
-			std::cout << "CR converged after " << i << " steps" << std::endl;
+	real L2_norm_rk = 0.0;
+	for (m_cr_step = 0; m_cr_step < m_max_conj_res_iter; m_cr_step++) {
+		bool L2_converged;
+		bool L_inf_converged;
+		
+		MpmCRStep(dt, L2_norm_rk, L2_converged, L_inf_converged);
+		if (L2_converged) {
 			break;
 		}
+	}
+	if (m_cr_step == 0) {
+		
+	}
+	else {
+		if (m_cr_step < m_max_conj_res_iter) {
+			std::cout << "CR converged after " << m_cr_step << " steps" << std::endl;
+		}
+		else {
+			std::cout << "CR did not converge after " << m_max_conj_res_iter << " steps." << std::endl;
+			m_paused = m_pause_if_not_converged;
+			void* ptr = glMapNamedBuffer(gridSSBO, GL_READ_WRITE);
+			GridNode* data = static_cast<GridNode*>(ptr);
+			for (int i = 0; i < GRID_SIZE_X * GRID_SIZE_Y; i++) {
+				GridNode gn = data[i];
+				/*if (!gn.converged) {
+					converged = false;
+				}*/
+				if (gn.m > 0.0) {
+					real node_norm = glm::length(glm::dot(gn.rk, gn.rk)); // using norm instead of norm squared, cuz more stable
+					L2_norm_rk += node_norm;
+					if (node_norm > 0.1) {
+						if (data[i].m < 0.000001 * m_mpParameters.density) {
+							int node_i = i / GRID_SIZE_Y;
+							int node_j = i % GRID_SIZE_Y;
+							std::cout << "node: (" << node_i << ", " << node_j << ") was too crazy." << std::endl;
+							std::cout << "explicit guessed velocity: (" << data[i].v.x << ", " << data[i].v.y << ")." << std::endl;
+							std::cout << "semi-implicit guessed velocity: (" << data[i].xk.x << ", " << data[i].xk.y << ")." << std::endl;
+							//data[i].xk = vec2(0.0);
+						}
+					}
+				}
+			}
+			glUnmapNamedBuffer(gridSSBO);
+		}
+		std::cout << "L2 norm of rk is: " << L2_norm_rk << std::endl;
 	}
 	MpmCREnd(dt);
 }
@@ -140,7 +181,7 @@ void mpm::MpmEngine::MpmCRInit(real dt) {
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
-bool mpm::MpmEngine::MpmCRStep(real dt)
+bool mpm::MpmEngine::MpmCRStep(real dt, real &L2_norm_rk, bool &L2_converged, bool &L_inf_converged)
 {
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 	m_gConjugateResidualsStepPart1->Use();
@@ -154,21 +195,41 @@ bool mpm::MpmEngine::MpmCRStep(real dt)
 
 	// Instead, we will use a parallel prefix sum algorithm to check if all grid nodes have converged.
 
-	bool converged = false;
-	/*void* ptr = glMapNamedBuffer(gridSSBO, GL_READ_ONLY);
+	L2_converged = false;
+	L_inf_converged = true;
+	L2_norm_rk = 0.0;
+	int num_active_nodes = 0;
+	void* ptr = glMapNamedBuffer(gridSSBO, GL_READ_WRITE);
 	GridNode* data = static_cast<GridNode*>(ptr);
 	for (int i = 0; i < GRID_SIZE_X * GRID_SIZE_Y; i++) {
 		GridNode gn = data[i];
-		if (!gn.converged) {
+		/*if (!gn.converged) {
 			converged = false;
+		}*/
+		if (gn.m > 0.0) {
+			num_active_nodes++;
+			real node_norm = glm::length(glm::dot(gn.rk, gn.rk)); // using norm instead of norm squared, cuz more stable
+			L2_norm_rk += node_norm;
 		}
 	}
 	glUnmapNamedBuffer(gridSSBO);
 
-	if (converged) {
-		std::cout << "CR converged after " << i << " steps." << std::endl;
-		break;
-	}*/
+	//std::cout << "L2 norm of rk (squared) is: " << L2_norm_rk << std::endl;
+
+	if (num_active_nodes == 0)
+		return true;
+
+	if (L2_norm_rk < m_L2_norm_threshold/* * num_active_nodes*/) {
+		L2_converged = true;
+	}
+
+	if (L2_converged)
+		return L2_converged;
+
+	//if (converged) {
+	//	std::cout << "CR converged after " << i << " steps." << std::endl;
+	//	//break;
+	//}
 
 	// CALCULATE deltaForce using rk
 	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
@@ -189,7 +250,7 @@ bool mpm::MpmEngine::MpmCRStep(real dt)
 	glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-	return converged;
+	return L2_converged;
 }
 
 void mpm::MpmEngine::MpmCREnd(real dt) {

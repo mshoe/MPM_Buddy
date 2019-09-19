@@ -32,6 +32,7 @@ void mpm::MpmEngine::RenderTimeIntegrator()
 	ImGui::Checkbox("Implicit Time Integration", &m_implicit);
 	ImGui::InputReal("Implict Ratio", &m_implicit_ratio);
 	ImGui::InputInt("Max CR Iterations", &m_max_conj_res_iter);
+	ImGui::InputReal("L2 Norm Threshold", &m_L2_norm_threshold);
 
 	if (ImGui::Button("Pause")) {
 		m_paused = !m_paused;
@@ -82,8 +83,8 @@ void mpm::MpmEngine::RenderTimeIntegrator()
 		UpdateNodeData();
 	}
 	bool converged = false;
-
-	if (ImGui::Button("CR Step") && m_paused) {
+	ImGui::Checkbox("Pause if not converged", &m_pause_if_not_converged);
+	/*if (ImGui::Button("CR Step") && m_paused) {
 		converged = MpmCRStep(m_dt);
 		m_cr_step++;
 		UpdateNodeData();
@@ -102,7 +103,7 @@ void mpm::MpmEngine::RenderTimeIntegrator()
 		m_cr_step += 100;
 		UpdateNodeData();
 	}
-	ImGui::Text((std::string("CR step: ") + std::to_string(m_cr_step)).c_str());
+	ImGui::Text((std::string("CR step: ") + std::to_string(m_cr_step)).c_str());*/
 	if (ImGui::Button("CR End") && m_paused) {
 		MpmCREnd(m_dt);
 		UpdateNodeData();
@@ -137,6 +138,9 @@ void mpm::MpmEngine::RenderGeometryEditor()
 
 	//ImGui::Color
 	ImGui::ColorEdit4("Color", m_color);
+	ImGui::InputReal("Initial Velocity X", &m_initVelocity.x, 0.1, 1.0, "%.1f");
+	ImGui::InputReal("Initial Velocity Y", &m_initVelocity.y, 0.1, 1.0, "%.1f");
+
 	//ImGui::InputInt3("Color", m_color);
 
 	switch (m_comodel) {
@@ -203,6 +207,13 @@ void mpm::MpmEngine::RenderGeometryEditor()
 		m_createIsoTriState = true;
 	}
 
+	ImGui::InputReal("Line m", &m_line_m);
+	ImGui::InputReal("Line b", &m_line_b);
+	ImGui::InputReal("Line2 m", &m_line2_m);
+	ImGui::InputReal("Line2 b", &m_line2_b);
+	if (ImGui::Button("Create below line y = mx + b")) {
+		GenPointCloudLineDivider();
+	}
 
 
 	ImGui::End();
@@ -219,6 +230,30 @@ void mpm::MpmEngine::RenderGridNodeViewer()
 	ImGui::InputInt2("Grid Node:", m_node);
 	if (ImGui::Button("Get node data") && m_paused) {
 		UpdateNodeData();
+	}
+	if (ImGui::Button("Get node largest |rk|")) {
+		real largest_norm_rk = 0.0;
+		int node_i = 0, node_j = 0;
+		void* ptr = glMapNamedBuffer(gridSSBO, GL_READ_ONLY);
+		GridNode* data = static_cast<GridNode*>(ptr);
+		for (int i = 0; i < GRID_SIZE_X * GRID_SIZE_Y; i++) {
+			GridNode gn = data[i];
+			/*if (!gn.converged) {
+				converged = false;
+			}*/
+			if (gn.m > 0.0) {
+				real cur_norm = glm::abs(glm::dot(gn.rk, gn.rk));
+				if (cur_norm > largest_norm_rk) {
+					largest_norm_rk = cur_norm;
+					node_i = i / GRID_SIZE_Y;
+					node_j = i % GRID_SIZE_Y;
+				}
+			}
+		}
+		glUnmapNamedBuffer(gridSSBO);
+		std::cout << "largest norm is " << largest_norm_rk << " at node: (" << node_i << ", " << node_j << ")" << std::endl;
+		m_node[0] = node_i;
+		m_node[1] = node_j;
 	}
 	ImGui::Checkbox("View grid", &m_viewGrid);
 	if (ImGui::CollapsingHeader("Grid Viewing Options")) {
@@ -294,6 +329,23 @@ void mpm::MpmEngine::RenderMaterialPointViewer()
 			SetReferenceConfig(pointCloudPair.first);
 		}
 	}
+	if (ImGui::Button("Set All Point Cloud Parameters")) {
+		for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+			pointCloudPair.second->parameters = m_mpParameters;
+			pointCloudPair.second->mew = m_mpParameters.youngMod / (2.f + 2.f * m_mpParameters.poisson);
+			pointCloudPair.second->lam = m_mpParameters.youngMod * m_mpParameters.poisson / ((1.f + m_mpParameters.poisson) * (1.f - 2.f * m_mpParameters.poisson));
+		}
+	}
+
+	ImGui::InputReal("lam", &m_lam);
+	ImGui::InputReal("mew", &m_mew);
+	if (ImGui::Button("Set All Point Cloud mew and lam")) {
+		for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+			pointCloudPair.second->mew = m_lam;
+			pointCloudPair.second->lam = m_mew;
+		}
+	}
+
 
 	
 

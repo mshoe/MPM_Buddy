@@ -30,7 +30,7 @@ struct MaterialPoint {
 	mat2 FeSVD_V;
 
 	real energy = 0.0;
-	real opengl_padding2 = 0.696942080086969;
+	real selectedWpg = 0.0;
 
 	friend std::ostream & operator << (std::ostream &out, const MaterialPoint &c) {
 		out << std::setprecision(std::numeric_limits<double>::digits10 + 1);
@@ -49,7 +49,7 @@ struct MaterialPoint {
 		out << "FeSVD_S: " << glm::to_string(c.FeSVD_S) << "\n";
 		out << "FeSVD_V: " << glm::to_string(c.FeSVD_V) << "\n";
 		out << "energy: " << c.energy << "\n";
-		out << "opengl_padding2: " << c.opengl_padding2 << "\n";
+		out << "selectedWpg: " << c.selectedWpg << "\n";
 		return out;
 	}
 };

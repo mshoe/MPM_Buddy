@@ -22,7 +22,9 @@ void main() {
     dvec2 grid_vec = dvec2(GRID_SIZE_X, GRID_SIZE_Y);
     dvec2 vector = dvec2(0.0, 0.0);
 
-    if (selectedVector == 0) { // velocity
+    if (selectedVector == -1) { // momentum
+        vector = nodes[gridNodeI[0]][gridNodeJ[0]].momentum / grid_vec; // normalizing momentum
+    } else if (selectedVector == 0) { // velocity
         vector = nodes[gridNodeI[0]][gridNodeJ[0]].v / grid_vec; // normalizing velocity?
     } else if (selectedVector == 1) { // acceleration
         double m = (nodes[gridNodeI[0]][gridNodeJ[0]].m == 0) ? 1.0 : nodes[gridNodeI[0]][gridNodeJ[0]].m;

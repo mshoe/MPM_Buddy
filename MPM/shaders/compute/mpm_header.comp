@@ -20,7 +20,7 @@ struct materialPoint {
 	dmat2 FeSVD_V;
 
 	double energy;
-	double opengl_padding2;
+	double selectedWpg;
 };
 
 struct gridNode {

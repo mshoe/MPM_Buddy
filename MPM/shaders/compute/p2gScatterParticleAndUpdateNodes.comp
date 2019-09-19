@@ -5,6 +5,9 @@ layout (local_size_x = 1024) in;
 
 /*** HEADER ***/
 
+// uniform int selectedNodeI;
+// uniform int selectedNodeJ;
+
 void main() {
 
 	uint pid = gl_GlobalInvocationID.x;
@@ -17,6 +20,10 @@ void main() {
 
 	int botLeftNode_i = int(floor(xp.x)) - 1;
 	int botLeftNode_j = int(floor(xp.y)) - 1;
+
+	// For visualizing bspline proximity to selected node
+	// dvec2 selectDpg = dvec2(selectedNodeI, selectedNodeJ) - xp;
+	// points[pid].selectedWpg = BSpline(selectDpg.x) * BSpline(selectDpg.y);
 
 	for (int i = 0; i <= 3; ++i) {
 		for (int j = 0; j <= 3; ++j) {

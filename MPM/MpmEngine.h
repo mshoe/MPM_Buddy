@@ -34,7 +34,8 @@ namespace mpm {
 
 		void Update();
 		void Render();
-		void RenderPointClouds(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen);
+		void RenderScreenShader(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen);
+		void RenderPointClouds(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> pointShader);
 		void RenderGrid(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> gridShader);
 		void RenderGUI();
 
@@ -52,7 +53,7 @@ namespace mpm {
 		void MpmTimeStepSemiImplicitGridUpdate(real dt);
 		void MpmTimeStepG2P(real dt);
 		void MpmCRInit(real dt);
-		bool MpmCRStep(real dt);
+		bool MpmCRStep(real dt, real& L2_norm_rk, bool& L2_converged, bool& L_inf_converged);
 		void MpmCREnd(real dt);
 		void CalculatePointCloudVolumes(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
 		void SetReferenceConfig(std::string pointCloudID);
@@ -82,13 +83,19 @@ namespace mpm {
 			const real gridDimX, const real gridDimY,
 			const real inner_rounding, const real outer_rounding, 
 			const MaterialParameters &parameters,
-			const GLuint comodel,
+			const GLuint comodel, bool useHollow,
 			vec2 initialVelocity, glm::highp_fvec4 color);
 		void ClearCreateStates() {
 			m_createCircleState = false;
 			m_createRectState = false;
 			m_createIsoTriState = false;
 		}
+
+		void GenPointCloudLineDivider();
+		real m_line_m = 2.0;
+		real m_line_b = -50.0;
+		real m_line2_m = -2.0;
+		real m_line2_b = 50.0;
 		
 
 
@@ -173,8 +180,13 @@ namespace mpm {
 		bool m_paused = true;
 		bool m_implicit = false;
 		real m_implicit_ratio = 1.0;
-		int m_max_conj_res_iter = 30;// GRID_SIZE_X* GRID_SIZE_Y;
+		int m_max_conj_res_iter = 300;//30;// GRID_SIZE_X* GRID_SIZE_Y;
+		bool m_check_L2_norm = false;
+		bool m_check_L_inf_norm = false;
+		real m_L2_norm_threshold = 0.001; // * number of active nodes ?
+		real m_L_inf_norm_threshold = 1.0; // * 1.0 / node mass?;
 		int m_cr_step = 0;
+		bool m_pause_if_not_converged = true;
 
 		//int m_pointCloudSelect = 0;
 		int m_timeStep = 0;
@@ -188,6 +200,7 @@ namespace mpm {
 		unsigned int m_circleCount = 0;
 		unsigned int m_rectCount = 0;
 		unsigned int m_isoTriCount = 0;
+		unsigned int m_lineDivCount = 0;
 
 		//std::vector<PointCloud> m_pointClouds;
 		std::unordered_map<std::string, std::shared_ptr<PointCloud>> m_pointCloudMap;
@@ -202,12 +215,16 @@ namespace mpm {
 		MaterialParameters m_fixedCorotatedParameters;
 		MaterialParameters m_simpleSnowParameters;
 
+		real m_lam = 0.0;
+		real m_mew = 0.0;
+
 
 		GLuint m_comodel = FIXED_COROTATIONAL_ELASTICITY;
 		void ChangeMaterialParameters(GLuint);
 		
 
 		float m_color[4] = { 1.0f, 0.0f, 0.0f, 1.0f}; // color needs to be float
+		vec2 m_initVelocity = vec2(0.0);
 		
 		bool m_createCircleState = false;
 		real m_circle_r = 5.0;

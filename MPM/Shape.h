@@ -87,6 +87,49 @@ namespace sdf {
 		real b, h;
 	};
 
+	struct LineDivider : public Shape
+	{
+	private:
+		LineDivider();
+	public:
+		LineDivider(real _m, real _b) {
+			m = _m;
+			b = _b;
+		}
+		// above or below the line y = mx + b;
+
+		real Sdf(vec2 p) {
+			// we ignore pos for this one
+			// positive if above line, negative if below
+
+			real y = m * p.x + b;
+			return p.y - y;
+		}
+
+		real m;
+		real b;
+
+
+	};
+
+	struct Intersection : public Shape {
+	public:
+		Intersection() {
+
+		}
+
+		real Sdf(vec2 p) {
+			real sd = -10000.0;
+			//std::cout << "size: " << shapes.size() << std::endl;
+			for (int i = 0; i < shapes.size(); i++) {
+				sd = glm::max(sd, shapes[i].Sdf(p));
+			}
+			return sd;
+		}
+
+		std::vector<LineDivider> shapes;
+	};
+
 	//enum BOOLEAN_GEOMETRY_NODE_TYPE {
 	//	BOOLEAN_SHAPE,
 	//	BOOLEAN_OPERATOR
