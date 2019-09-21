@@ -1,5 +1,16 @@
 #include "MpmEngine.h"
 
+void mpm::MpmEngine::MpmReset()
+{
+	m_pointCloudMap.clear();
+	m_timeStep = 0;
+	m_time = 0.0;
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
+	m_gReset->Use();
+	glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+}
+
 void mpm::MpmEngine::MpmTimeStep(real dt)
 {
 #ifdef MPM_DEBUG

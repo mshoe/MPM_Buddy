@@ -1,7 +1,10 @@
 #version 450 core
 
+out vec4 vs_speedColor;
 out vec4 vs_stressColor;
 out uint pointID;
+uniform double minSpeedClamp = 0.0;
+uniform double maxSpeedClamp = 25.0;
 uniform double maxEnergyClamp = 100.0;
 uniform double minEnergyClamp = 0.0;
 uniform dvec2 iSourceResolution; // should be vec2(1800, 900)
@@ -59,7 +62,17 @@ void main() {
 	}
 
 	//stressColor = vec4(colorMix*maxColor + (1.0 - colorMix)*minColor, 1.0);
-	
+
+	double speed = length(points[gl_VertexID].v);
+	float normalizedSpeed = float(clamp((speed - minSpeedClamp) / (maxSpeedClamp - minSpeedClamp), 0.0, 1.0));
+	if (normalizedSpeed > 0.5) {
+		normalizedSpeed = 2.0 * normalizedSpeed - 1.0;
+		vs_speedColor = vec4(normalizedSpeed * maxColor + (1.0 - normalizedSpeed) * midColor, 1.0);
+	} else {
+		normalizedSpeed = 2.0 * normalizedSpeed;
+		vs_speedColor = vec4(normalizedSpeed * midColor + (1.0 - normalizedSpeed) * minColor, 1.0);
+	}
+	//float normalizedSpeed = float(clamp(()))	
 
 	// gl_Position needs to take float, not double
     gl_Position = vec4(float(norm_pos.x), float(norm_pos.y), 0.0, 1.0);

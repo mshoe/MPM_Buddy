@@ -212,6 +212,9 @@ void mpm::MpmEngine::RenderPointClouds(vec2 zoomPoint, real zoomFactor, std::sha
 
 	// RENDER POINT CLOUD
 	m_pPointCloudShader->Use();
+	m_pPointCloudShader->SetReal("maxSpeedClamp", m_maxSpeedClamp);
+	m_pPointCloudShader->SetReal("minSpeedClamp", m_minSpeedClamp);
+	m_pPointCloudShader->SetBool("visualizeSpeed", m_visualizeSpeed);
 	m_pPointCloudShader->SetReal("maxEnergyClamp", m_maxEnergyClamp);
 	m_pPointCloudShader->SetReal("minEnergyClamp", m_minEnergyClamp);
 	m_pPointCloudShader->SetBool("visualizeEnergy", m_visualizeEnergy);
@@ -298,6 +301,10 @@ void mpm::MpmEngine::ProcessKeyboardInput(GLFWwindow* window, real lag)
 		if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
 			ClearCreateStates();
 			m_createIsoTriState = true;
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS) {
+			MpmReset();
 		}
 	}
 
@@ -497,6 +504,8 @@ std::shared_ptr<PointCloud> mpm::MpmEngine::GenPointCloud(const std::string poin
 	pointCloud->lam = parameters.youngMod * parameters.poisson / ((1.f + parameters.poisson) * (1.f - 2.f * parameters.poisson));
 
 	std::cout << "mew: " << pointCloud->mew << ", lam: " << pointCloud->lam << std::endl;
+	m_mew = pointCloud->mew;
+	m_lam = pointCloud->lam;
 
 	pointCloud->comodel = comodel;
 

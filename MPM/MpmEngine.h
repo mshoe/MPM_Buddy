@@ -47,6 +47,7 @@ namespace mpm {
 	private:
 
 		//*** MPM FUNCTIONS ***//
+		void MpmReset();
 		void MpmTimeStep(real dt);
 		void MpmTimeStepP2G(real dt);
 		void MpmTimeStepExplicitGridUpdate(real dt);
@@ -59,12 +60,20 @@ namespace mpm {
 		void SetReferenceConfig(std::string pointCloudID);
 
 		//*** GUI FUNCTIONS ***//
+		void RenderWindowManager();
 		void RenderTimeIntegrator();
 		void RenderForceController();
 		void RenderGeometryEditor();
 		void RenderGridNodeViewer();
 		void RenderMaterialPointViewer();
 		void RenderZoomWindow();
+
+		bool m_renderTimeIntegrator = true;
+		bool m_renderForceController = true;
+		bool m_renderGeometryEditor = true;
+		bool m_renderGridNodeViewer = true;
+		bool m_renderMaterialPointViewer = true;
+		bool m_renderZoomWindow = true;
 
 		//*** ZOOM WINDOW ***//
 		void InitZoomWindow();
@@ -95,7 +104,7 @@ namespace mpm {
 		real m_line_m = 2.0;
 		real m_line_b = -50.0;
 		real m_line2_m = -2.0;
-		real m_line2_b = 50.0;
+		real m_line2_b = 178.0;
 		
 
 
@@ -148,6 +157,9 @@ namespace mpm {
 
 		// MATERIAL POINT VISUALIZATION STUFF
 		MaterialPoint m_mp; // selecting material points
+		double m_maxSpeedClamp = 25.0;
+		double m_minSpeedClamp = 0.0;
+		bool m_visualizeSpeed = true;
 		double m_maxEnergyClamp = 100.0;
 		double m_minEnergyClamp = 0.0;
 		bool m_visualizeEnergy = true;
@@ -215,8 +227,8 @@ namespace mpm {
 		MaterialParameters m_fixedCorotatedParameters;
 		MaterialParameters m_simpleSnowParameters;
 
-		real m_lam = 0.0;
-		real m_mew = 0.0;
+		real m_lam = 38888.9;
+		real m_mew = 58333.0;
 
 
 		GLuint m_comodel = FIXED_COROTATIONAL_ELASTICITY;

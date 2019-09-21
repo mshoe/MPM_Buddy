@@ -102,13 +102,15 @@ namespace sdf {
 			// we ignore pos for this one
 			// positive if above line, negative if below
 
+			vec2 perp = vec2(1, m);
 			real y = m * p.x + b;
+			
 			return p.y - y;
 		}
 
 		real m;
 		real b;
-
+		//bool above = false;
 
 	};
 

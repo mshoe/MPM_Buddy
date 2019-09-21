@@ -8,19 +8,34 @@ void mpm::MpmEngine::RenderGUI()
 {
 	if (m_renderGUI) {
 
-		RenderTimeIntegrator();
-		RenderForceController();
-		RenderGeometryEditor();
-		RenderGridNodeViewer();
-		RenderMaterialPointViewer();
-		RenderZoomWindow();
+		RenderWindowManager();
+		if (m_renderTimeIntegrator) RenderTimeIntegrator();
+		if (m_renderForceController) RenderForceController();
+		if (m_renderGeometryEditor) RenderGeometryEditor();
+		if (m_renderGridNodeViewer) RenderGridNodeViewer();
+		if (m_renderMaterialPointViewer) RenderMaterialPointViewer();
+		if (m_renderZoomWindow) RenderZoomWindow();
 
 	}
 }
 
+void mpm::MpmEngine::RenderWindowManager()
+{
+	ImGui::Begin("Window Manager");
+
+	ImGui::Checkbox("Time Integrator", &m_renderTimeIntegrator);
+	ImGui::Checkbox("Force Controller", &m_renderForceController);
+	ImGui::Checkbox("Geometry Editor", &m_renderGeometryEditor);
+	ImGui::Checkbox("Grid Node Viewer", &m_renderGridNodeViewer);
+	ImGui::Checkbox("Material Point Viewer", &m_renderMaterialPointViewer);
+	ImGui::Checkbox("Zoom Window", &m_renderZoomWindow);
+
+	ImGui::End();
+}
+
 void mpm::MpmEngine::RenderTimeIntegrator()
 {
-	ImGui::Begin("Time Integrator", &m_renderGUI);
+	ImGui::Begin("Time Integrator");
 
 	ImGui::Text(std::to_string(m_time).c_str());
 	ImGui::Text(std::to_string(m_timeStep).c_str());
@@ -53,10 +68,8 @@ void mpm::MpmEngine::RenderTimeIntegrator()
 		}
 		UpdateNodeData();
 	}
-	if (ImGui::Button("Restart")) {
-		m_pointCloudMap.clear();
-		m_timeStep = 0;
-		m_time = 0.0;
+	if (ImGui::Button("Reset")) {
+		MpmReset();
 	}
 	ImGui::Text("MPM Algorithm Breakdown");
 	if (ImGui::Button("P2G") && m_paused) {
@@ -321,6 +334,10 @@ void mpm::MpmEngine::RenderMaterialPointViewer()
 	ImGui::InputReal("Min energy clamp (for coloring)", &m_minEnergyClamp, 1.0, 1000.0, "%.1f");
 	ImGui::Checkbox("Visualize Energy", &m_visualizeEnergy);
 
+	ImGui::InputReal("Max speed clamp (for coloring)", &m_maxSpeedClamp, 1.0, 1000.0, "%.1f");
+	ImGui::InputReal("Min speed clamp (for coloring)", &m_minSpeedClamp, 1.0, 1000.0, "%.1f");
+	ImGui::Checkbox("Visualize Speed", &m_visualizeSpeed);
+
 	if (ImGui::Button("Set Current Point Cloud Reference Configuration")) {
 		SetReferenceConfig(pointCloudSelectStr);
 	}
@@ -341,8 +358,8 @@ void mpm::MpmEngine::RenderMaterialPointViewer()
 	ImGui::InputReal("mew", &m_mew);
 	if (ImGui::Button("Set All Point Cloud mew and lam")) {
 		for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
-			pointCloudPair.second->mew = m_lam;
-			pointCloudPair.second->lam = m_mew;
+			pointCloudPair.second->mew = m_mew;
+			pointCloudPair.second->lam = m_lam;
 		}
 	}
 
