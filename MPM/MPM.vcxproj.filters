@@ -105,6 +105,12 @@
     <ClCompile Include="external\imgui\imgui.cpp">
       <Filter>Resource Files\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="MpmCR.cpp">
+      <Filter>Source Files\MPM</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmSemiImplicitDirectSolver.cpp">
+      <Filter>Source Files\MPM</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainEngine.h">

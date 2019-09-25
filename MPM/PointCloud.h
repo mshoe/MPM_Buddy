@@ -86,4 +86,6 @@ struct PointCloud {
 	GLuint comodel = 1;
 
 	GLuint ssbo;
+
+	bool fixed = false;
 };

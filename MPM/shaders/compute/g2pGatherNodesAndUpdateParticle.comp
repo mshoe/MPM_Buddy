@@ -4,6 +4,8 @@ layout (local_size_x = 1024) in;
 
 /*** HEADER ***/
 
+uniform bool fixedPointCloud = false;
+
 void main() {
 
 	uint pid = gl_GlobalInvocationID.x;
@@ -44,6 +46,7 @@ void main() {
 
 	points[pid].v = vp;
 	points[pid].B = bp;
+	//if (!fixedPointCloud)
 	points[pid].x += dt*vp;//dt*(dvec2(0.0, -9.8));
 
 	// THIS IS WHERE DIFFERENT CONSTITUTIVE MODELS ARE EVALUATED

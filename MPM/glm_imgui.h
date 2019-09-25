@@ -11,6 +11,7 @@ namespace ImGui {
 	void DisplayGlmRealColor(real value, glm::highp_fvec4 color);
 	void DisplayNamedGlmRealColor(std::string name, real value, glm::highp_fvec4 color);
 	void DisplayGlmRealMixColor(real value, real min_element, real max_element, glm::highp_fvec4 min_color, glm::highp_fvec4 max_color);
+	void DisplayGlmVec(vec2 vec);
 	void DisplayNamedGlmVecMixColor(std::string name, vec2 vec, glm::highp_fvec4 min_color, glm::highp_fvec4 max_color);
 	void DisplayNamedGlmMatrixMixColor(std::string name, mat2 mat, glm::highp_fvec4 min_color, glm::highp_fvec4 max_color);
 	void PopupCopyRealMATLAB(std::string name, real value);

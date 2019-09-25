@@ -6,6 +6,13 @@
 #include <math.h>
 
 namespace sdf {
+
+	enum SDF_OPTION {
+		NORMAL,
+		ROUNDED,
+		HOLLOW
+	};
+
 	struct Shape {
 	public:
 
@@ -87,49 +94,113 @@ namespace sdf {
 		real b, h;
 	};
 
-	struct LineDivider : public Shape
-	{
-	private:
-		LineDivider();
+	//struct LineDivider : public Shape
+	//{
+	//private:
+	//	LineDivider();
+	//public:
+	//	LineDivider(real _m, real _b) {
+	//		m = _m;
+	//		b = _b;
+	//	}
+	//	// above or below the line y = mx + b;
+
+	//	real Sdf(vec2 p) {
+	//		// we ignore pos for this one
+	//		// positive if above line, negative if below
+
+	//		vec2 perp = vec2(1, m);
+	//		real y = m * p.x + b;
+	//		
+	//		return p.y - y;
+	//	}
+
+	//	real m;
+	//	real b;
+	//	//bool above = false;
+
+	//};
+
+	//struct Intersection : public Shape {
+	//public:
+	//	Intersection() {
+
+	//	}
+
+	//	real Sdf(vec2 p) {
+	//		real sd = -10000.0;
+	//		//std::cout << "size: " << shapes.size() << std::endl;
+	//		for (int i = 0; i < shapes.size(); i++) {
+	//			sd = glm::max(sd, shapes[i].Sdf(p));
+	//		}
+	//		return sd;
+	//	}
+
+	//	std::vector<LineDivider> shapes;
+	//};
+
+	struct Polygon : public Shape {
 	public:
-		LineDivider(real _m, real _b) {
-			m = _m;
-			b = _b;
-		}
-		// above or below the line y = mx + b;
+		Polygon() {}
 
 		real Sdf(vec2 p) {
-			// we ignore pos for this one
-			// positive if above line, negative if below
+			if (vertices.size() < 3)
+				return 1.0;
 
-			vec2 perp = vec2(1, m);
-			real y = m * p.x + b;
-			
-			return p.y - y;
+			real d = glm::dot(p - vertices[0], p - vertices[0]);
+			real s = 1.0;
+			for (int i = 0, j = vertices.size()-1; i < vertices.size(); j = i, i++) {
+				vec2 e = vertices[j] - vertices[i];
+				vec2 w = p - vertices[i];
+				vec2 b = w - e * glm::clamp(glm::dot(w, e) / glm::dot(e, e), 0.0, 1.0);
+				d = glm::min(d, glm::dot(b, b));
+				glm::bvec3 c = glm::bvec3(p.y >= vertices[i].y, p.y < vertices[j].y, e.x * w.y > e.y * w.x);
+				if (glm::all(c) || glm::all(glm::not_(c)))
+					s *= -1.0;
+			}
+			return s * glm::sqrt(d);
 		}
 
-		real m;
-		real b;
-		//bool above = false;
+		void AddVertex(vec2 v) {
+			vertices.push_back(v);
+		}
 
+
+		// first and last vertex are assumed connected
+		// assumed at least 3 vertices before calling Sdf functions
+		std::vector<vec2> vertices; 
 	};
 
-	struct Intersection : public Shape {
+	struct PWLine : public Shape {
 	public:
-		Intersection() {
-
-		}
+		PWLine() {}
 
 		real Sdf(vec2 p) {
-			real sd = -10000.0;
-			//std::cout << "size: " << shapes.size() << std::endl;
-			for (int i = 0; i < shapes.size(); i++) {
-				sd = glm::max(sd, shapes[i].Sdf(p));
+			if (vertices.size() < 2)
+				return 1.0;
+
+			real sd_total = DBL_MAX;
+
+			for (size_t i = 0; i < vertices.size() - 1; i++) {
+				vec2 a = vertices[i];
+				vec2 b = vertices[i + 1];
+				vec2 pa = p - a;
+				vec2 ba = b - a;
+
+				real h = glm::clamp(glm::dot(pa, ba) / glm::dot(ba, ba), 0.0, 1.0);
+				real sd = glm::length(pa - ba * h);
+
+				sd_total = glm::min(sd_total, sd);
 			}
-			return sd;
+
+			return sd_total;
 		}
 
-		std::vector<LineDivider> shapes;
+		void AddVertex(vec2 v) {
+			vertices.push_back(v);
+		}
+
+		std::vector<vec2> vertices;
 	};
 
 	//enum BOOLEAN_GEOMETRY_NODE_TYPE {

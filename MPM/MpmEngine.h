@@ -37,6 +37,8 @@ namespace mpm {
 		void RenderScreenShader(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen);
 		void RenderPointClouds(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> pointShader);
 		void RenderGrid(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> gridShader);
+		void RenderPolygon(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> polygonShader);
+		void RenderPWLine(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> pwLineShader);
 		void RenderGUI();
 
 		void ProcessKeyboardInput(GLFWwindow* window, real lag);
@@ -51,11 +53,12 @@ namespace mpm {
 		void MpmTimeStep(real dt);
 		void MpmTimeStepP2G(real dt);
 		void MpmTimeStepExplicitGridUpdate(real dt);
-		void MpmTimeStepSemiImplicitGridUpdate(real dt);
 		void MpmTimeStepG2P(real dt);
+		void MpmTimeStepSemiImplicitCRGridUpdate(real dt);
 		void MpmCRInit(real dt);
 		bool MpmCRStep(real dt, real& L2_norm_rk, bool& L2_converged, bool& L_inf_converged);
 		void MpmCREnd(real dt);
+		void MpmTimeStepSemiImplicitDirectSolve(real dt);
 		void CalculatePointCloudVolumes(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
 		void SetReferenceConfig(std::string pointCloudID);
 
@@ -64,12 +67,14 @@ namespace mpm {
 		void RenderTimeIntegrator();
 		void RenderForceController();
 		void RenderGeometryEditor();
+		void RenderMaterialParametersEditor();
 		void RenderGridNodeViewer();
 		void RenderMaterialPointViewer();
 		void RenderZoomWindow();
 
 		bool m_renderTimeIntegrator = true;
 		bool m_renderForceController = true;
+		bool m_renderMaterialParametersEditor = true;
 		bool m_renderGeometryEditor = true;
 		bool m_renderGridNodeViewer = true;
 		bool m_renderMaterialPointViewer = true;
@@ -88,11 +93,14 @@ namespace mpm {
 		vec2 m_zoomDim = vec2(GRID_SIZE_X, GRID_SIZE_Y);
 
 		//*** GEOMETRY EDITOR FUNCTIONS ***//
+		bool m_fixedPointCloud = false;
+		bool m_invertedSdf = false;
 		std::shared_ptr<PointCloud> GenPointCloud(const std::string pointCloudID, sdf::Shape& shape,
 			const real gridDimX, const real gridDimY,
 			const real inner_rounding, const real outer_rounding, 
 			const MaterialParameters &parameters,
-			const GLuint comodel, bool useHollow,
+			const GLuint comodel, sdf::SDF_OPTION sdfOption, 
+			bool inverted, bool fixed,
 			vec2 initialVelocity, glm::highp_fvec4 color);
 		void ClearCreateStates() {
 			m_createCircleState = false;
@@ -100,11 +108,24 @@ namespace mpm {
 			m_createIsoTriState = false;
 		}
 
-		void GenPointCloudLineDivider();
-		real m_line_m = 2.0;
-		real m_line_b = -50.0;
-		real m_line2_m = -2.0;
-		real m_line2_b = 178.0;
+		std::shared_ptr<sdf::Polygon> m_polygon = nullptr;
+		bool m_addPolygonVertexState = false;
+		void GenPointCloudPolygon();
+		int m_polygonCount = 0;
+		bool m_renderPolygon = false;
+
+		std::shared_ptr<sdf::PWLine> m_pwLine = nullptr;
+		bool m_addPWLineVertexState = false;
+		real m_pwLineRounding = 2.0;
+		void GenPointCloudPWLine();
+		int m_pwLineCount = 0;
+		bool m_renderPWLine = false;
+		//void GenPointCloudLineDivider();
+		////std::vector<>
+		//real m_line_m = 2.0;
+		//real m_line_b = -50.0;
+		//real m_line2_m = -2.0;
+		//real m_line2_b = 178.0;
 		
 
 
@@ -131,6 +152,8 @@ namespace mpm {
 		std::shared_ptr<StandardShader> m_zoomWindowShader = nullptr;
 		std::shared_ptr<StandardShader> m_gridShader = nullptr;
 		std::shared_ptr<StandardShader> m_gridShaderVector = nullptr;
+		std::shared_ptr<StandardShader> m_polygonShader = nullptr;
+		std::shared_ptr<StandardShader> m_pwLineShader = nullptr;
 
 
 
@@ -186,12 +209,14 @@ namespace mpm {
 
 
 		real m_drag = 0.5;
-		vec2 m_globalForce = vec2(0.0);
+		vec2 m_globalForce = vec2(0.0, -9.81);
 		//real m_set_dt = 1.0 / 120.0;
 		real m_dt = 1.0 / 120.0;
 		bool m_paused = true;
-		bool m_implicit = false;
-		real m_implicit_ratio = 1.0;
+
+		// SEMI-IMPLICIT CR
+		bool m_semi_implicit_CR = false;
+		real m_semi_implicit_ratio = 1.0;
 		int m_max_conj_res_iter = 300;//30;// GRID_SIZE_X* GRID_SIZE_Y;
 		bool m_check_L2_norm = false;
 		bool m_check_L_inf_norm = false;
@@ -203,7 +228,7 @@ namespace mpm {
 		//int m_pointCloudSelect = 0;
 		int m_timeStep = 0;
 		real m_time = 0.0;
-		bool m_rt = true;
+		bool m_rt = true; // realtime
 
 		GLreal m_mousePower = 25.0;
 

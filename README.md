@@ -21,17 +21,6 @@ Rendering nodes by density and with elastic force vectors:
 Rendering snow through node density (looks better this way than with points):
 ![gif](MPM/gifs/RenderingSnowThroughGrid.gif)
 
-Gallery:
-![pic](MPM/pics/rectanglesCirclesSnowElastic.PNG)
-
-![pic](MPM/pics/snowTruss.PNG)
-
-![pic](MPM/pics/demoBefore.PNG)
-
-![pic](MPM/pics/demoAfter1.PNG)
-
-![pic](MPM/pics/demoAfter2.PNG)
-
 
 Material Point Method (MPM) is an Eulerian-Lagrangian hybrid algorithm for simulating continuum materials.
 

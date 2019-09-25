@@ -48,6 +48,19 @@ void ImGui::DisplayGlmRealMixColor(real value, real min_element, real max_elemen
 	ImGui::TextColored(imcolor, numStream.str().c_str());
 }
 
+void ImGui::DisplayGlmVec(vec2 vec)
+{
+	ImGui::Text("[ ");
+	ImGui::SameLine();
+	DisplayGlmRealColor(vec.x, glm::highp_fvec4(1.0));
+	ImGui::SameLine();
+	ImGui::Text(", ");
+	ImGui::SameLine();
+	DisplayGlmRealColor(vec.y, glm::highp_fvec4(1.0));
+	ImGui::SameLine();
+	ImGui::Text(" ]");
+}
+
 void ImGui::DisplayNamedGlmVecMixColor(std::string name, vec2 vec, glm::highp_fvec4 min_color, glm::highp_fvec4 max_color)
 {
 	std::string beginStr = name + " = [ ";

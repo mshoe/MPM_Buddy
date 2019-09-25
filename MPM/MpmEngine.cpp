@@ -63,6 +63,9 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 	m_gridShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\gridShader.vs"}, std::vector<std::string>{"shaders\\graphics\\gridShaderPassThrough.gs"}, std::vector<std::string>{"shaders\\graphics\\gridShader.fs"}, "shaders\\compute\\mpm_header.comp");
 	m_gridShaderVector = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\gridShader.vs"}, std::vector<std::string>{"shaders\\graphics\\gridShaderVector.gs"}, std::vector<std::string>{"shaders\\graphics\\gridShader.fs"}, "shaders\\compute\\mpm_header.comp");
 
+	m_polygonShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\polygon.vs"}, std::vector<std::string>{"shaders\\graphics\\polygon.gs"}, std::vector<std::string>{"shaders\\graphics\\polygon.fs"}, "shaders\\compute\\mpm_header.comp");
+	m_pwLineShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\polygon.vs"}, std::vector<std::string>{"shaders\\graphics\\pwLine.gs"}, std::vector<std::string>{"shaders\\graphics\\polygon.fs"}, "shaders\\compute\\mpm_header.comp");
+
 
 	m_openGLScreen = std::make_shared<OpenGLScreen>();
 	m_openGLScreen->center = vec2(1350.0, 450.0);
@@ -103,6 +106,9 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 	m_simpleSnowParameters.hardening = 10.0;
 
 	m_mpParameters = m_fixedCorotatedParameters;
+
+	m_polygon = std::make_shared<sdf::Polygon>();
+	m_pwLine = std::make_shared<sdf::PWLine>();
 	return true;
 }
 
@@ -172,6 +178,15 @@ void mpm::MpmEngine::Render()
 		m_zoomWindowShader->SetVec("zoomPoint", m_zoomPoint);
 		
 		m_zoomWindow->RenderLineLoop();
+	}
+
+	// Render polygon
+	if (m_renderPolygon) {
+		RenderPolygon(m_zoomPoint, m_zoomFactor, m_openGLScreen, m_polygonShader);
+	}
+
+	if (m_renderPWLine) {
+		RenderPWLine(m_zoomPoint, m_zoomFactor, m_openGLScreen, m_pwLineShader);
 	}
 
 	m_zoomWindow->BindFBO();
@@ -266,6 +281,64 @@ void mpm::MpmEngine::RenderGrid(vec2 zoomPoint, real zoomFactor, std::shared_ptr
 	glBindVertexArray(0);
 }
 
+void mpm::MpmEngine::RenderPolygon(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> polygonShader)
+{
+	if (m_polygon->vertices.size() == 0)
+		return;
+
+	polygonShader->Use();
+	polygonShader->SetVec("iMouse", m_mpm_mouse);
+	polygonShader->SetVec("iCenter", vec2(openGLScreen->center.x, openGLScreen->screen_dimensions.y - openGLScreen->center.y)); // correct y for glsl
+	polygonShader->SetVec("iResolution", openGLScreen->sim_dimensions);
+	polygonShader->SetVec("iSourceResolution", openGLScreen->screen_dimensions);
+	polygonShader->SetBool("lastVertexMouse", m_addPolygonVertexState);
+	GLuint polygonSSBO;
+	glCreateBuffers(1, &polygonSSBO);
+
+	glNamedBufferStorage(
+		polygonSSBO,
+		sizeof(vec2) * m_polygon->vertices.size(),
+		&(m_polygon->vertices.front()),
+		GL_MAP_READ_BIT | GL_MAP_WRITE_BIT // adding write bit for debug purposes
+	);
+	glBindVertexArray(VisualizeVAO);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, polygonSSBO);
+	glDrawArrays(GL_POINTS, 0, (GLsizei)1);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
+	glBindVertexArray(0);
+
+	glDeleteBuffers(1, &polygonSSBO);
+}
+
+void mpm::MpmEngine::RenderPWLine(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> pwLineShader)
+{
+	if (m_pwLine->vertices.size() == 0)
+		return;
+
+	pwLineShader->Use();
+	pwLineShader->SetVec("iMouse", m_mpm_mouse);
+	pwLineShader->SetVec("iCenter", vec2(openGLScreen->center.x, openGLScreen->screen_dimensions.y - openGLScreen->center.y)); // correct y for glsl
+	pwLineShader->SetVec("iResolution", openGLScreen->sim_dimensions);
+	pwLineShader->SetVec("iSourceResolution", openGLScreen->screen_dimensions);
+	pwLineShader->SetBool("lastVertexMouse", m_addPWLineVertexState);
+	GLuint pwLineSSBO;
+	glCreateBuffers(1, &pwLineSSBO);
+
+	glNamedBufferStorage(
+		pwLineSSBO,
+		sizeof(vec2) * m_pwLine->vertices.size(),
+		&(m_pwLine->vertices.front()),
+		GL_MAP_READ_BIT | GL_MAP_WRITE_BIT // adding write bit for debug purposes
+	);
+	glBindVertexArray(VisualizeVAO);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, pwLineSSBO);
+	glDrawArrays(GL_POINTS, 0, (GLsizei)1);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
+	glBindVertexArray(0);
+
+	glDeleteBuffers(1, &pwLineSSBO);
+}
+
 void mpm::MpmEngine::ProcessKeyboardInput(GLFWwindow* window, real lag)
 {
 	// don't process keyboard input when writing into imgui textboxes
@@ -305,6 +378,14 @@ void mpm::MpmEngine::ProcessKeyboardInput(GLFWwindow* window, real lag)
 
 		if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS) {
 			MpmReset();
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
+			m_addPolygonVertexState = true;
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
+			m_addPWLineVertexState = true;
 		}
 	}
 
@@ -411,7 +492,7 @@ void mpm::MpmEngine::HandleStates()
 		color.z = (float)glm::clamp(m_color[2], 0, 255) / 255.f;*/
 
 		real inner_rounding = m_circle_r - m_circle_inner_radius;
-		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(circleID, shape, GRID_SIZE_X, GRID_SIZE_Y, inner_rounding, m_circle_rounding, m_mpParameters, m_comodel, true, m_initVelocity, color);
+		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(circleID, shape, GRID_SIZE_X, GRID_SIZE_Y, inner_rounding, m_circle_rounding, m_mpParameters, m_comodel, sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, m_initVelocity, color);
 
 		t2 = high_resolution_clock::now();
 
@@ -441,7 +522,7 @@ void mpm::MpmEngine::HandleStates()
 		
 
 		real inner_rounding = glm::min(m_rect_b, m_rect_h) - m_rect_inner_radius;
-		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(rectID, shape, GRID_SIZE_X, GRID_SIZE_Y, inner_rounding, m_rect_rounding, m_mpParameters, m_comodel, true, m_initVelocity, color);
+		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(rectID, shape, GRID_SIZE_X, GRID_SIZE_Y, inner_rounding, m_rect_rounding, m_mpParameters, m_comodel, sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, m_initVelocity, color);
 
 		t2 = high_resolution_clock::now();
 
@@ -470,7 +551,7 @@ void mpm::MpmEngine::HandleStates()
 		glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
 
 		real inner_rounding = glm::min(m_iso_tri_b, m_iso_tri_h) - m_iso_tri_inner_radius;
-		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(isoTriID, shape, GRID_SIZE_X, GRID_SIZE_Y, inner_rounding, m_iso_tri_rounding, m_mpParameters, m_comodel, true, m_initVelocity, color);
+		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(isoTriID, shape, GRID_SIZE_X, GRID_SIZE_Y, inner_rounding, m_iso_tri_rounding, m_mpParameters, m_comodel, sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, m_initVelocity, color);
 
 		t2 = high_resolution_clock::now();
 
@@ -487,13 +568,42 @@ void mpm::MpmEngine::HandleStates()
 		m_node[0] = glm::clamp((int)(mouseX * GRID_SIZE_X), 0, GRID_SIZE_X - 1);
 		m_node[1] = glm::clamp((int)(mouseY * GRID_SIZE_Y), 0, GRID_SIZE_Y - 1);
 	}
+
+	if (m_paused && m_addPolygonVertexState && m_leftButtonDown) {
+		m_addPolygonVertexState = false;
+
+		real mouseX = m_mpm_mouse.x;
+		real mouseY = m_mpm_mouse.y;
+
+		real vertexX = mouseX * (real)GRID_SIZE_X;
+		real vertexY = mouseY * (real)GRID_SIZE_Y;
+
+		vec2 v = vec2(vertexX, vertexY);
+
+		m_polygon->AddVertex(v);
+	}
+
+	if (m_paused && m_addPWLineVertexState && m_leftButtonDown) {
+		m_addPWLineVertexState = false;
+
+		real mouseX = m_mpm_mouse.x;
+		real mouseY = m_mpm_mouse.y;
+
+		real vertexX = mouseX * (real)GRID_SIZE_X;
+		real vertexY = mouseY * (real)GRID_SIZE_Y;
+
+		vec2 v = vec2(vertexX, vertexY);
+
+		m_pwLine->AddVertex(v);
+	}
 }
 
 std::shared_ptr<PointCloud> mpm::MpmEngine::GenPointCloud(const std::string pointCloudID, sdf::Shape& shape,
 	const real gridDimX, const real gridDimY, 
 	const real inner_rounding, const real outer_rounding,
 	const MaterialParameters &parameters,
-	const GLuint comodel, bool useHollow,
+	const GLuint comodel, sdf::SDF_OPTION sdfOption,
+	bool inverted, bool fixed,
 	vec2 initialVelocity, glm::highp_fvec4 color)
 {
 	std::shared_ptr<PointCloud> pointCloud = std::make_shared<PointCloud>();
@@ -509,6 +619,8 @@ std::shared_ptr<PointCloud> mpm::MpmEngine::GenPointCloud(const std::string poin
 
 	pointCloud->comodel = comodel;
 
+	pointCloud->fixed = fixed;
+
 	real mass = parameters.particleSpacing * parameters.particleSpacing * parameters.density;
 	
 	// gen points from sdf
@@ -518,10 +630,23 @@ std::shared_ptr<PointCloud> mpm::MpmEngine::GenPointCloud(const std::string poin
 			glm::vec2 p(x, y);
 			
 			real sd;
-			if (useHollow)
+			switch (sdfOption) {
+			case sdf::SDF_OPTION::NORMAL:
+				sd = shape.Sdf(p);
+				break;
+			case sdf::SDF_OPTION::ROUNDED:
+				sd = shape.SdfRounded(p, outer_rounding);
+				break;
+			case sdf::SDF_OPTION::HOLLOW:
 				sd = shape.SdfHollow(p, inner_rounding, outer_rounding);
-			else
-				sd = shape.Sdf(p);// 
+				break;
+			default:
+				break;
+			}
+
+			if (inverted)
+				sd *= -1.0;
+
 			if (sd < 0.f) {
 				MaterialPoint mp;
 				mp.x = p;
@@ -567,7 +692,7 @@ std::shared_ptr<PointCloud> mpm::MpmEngine::GenPointCloud(const std::string poin
 	return pointCloud;
 }
 
-void mpm::MpmEngine::GenPointCloudLineDivider()
+void mpm::MpmEngine::GenPointCloudPolygon()
 {
 	if (!m_paused)
 		return;
@@ -578,24 +703,75 @@ void mpm::MpmEngine::GenPointCloudLineDivider()
 	t1 = high_resolution_clock::now();
 
 
-	m_isoTriCount++;
-	//sdf::sdFunc dCircle(sdf::DemoCircle);
-	sdf::LineDivider shape1(m_line_m, m_line_b);
-	sdf::LineDivider shape2(m_line2_m, m_line2_b);
-	sdf::Intersection andShape;
-	andShape.shapes.push_back(shape1);
-	andShape.shapes.push_back(shape2);
-	std::string lineDivID = "lineDiv" + std::to_string(m_lineDivCount);
+	
+
+	std::string polygonID = "polygon" + std::to_string(m_polygonCount);
+	m_polygonCount++;
 
 	glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
 
-	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(lineDivID, andShape, GRID_SIZE_X, GRID_SIZE_Y, 0.0, 0.0, m_mpParameters, m_comodel, false, m_initVelocity, color);
+	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(polygonID, *m_polygon, GRID_SIZE_X, GRID_SIZE_Y, 0.0, 0.0, m_mpParameters, m_comodel, sdf::SDF_OPTION::NORMAL, m_invertedSdf, m_fixedPointCloud, m_initVelocity, color);
 
 	t2 = high_resolution_clock::now();
 
-	std::cout << "Finished generating " << pointCloud->N << " points for '" << lineDivID << "' point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
+	std::cout << "Finished generating " << pointCloud->N << " points for '" << polygonID << "' point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
 
 }
+
+void mpm::MpmEngine::GenPointCloudPWLine()
+{
+	if (!m_paused)
+		return;
+
+	using namespace std::chrono;
+	time_point<high_resolution_clock> t1;
+	time_point<high_resolution_clock> t2;
+	t1 = high_resolution_clock::now();
+
+
+
+
+	std::string pwLineID = "line" + std::to_string(m_pwLineCount);
+	m_pwLineCount++;
+
+	glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
+
+	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(pwLineID, *m_pwLine, GRID_SIZE_X, GRID_SIZE_Y, 0.0, m_pwLineRounding, m_mpParameters, m_comodel, sdf::SDF_OPTION::ROUNDED, false, m_fixedPointCloud, m_initVelocity, color);
+
+	t2 = high_resolution_clock::now();
+
+	std::cout << "Finished generating " << pointCloud->N << " points for '" << pwLineID << "' point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
+}
+
+//void mpm::MpmEngine::GenPointCloudLineDivider()
+//{
+//	if (!m_paused)
+//		return;
+//
+//	using namespace std::chrono;
+//	time_point<high_resolution_clock> t1;
+//	time_point<high_resolution_clock> t2;
+//	t1 = high_resolution_clock::now();
+//
+//
+//	m_isoTriCount++;
+//	//sdf::sdFunc dCircle(sdf::DemoCircle);
+//	sdf::LineDivider shape1(m_line_m, m_line_b);
+//	sdf::LineDivider shape2(m_line2_m, m_line2_b);
+//	sdf::Intersection andShape;
+//	andShape.shapes.push_back(shape1);
+//	andShape.shapes.push_back(shape2);
+//	std::string lineDivID = "lineDiv" + std::to_string(m_lineDivCount);
+//
+//	glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
+//
+//	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(lineDivID, andShape, GRID_SIZE_X, GRID_SIZE_Y, 0.0, 0.0, m_mpParameters, m_comodel, false, m_invertedSdf, m_fixedPointCloud, m_initVelocity, color);
+//
+//	t2 = high_resolution_clock::now();
+//
+//	std::cout << "Finished generating " << pointCloud->N << " points for '" << lineDivID << "' point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
+//
+//}
 
 void mpm::MpmEngine::PrintGridData()
 {

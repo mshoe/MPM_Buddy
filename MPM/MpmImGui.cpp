@@ -12,6 +12,7 @@ void mpm::MpmEngine::RenderGUI()
 		if (m_renderTimeIntegrator) RenderTimeIntegrator();
 		if (m_renderForceController) RenderForceController();
 		if (m_renderGeometryEditor) RenderGeometryEditor();
+		if (m_renderMaterialParametersEditor) RenderMaterialParametersEditor();
 		if (m_renderGridNodeViewer) RenderGridNodeViewer();
 		if (m_renderMaterialPointViewer) RenderMaterialPointViewer();
 		if (m_renderZoomWindow) RenderZoomWindow();
@@ -26,6 +27,7 @@ void mpm::MpmEngine::RenderWindowManager()
 	ImGui::Checkbox("Time Integrator", &m_renderTimeIntegrator);
 	ImGui::Checkbox("Force Controller", &m_renderForceController);
 	ImGui::Checkbox("Geometry Editor", &m_renderGeometryEditor);
+	ImGui::Checkbox("Material Parameters Editor", &m_renderMaterialParametersEditor);
 	ImGui::Checkbox("Grid Node Viewer", &m_renderGridNodeViewer);
 	ImGui::Checkbox("Material Point Viewer", &m_renderMaterialPointViewer);
 	ImGui::Checkbox("Zoom Window", &m_renderZoomWindow);
@@ -44,8 +46,8 @@ void mpm::MpmEngine::RenderTimeIntegrator()
 	ImGui::Checkbox("Realtime Rendering", &m_rt);
 
 
-	ImGui::Checkbox("Implicit Time Integration", &m_implicit);
-	ImGui::InputReal("Implict Ratio", &m_implicit_ratio);
+	ImGui::Checkbox("Implicit Time Integration", &m_semi_implicit_CR);
+	ImGui::InputReal("Implict Ratio", &m_semi_implicit_ratio);
 	ImGui::InputInt("Max CR Iterations", &m_max_conj_res_iter);
 	ImGui::InputReal("L2 Norm Threshold", &m_L2_norm_threshold);
 
@@ -81,7 +83,7 @@ void mpm::MpmEngine::RenderTimeIntegrator()
 		UpdateNodeData();
 	}
 	if (ImGui::Button("Semi-Implicit Grid Update") && m_paused) {
-		MpmTimeStepSemiImplicitGridUpdate(m_dt);
+		MpmTimeStepSemiImplicitCRGridUpdate(m_dt);
 		UpdateNodeData();
 	}
 	if (ImGui::Button("G2P") && m_paused) {
@@ -149,6 +151,84 @@ void mpm::MpmEngine::RenderGeometryEditor()
 {
 	ImGui::Begin("Geometry Editor");
 
+	
+
+	ImGui::Checkbox("Fixed point cloud", &m_fixedPointCloud);
+	ImGui::Checkbox("Inverted SDF (DANGER)", &m_invertedSdf);
+
+	ImGui::InputReal("Circle Radius", &m_circle_r, 0.1, 1.0, "%.1f");
+	ImGui::InputReal("Circle Inner Radius", &m_circle_inner_radius, 0.1, 1.0, "%.1f");
+	ImGui::InputReal("Circle Rounding", &m_circle_rounding, 0.1, 1.0, "%.1f");
+	if (ImGui::Button("Create Solid Circle") && m_paused) {
+		m_createCircleState = true;
+	}
+
+
+	ImGui::InputReal("Rectangle Base Length", &m_rect_b, 0.1, 1.0, "%.1f");
+	ImGui::InputReal("Rectangle Height Length", &m_rect_h, 0.1, 1.0, "%.1f");
+	ImGui::InputReal("Rectangle Inner Radius", &m_rect_inner_radius, 0.1, 1.0, "%.1f");
+	ImGui::InputReal("Rectangle Rounding", &m_rect_rounding, 0.1, 1.0, "%.1f");
+	if (ImGui::Button("Create Solid Rectangle") && m_paused) {
+		m_createRectState = true;
+	}
+
+	ImGui::InputReal("Isosceles Triangle Base Length", &m_iso_tri_b, 0.1, 1.0, "%.1f");
+	ImGui::InputReal("Isosceles Height Length", &m_iso_tri_h, 0.1, 1.0, "%.1f");
+	ImGui::InputReal("Isosceles Triangle Inner Radius", &m_iso_tri_inner_radius, 0.1, 1.0, "%.1f");
+	ImGui::InputReal("Isosceles Triangle Rounding", &m_iso_tri_rounding, 0.1, 1.0, "%.1f");
+	if (ImGui::Button("Create Solid Triangle") && m_paused) {
+		m_createIsoTriState = true;
+	}
+
+	//ImGui::InputReal("Line m", &m_line_m);
+	//ImGui::InputReal("Line b", &m_line_b);
+	//ImGui::InputReal("Line2 m", &m_line2_m);
+	//ImGui::InputReal("Line2 b", &m_line2_b);
+	//if (ImGui::Button("Create below line y = mx + b")) {
+	//	GenPointCloudLineDivider();
+	//}
+
+	ImGui::Text("");
+	ImGui::Checkbox("Render polygon", &m_renderPolygon);
+	if (ImGui::Button("Add Polygon Vertex")) {
+		m_addPolygonVertexState = true;
+	}
+	if (ImGui::Button("Clear Polygon")) {
+		m_polygon->vertices.clear();
+	}
+	if (ImGui::Button("Create polygon")) {
+		GenPointCloudPolygon();
+	}
+	ImGui::DisplayNamedGlmRealColor("Number of vertices", m_polygon->vertices.size(), glm::highp_fvec4(1.0));
+	ImGui::Text("Polygon vertices:");
+	for (int i = 0; i < m_polygon->vertices.size(); i++) {
+		ImGui::DisplayGlmVec(m_polygon->vertices[i]);
+	}
+
+	ImGui::Text("");
+	ImGui::Checkbox("Render piecewise line", &m_renderPWLine);
+	if (ImGui::Button("Add line Vertex")) {
+		m_addPWLineVertexState = true;
+	}
+	if (ImGui::Button("Clear Line")) {
+		m_pwLine->vertices.clear();
+	}
+	if (ImGui::Button("Create PW Line from SDF")) {
+		GenPointCloudPWLine();
+	}
+	ImGui::DisplayNamedGlmRealColor("Number of vertices", m_pwLine->vertices.size(), glm::highp_fvec4(1.0));
+	ImGui::Text("PW Line vertices:");
+	for (int i = 0; i < m_pwLine->vertices.size(); i++) {
+		ImGui::DisplayGlmVec(m_pwLine->vertices[i]);
+	}
+
+
+	ImGui::End();
+}
+
+void mpm::MpmEngine::RenderMaterialParametersEditor()
+{
+	ImGui::Begin("Material Parameters Editor");
 	//ImGui::Color
 	ImGui::ColorEdit4("Color", m_color);
 	ImGui::InputReal("Initial Velocity X", &m_initVelocity.x, 0.1, 1.0, "%.1f");
@@ -193,42 +273,6 @@ void mpm::MpmEngine::RenderGeometryEditor()
 	}
 	std::string comodelStr = "constitutive model: " + std::to_string(m_comodel);
 	ImGui::Text(comodelStr.c_str());
-
-
-
-	ImGui::InputReal("Circle Radius", &m_circle_r, 0.1, 1.0, "%.1f");
-	ImGui::InputReal("Circle Inner Radius", &m_circle_inner_radius, 0.1, 1.0, "%.1f");
-	ImGui::InputReal("Circle Rounding", &m_circle_rounding, 0.1, 1.0, "%.1f");
-	if (ImGui::Button("Create Solid Circle") && m_paused) {
-		m_createCircleState = true;
-	}
-
-
-	ImGui::InputReal("Rectangle Base Length", &m_rect_b, 0.1, 1.0, "%.1f");
-	ImGui::InputReal("Rectangle Height Length", &m_rect_h, 0.1, 1.0, "%.1f");
-	ImGui::InputReal("Rectangle Inner Radius", &m_rect_inner_radius, 0.1, 1.0, "%.1f");
-	ImGui::InputReal("Rectangle Rounding", &m_rect_rounding, 0.1, 1.0, "%.1f");
-	if (ImGui::Button("Create Solid Rectangle") && m_paused) {
-		m_createRectState = true;
-	}
-
-	ImGui::InputReal("Isosceles Triangle Base Length", &m_iso_tri_b, 0.1, 1.0, "%.1f");
-	ImGui::InputReal("Isosceles Height Length", &m_iso_tri_h, 0.1, 1.0, "%.1f");
-	ImGui::InputReal("Isosceles Triangle Inner Radius", &m_iso_tri_inner_radius, 0.1, 1.0, "%.1f");
-	ImGui::InputReal("Isosceles Triangle Rounding", &m_iso_tri_rounding, 0.1, 1.0, "%.1f");
-	if (ImGui::Button("Create Solid Triangle") && m_paused) {
-		m_createIsoTriState = true;
-	}
-
-	ImGui::InputReal("Line m", &m_line_m);
-	ImGui::InputReal("Line b", &m_line_b);
-	ImGui::InputReal("Line2 m", &m_line2_m);
-	ImGui::InputReal("Line2 b", &m_line2_b);
-	if (ImGui::Button("Create below line y = mx + b")) {
-		GenPointCloudLineDivider();
-	}
-
-
 	ImGui::End();
 }
 
