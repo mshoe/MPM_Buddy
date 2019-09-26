@@ -48,8 +48,8 @@ namespace mpm {
 
 	private:
 
-		int m_chunks_x = 2;
-		int m_chunks_y = 2;
+		int m_chunks_x = 4;
+		int m_chunks_y = 4;
 
 		//*** MPM FUNCTIONS ***//
 		void MpmReset();
@@ -155,6 +155,8 @@ namespace mpm {
 		std::shared_ptr<StandardShader> m_zoomWindowShader = nullptr;
 		std::shared_ptr<StandardShader> m_gridShader = nullptr;
 		std::shared_ptr<StandardShader> m_gridShaderVector = nullptr;
+
+		std::shared_ptr<StandardShader> m_borderShader = nullptr;
 		std::shared_ptr<StandardShader> m_polygonShader = nullptr;
 		std::shared_ptr<StandardShader> m_pwLineShader = nullptr;
 

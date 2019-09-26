@@ -1,6 +1,9 @@
 /* begin MPM shaders header */
 const int GRID_SIZE_X = 32*4;
 const int GRID_SIZE_Y = 32*4;
+int CHUNK_WIDTH = 32;
+uniform int CHUNKS_X = 4;
+uniform int CHUNKS_Y = 4;
 
 struct materialPoint {
 	dvec2 x;
@@ -51,6 +54,10 @@ layout (std430, binding = 2) buffer particleGrid {
 	gridNode nodes[GRID_SIZE_X][GRID_SIZE_Y];
 };
 
+int GetGridNodeIndex(int node_i, int node_j) {
+	return node_i * CHUNKS_Y * CHUNK_WIDTH + node_j;
+}
+
 double QuadBSpline(in double x) {
 	x = abs(x);
 	return (x < 0.5) ? 	step(0.0, x)*(0.75 - x*x) :
@@ -76,8 +83,8 @@ double BSplineSlope(in double x) {
 }
 
 void InBounds(inout int i, inout int j, out double inbounds) {
-	double r1 = double(int((0 <= i) && (i < GRID_SIZE_X)));
-	double r2 = double(int((0 <= j) && (j < GRID_SIZE_Y)));
+	double r1 = double(int((0 <= i) && (i < CHUNK_WIDTH * CHUNKS_X)));
+	double r2 = double(int((0 <= j) && (j < CHUNK_WIDTH * CHUNKS_Y)));
 	inbounds = r1 * r2;
 
 	// also sets i and j to 0 if they are out of bounds, 

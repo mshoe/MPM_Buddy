@@ -62,7 +62,9 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 	m_zoomWindowShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\zoomWindow.vs"}, std::vector<std::string>{}, std::vector<std::string>{"shaders\\graphics\\zoomWindow.fs"}, "shaders\\compute\\mpm_header.comp");
 	m_gridShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\gridShader.vs"}, std::vector<std::string>{"shaders\\graphics\\gridShaderPassThrough.gs"}, std::vector<std::string>{"shaders\\graphics\\gridShader.fs"}, "shaders\\compute\\mpm_header.comp");
 	m_gridShaderVector = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\gridShader.vs"}, std::vector<std::string>{"shaders\\graphics\\gridShaderVector.gs"}, std::vector<std::string>{"shaders\\graphics\\gridShader.fs"}, "shaders\\compute\\mpm_header.comp");
+	
 
+	m_borderShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\polygon.vs"}, std::vector<std::string>{"shaders\\graphics\\border.gs"}, std::vector<std::string>{"shaders\\graphics\\polygon.fs"}, "shaders\\compute\\mpm_header.comp");
 	m_polygonShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\polygon.vs"}, std::vector<std::string>{"shaders\\graphics\\polygon.gs"}, std::vector<std::string>{"shaders\\graphics\\polygon.fs"}, "shaders\\compute\\mpm_header.comp");
 	m_pwLineShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\polygon.vs"}, std::vector<std::string>{"shaders\\graphics\\pwLine.gs"}, std::vector<std::string>{"shaders\\graphics\\polygon.fs"}, "shaders\\compute\\mpm_header.comp");
 
@@ -188,6 +190,17 @@ void mpm::MpmEngine::Render()
 	if (m_renderPWLine) {
 		RenderPWLine(m_zoomPoint, m_zoomFactor, m_openGLScreen, m_pwLineShader);
 	}
+
+	// Render the grid border
+	m_borderShader->Use();
+	m_borderShader->SetVec("iCenter", vec2(m_openGLScreen->center.x, m_openGLScreen->screen_dimensions.y - m_openGLScreen->center.y)); // correct y for glsl
+	m_borderShader->SetVec("iResolution", m_openGLScreen->sim_dimensions);
+	m_borderShader->SetVec("iSourceResolution", m_openGLScreen->screen_dimensions);
+	m_borderShader->SetInt("CHUNKS_X", m_chunks_x);
+	m_borderShader->SetInt("CHUNKS_Y", m_chunks_y);
+	glBindVertexArray(VisualizeVAO);
+	glDrawArrays(GL_POINTS, 0, (GLsizei)1);
+	glBindVertexArray(0);
 
 	m_zoomWindow->BindFBO();
 	glViewport(0, 0, (GLsizei)m_zoomWindow->screen_dimensions.x, (GLsizei)m_zoomWindow->screen_dimensions.y);
@@ -492,7 +505,7 @@ void mpm::MpmEngine::HandleStates()
 		color.z = (float)glm::clamp(m_color[2], 0, 255) / 255.f;*/
 
 		real inner_rounding = m_circle_r - m_circle_inner_radius;
-		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(circleID, shape, GRID_SIZE_X, GRID_SIZE_Y, inner_rounding, m_circle_rounding, m_mpParameters, m_comodel, sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, m_initVelocity, color);
+		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(circleID, shape, m_chunks_x * CHUNK_WIDTH, m_chunks_y * CHUNK_WIDTH, inner_rounding, m_circle_rounding, m_mpParameters, m_comodel, sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, m_initVelocity, color);
 
 		t2 = high_resolution_clock::now();
 
@@ -522,7 +535,7 @@ void mpm::MpmEngine::HandleStates()
 		
 
 		real inner_rounding = glm::min(m_rect_b, m_rect_h) - m_rect_inner_radius;
-		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(rectID, shape, GRID_SIZE_X, GRID_SIZE_Y, inner_rounding, m_rect_rounding, m_mpParameters, m_comodel, sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, m_initVelocity, color);
+		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(rectID, shape, m_chunks_x * CHUNK_WIDTH, m_chunks_y * CHUNK_WIDTH, inner_rounding, m_rect_rounding, m_mpParameters, m_comodel, sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, m_initVelocity, color);
 
 		t2 = high_resolution_clock::now();
 
@@ -551,7 +564,7 @@ void mpm::MpmEngine::HandleStates()
 		glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
 
 		real inner_rounding = glm::min(m_iso_tri_b, m_iso_tri_h) - m_iso_tri_inner_radius;
-		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(isoTriID, shape, GRID_SIZE_X, GRID_SIZE_Y, inner_rounding, m_iso_tri_rounding, m_mpParameters, m_comodel, sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, m_initVelocity, color);
+		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(isoTriID, shape, m_chunks_x*CHUNK_WIDTH, m_chunks_y*CHUNK_WIDTH, inner_rounding, m_iso_tri_rounding, m_mpParameters, m_comodel, sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, m_initVelocity, color);
 
 		t2 = high_resolution_clock::now();
 
@@ -710,7 +723,7 @@ void mpm::MpmEngine::GenPointCloudPolygon()
 
 	glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
 
-	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(polygonID, *m_polygon, GRID_SIZE_X, GRID_SIZE_Y, 0.0, 0.0, m_mpParameters, m_comodel, sdf::SDF_OPTION::NORMAL, m_invertedSdf, m_fixedPointCloud, m_initVelocity, color);
+	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(polygonID, *m_polygon, m_chunks_x * CHUNK_WIDTH, m_chunks_y * CHUNK_WIDTH, 0.0, 0.0, m_mpParameters, m_comodel, sdf::SDF_OPTION::NORMAL, m_invertedSdf, m_fixedPointCloud, m_initVelocity, color);
 
 	t2 = high_resolution_clock::now();
 
@@ -736,7 +749,7 @@ void mpm::MpmEngine::GenPointCloudPWLine()
 
 	glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
 
-	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(pwLineID, *m_pwLine, GRID_SIZE_X, GRID_SIZE_Y, 0.0, m_pwLineRounding, m_mpParameters, m_comodel, sdf::SDF_OPTION::ROUNDED, false, m_fixedPointCloud, m_initVelocity, color);
+	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(pwLineID, *m_pwLine, m_chunks_x * CHUNK_WIDTH, m_chunks_y * CHUNK_WIDTH, 0.0, m_pwLineRounding, m_mpParameters, m_comodel, sdf::SDF_OPTION::ROUNDED, false, m_fixedPointCloud, m_initVelocity, color);
 
 	t2 = high_resolution_clock::now();
 

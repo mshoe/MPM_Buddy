@@ -58,7 +58,7 @@ void mpm::MpmEngine::MpmCRInit(real dt) {
 	// IMPLICIT INIT PART 1
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 	m_gConjugateResidualsInitPart1->Use();
-	glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
+	glDispatchCompute(m_chunks_x, m_chunks_y, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 	// CALCULATE deltaForce using v from explicit update
@@ -68,6 +68,8 @@ void mpm::MpmEngine::MpmCRInit(real dt) {
 		m_p2g2pDeltaForce->Use();
 		m_p2g2pDeltaForce->SetReal("lam", pointCloudPair.second->lam);
 		m_p2g2pDeltaForce->SetReal("mew", pointCloudPair.second->mew);
+		m_p2g2pDeltaForce->SetInt("CHUNKS_X", m_chunks_x);
+		m_p2g2pDeltaForce->SetInt("CHUNKS_Y", m_chunks_y);
 		int p_workgroups = int(glm::ceil(real(pointCloudPair.second->N) / real(G2P_WORKGROUP_SIZE)));
 		glDispatchCompute(p_workgroups, 1, 1);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
@@ -78,7 +80,7 @@ void mpm::MpmEngine::MpmCRInit(real dt) {
 	m_gConjugateResidualsInitPart2->Use();
 	m_gConjugateResidualsInitPart2->SetReal("dt", dt);
 	m_gConjugateResidualsInitPart2->SetReal("IMPLICIT_RATIO", m_semi_implicit_ratio);
-	glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
+	glDispatchCompute(m_chunks_x, m_chunks_y, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 	// CALCULATE deltaForce using r0
@@ -88,6 +90,8 @@ void mpm::MpmEngine::MpmCRInit(real dt) {
 		m_p2g2pDeltaForce->Use();
 		m_p2g2pDeltaForce->SetReal("lam", pointCloudPair.second->lam);
 		m_p2g2pDeltaForce->SetReal("mew", pointCloudPair.second->mew);
+		m_p2g2pDeltaForce->SetInt("CHUNKS_X", m_chunks_x);
+		m_p2g2pDeltaForce->SetInt("CHUNKS_Y", m_chunks_y);
 		int p_workgroups = int(glm::ceil(real(pointCloudPair.second->N) / real(G2P_WORKGROUP_SIZE)));
 		glDispatchCompute(p_workgroups, 1, 1);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
@@ -98,7 +102,7 @@ void mpm::MpmEngine::MpmCRInit(real dt) {
 	m_gConjugateResidualsInitPart3->Use();
 	m_gConjugateResidualsInitPart3->SetReal("dt", dt);
 	m_gConjugateResidualsInitPart3->SetReal("IMPLICIT_RATIO", m_semi_implicit_ratio);
-	glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
+	glDispatchCompute(m_chunks_x, m_chunks_y, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
@@ -106,7 +110,7 @@ bool mpm::MpmEngine::MpmCRStep(real dt, real& L2_norm_rk, bool& L2_converged, bo
 {
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 	m_gConjugateResidualsStepPart1->Use();
-	glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
+	glDispatchCompute(m_chunks_x, m_chunks_y, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 	// now need to calculate the norm of the residual vector to determine if we should stop
@@ -162,6 +166,8 @@ bool mpm::MpmEngine::MpmCRStep(real dt, real& L2_norm_rk, bool& L2_converged, bo
 		m_p2g2pDeltaForce->Use();
 		m_p2g2pDeltaForce->SetReal("lam", pointCloudPair.second->lam);
 		m_p2g2pDeltaForce->SetReal("mew", pointCloudPair.second->mew);
+		m_p2g2pDeltaForce->SetInt("CHUNKS_X", m_chunks_x);
+		m_p2g2pDeltaForce->SetInt("CHUNKS_Y", m_chunks_y);
 		int p_workgroups = int(glm::ceil(real(pointCloudPair.second->N) / real(G2P_WORKGROUP_SIZE)));
 		glDispatchCompute(p_workgroups, 1, 1);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
@@ -171,7 +177,7 @@ bool mpm::MpmEngine::MpmCRStep(real dt, real& L2_norm_rk, bool& L2_converged, bo
 	m_gConjugateResidualsStepPart2->Use();
 	m_gConjugateResidualsStepPart2->SetReal("dt", dt);
 	m_gConjugateResidualsStepPart2->SetReal("IMPLICIT_RATIO", m_semi_implicit_ratio);
-	glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
+	glDispatchCompute(m_chunks_x, m_chunks_y, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 	return L2_converged;
@@ -182,6 +188,6 @@ void mpm::MpmEngine::MpmCREnd(real dt) {
 	// IMPLICIT CONCLUSION
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 	m_gConjugateResidualsConclusion->Use();
-	glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);
+	glDispatchCompute(m_chunks_x, m_chunks_y, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }

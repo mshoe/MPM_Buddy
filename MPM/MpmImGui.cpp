@@ -280,6 +280,14 @@ void mpm::MpmEngine::RenderGridNodeViewer()
 {
 	ImGui::Begin("Grid Node Viewer");
 
+	std::string chunkWidthStr = "Chunk width: " + std::to_string(CHUNK_WIDTH);
+	ImGui::Text(chunkWidthStr.c_str());
+
+	ImGui::InputInt("# chunks (x)", &m_chunks_x, 1, 1);
+	m_chunks_x = glm::clamp(m_chunks_x, 1, 4);
+	ImGui::InputInt("# chunks (y)", &m_chunks_y, 1, 1);
+	m_chunks_y = glm::clamp(m_chunks_y, 1, 4);
+
 	ImGui::Checkbox("Node Selection Graphics", &m_nodeGraphicsActive);
 	if (ImGui::Button("Select Node")) {
 		m_selectNodeState = true;
