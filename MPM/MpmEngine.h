@@ -48,6 +48,9 @@ namespace mpm {
 
 	private:
 
+		int m_chunks_x = 2;
+		int m_chunks_y = 2;
+
 		//*** MPM FUNCTIONS ***//
 		void MpmReset();
 		void MpmTimeStep(real dt);

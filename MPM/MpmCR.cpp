@@ -116,36 +116,39 @@ bool mpm::MpmEngine::MpmCRStep(real dt, real& L2_norm_rk, bool& L2_converged, bo
 
 	// Instead, we will use a parallel prefix sum algorithm to check if all grid nodes have converged.
 
-	L2_converged = false;
-	L_inf_converged = true;
-	L2_norm_rk = 0.0;
-	int num_active_nodes = 0;
-	void* ptr = glMapNamedBuffer(gridSSBO, GL_READ_WRITE);
-	GridNode* data = static_cast<GridNode*>(ptr);
-	for (int i = 0; i < GRID_SIZE_X * GRID_SIZE_Y; i++) {
-		GridNode gn = data[i];
-		/*if (!gn.converged) {
-			converged = false;
-		}*/
-		if (gn.m > 0.0) {
-			num_active_nodes++;
-			real node_norm = glm::length(glm::dot(gn.rk, gn.rk)); // using norm instead of norm squared, cuz more stable
-			L2_norm_rk += node_norm;
-		}
-	}
-	glUnmapNamedBuffer(gridSSBO);
 
-	//std::cout << "L2 norm of rk (squared) is: " << L2_norm_rk << std::endl;
+	// THIS CODE CHECKS IF CONVERGED ON CPU
 
-	if (num_active_nodes == 0)
-		return true;
+	//L2_converged = false;
+	//L_inf_converged = true;
+	//L2_norm_rk = 0.0;
+	//int num_active_nodes = 0;
+	//void* ptr = glMapNamedBuffer(gridSSBO, GL_READ_WRITE);
+	//GridNode* data = static_cast<GridNode*>(ptr);
+	//for (int i = 0; i < GRID_SIZE_X * GRID_SIZE_Y; i++) {
+	//	GridNode gn = data[i];
+	//	/*if (!gn.converged) {
+	//		converged = false;
+	//	}*/
+	//	if (gn.m > 0.0) {
+	//		num_active_nodes++;
+	//		real node_norm = glm::length(glm::dot(gn.rk, gn.rk)); // using norm instead of norm squared, cuz more stable
+	//		L2_norm_rk += node_norm;
+	//	}
+	//}
+	//glUnmapNamedBuffer(gridSSBO);
 
-	if (L2_norm_rk < m_L2_norm_threshold/* * num_active_nodes*/) {
-		L2_converged = true;
-	}
+	////std::cout << "L2 norm of rk (squared) is: " << L2_norm_rk << std::endl;
 
-	if (L2_converged)
-		return L2_converged;
+	//if (num_active_nodes == 0)
+	//	return true;
+
+	//if (L2_norm_rk < m_L2_norm_threshold/* * num_active_nodes*/) {
+	//	L2_converged = true;
+	//}
+
+	//if (L2_converged)
+	//	return L2_converged;
 
 	//if (converged) {
 	//	std::cout << "CR converged after " << i << " steps." << std::endl;
