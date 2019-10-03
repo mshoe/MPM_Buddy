@@ -135,15 +135,4 @@ void mpm::MpmEngine::CalculatePointCloudVolumes(std::string pointCloudID, std::s
 	std::cout << "Finished calculating initial volumes for '" << pointCloudID << "' in " << duration_cast<duration<real>>(t2 - t1).count() << " seconds.\n";
 }
 
-void mpm::MpmEngine::SetReferenceConfig(std::string pointCloudID)
-{
-	if (m_pointCloudMap.count(pointCloudID)) {
-		std::shared_ptr<PointCloud> pointCloud = m_pointCloudMap[pointCloudID];
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloud->ssbo);
-		m_pSetReferenceConfig->Use();
-		int p_workgroups = int(glm::ceil(real(pointCloud->N) / real(G2P_WORKGROUP_SIZE)));
-		glDispatchCompute(p_workgroups, 1, 1);
-		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
-	}
-}
+

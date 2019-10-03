@@ -4,16 +4,6 @@
 #include "glm_MATLAB.h"
 #include "glm_imgui.h"
 
-real BSpline(real x) {
-	return (x < 0.5) ? glm::step(0.0, x)*(0.75 - x * x) :
-		glm::step(x, 1.5)*0.5*(1.5 - abs(x))*(1.5 - abs(x));
-}
-
-real BSplineSlope(real x) {
-	return (x < 0.5) ? glm::step(0.0, x)*(-2.0 * x) :
-		glm::step(x, 1.5)*(1.5 - abs(x))*x / abs(x);
-}
-
 
 
 bool mpm::MpmEngine::InitComputeShaderPipeline()
@@ -39,7 +29,8 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 	m_p2gCalcVolumes = std::make_unique<ComputeShader>(std::vector<std::string> {"shaders\\compute\\p2gCalculateVolumes.comp"}, "shaders\\compute\\mpm_header.comp");
 	m_g2pCalcVolumes = std::make_unique<ComputeShader>(std::vector<std::string> {"shaders\\compute\\g2pCalculateVolumes.comp"}, "shaders\\compute\\mpm_header.comp");
 
-	m_pSetReferenceConfig = std::make_unique<ComputeShader>(std::vector<std::string> {"shaders\\compute\\pSetReferenceConfig.comp"}, "shaders\\compute\\mpm_header.comp");
+	m_pSetDeformationGradients = std::make_unique<ComputeShader>(std::vector<std::string> {"shaders\\compute\\interactive\\pSetDeformationGradients.comp"}, "shaders\\compute\\mpm_header.comp");
+	m_pMultDeformationGradients = std::make_unique<ComputeShader>(std::vector<std::string> {"shaders\\compute\\interactive\\pMultiplyDeformationGradients.comp"}, "shaders\\compute\\mpm_header.comp");
 
 	// implict time integration shaders
 	m_p2g2pDeltaForce = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\implicit\\g2p2gDeltaForce.comp"}, "shaders\\compute\\mpm_header.comp");
@@ -151,7 +142,7 @@ void mpm::MpmEngine::Update()
 void mpm::MpmEngine::Render()
 {
 	glViewport(0, 0, (GLsizei)m_openGLScreen->screen_dimensions.x, (GLsizei)m_openGLScreen->screen_dimensions.y);
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor(m_backgroundColor[0], m_backgroundColor[1], m_backgroundColor[2], m_backgroundColor[3]);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	// RENDER MOUSE SHADER
@@ -204,7 +195,7 @@ void mpm::MpmEngine::Render()
 
 	m_zoomWindow->BindFBO();
 	glViewport(0, 0, (GLsizei)m_zoomWindow->screen_dimensions.x, (GLsizei)m_zoomWindow->screen_dimensions.y);
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor(m_backgroundColor[0], m_backgroundColor[1], m_backgroundColor[2], m_backgroundColor[3]);
 	glClear(GL_COLOR_BUFFER_BIT);
 	//RenderScreenShader(m_zoomPoint, m_zoomFactor, m_zoomWindow);
 	if (m_viewPointClouds) {
@@ -370,6 +361,12 @@ void mpm::MpmEngine::ProcessKeyboardInput(GLFWwindow* window, real lag)
 	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
 		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
 			m_paused = false;
+		}
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {
+		for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+			SetDeformationGradients(pointCloudPair.first, mat2(1.0), m_setFp);
 		}
 	}
 

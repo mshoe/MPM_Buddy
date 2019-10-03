@@ -63,7 +63,15 @@ namespace mpm {
 		void MpmCREnd(real dt);
 		void MpmTimeStepSemiImplicitDirectSolve(real dt);
 		void CalculatePointCloudVolumes(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
-		void SetReferenceConfig(std::string pointCloudID);
+
+		//*** INTERACTIVE FUNCTIONS ***//
+		void SetDeformationGradients(std::string pointCloudID, mat2 Fe, mat2 Fp);
+		mat2 m_setFe = mat2(1.0);
+		mat2 m_setFp = mat2(1.0);
+		void MultiplyDeformationGradients(std::string pointCloudID, mat2 multFe, mat2 multFp);
+		std::vector<mat2> m_multFeVector;
+		mat2 m_multFe = mat2(1.0);
+		mat2 m_multFp = mat2(1.0);
 
 		//*** GUI FUNCTIONS ***//
 		void RenderWindowManager();
@@ -146,7 +154,9 @@ namespace mpm {
 		std::unique_ptr<ComputeShader> m_p2gCalcVolumes = nullptr;
 		std::unique_ptr<ComputeShader> m_g2pCalcVolumes = nullptr;
 
-		std::unique_ptr<ComputeShader> m_pSetReferenceConfig = nullptr;
+		// INTERACTIONS
+		std::unique_ptr<ComputeShader> m_pSetDeformationGradients = nullptr;
+		std::unique_ptr<ComputeShader> m_pMultDeformationGradients = nullptr;
 
 		// RENDERING
 		std::shared_ptr<StandardShader> m_pPointCloudShader = nullptr;
@@ -197,7 +207,7 @@ namespace mpm {
 		Grid m_grid;
 		bool m_nodeGraphicsActive = false;
 		int m_node[2] = { 26, 8 };
-		bool m_viewGrid = true;
+		bool m_viewGrid = false;
 		bool m_viewGridMass = true;
 		real m_maxNodeMassClamp = 40.0;
 		real m_minNodeMassClamp = 1.0;
@@ -264,6 +274,8 @@ namespace mpm {
 		GLuint m_comodel = FIXED_COROTATIONAL_ELASTICITY;
 		void ChangeMaterialParameters(GLuint);
 		
+
+		float m_backgroundColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 		float m_color[4] = { 1.0f, 0.0f, 0.0f, 1.0f}; // color needs to be float
 		vec2 m_initVelocity = vec2(0.0);

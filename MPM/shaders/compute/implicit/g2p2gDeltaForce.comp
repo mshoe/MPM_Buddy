@@ -46,13 +46,17 @@ void main() {
 		}
 	}
 
+	// Finally finish computing dF
 	dmat2 Fe = points[pid].Fe;
+	dF = dF * Fe;
+
+	// create some other variables that will be useful later
 	dmat2 Fit = transpose(inverse(Fe));
 	double J = determinant(Fe);
 	dmat2 R;
 	dmat2 S;
 	PolarDecomp(Fe, R, S);
-	dF = dF * Fe;
+	
 
 	dmat2 A = dmat2(0.0);
 
@@ -93,7 +97,10 @@ void main() {
 
 			// Just need to add the force derivative for the implict time integration step
 			dvec2 delforce = points[pid].vol*A*(Fit*wpgGrad);
+
+			barrier();
 			atomicAdd(nodes[curNode_i][curNode_j].deltaForce.x, delforce.x);
+			barrier();
 			atomicAdd(nodes[curNode_i][curNode_j].deltaForce.y, delforce.y);
 			barrier();
 		}

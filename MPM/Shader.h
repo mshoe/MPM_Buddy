@@ -85,6 +85,10 @@ public:
 	{
 		glUniform4d(glGetUniformLocation(m_ID, name.c_str()), vec.x, vec.y, vec.z, vec.w);
 	}
+	void SetMat(const std::string& name, glm::highp_dmat2 mat) const
+	{
+		glUniformMatrix2dv(glGetUniformLocation(m_ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(mat));
+	}
 	void SetMat(const std::string& name, glm::highp_dmat4 mat) const
 	{
 		glUniformMatrix4dv(glGetUniformLocation(m_ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(mat));

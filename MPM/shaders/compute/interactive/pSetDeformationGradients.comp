@@ -1,0 +1,24 @@
+#version 450 core
+
+layout (local_size_x = 1024) in;
+
+uniform dmat2 setFe = dmat2(1.0);
+uniform dmat2 setFp = dmat2(1.0);
+
+/*** HEADER ***/
+
+void main() {
+
+	uint pid = gl_GlobalInvocationID.x;
+	uint N = points.length();
+	if (pid > N) {
+		return;
+	}
+
+    // update volume (assuming setFe and setFp are non-singular)
+    points[pid].vol = determinant(inverse(setFe) * inverse(setFp) * points[pid].Fe * points[pid].Fp) * points[pid].vol;
+
+    // set the deformation gradients to identity
+	points[pid].Fe = setFe;
+    points[pid].Fp = setFp;
+}

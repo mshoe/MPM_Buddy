@@ -1,0 +1,24 @@
+#version 450 core
+
+layout (local_size_x = 1024) in;
+
+uniform dmat2 multFe = dmat2(1.0);
+uniform dmat2 multFp = dmat2(1.0);
+
+/*** HEADER ***/
+
+void main() {
+
+	uint pid = gl_GlobalInvocationID.x;
+	uint N = points.length();
+	if (pid > N) {
+		return;
+	}
+
+    // update volume (assuming multFe is non-singular)
+    points[pid].vol = 1.0 / determinant(multFe * multFp) * points[pid].vol;
+
+    // set the deformation gradients to identity
+	points[pid].Fe = multFe * points[pid].Fe;
+    points[pid].Fp = multFp * points[pid].Fp;
+}

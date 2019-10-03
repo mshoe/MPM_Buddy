@@ -41,12 +41,19 @@ void mpm::MpmEngine::RenderTimeIntegrator()
 
 	ImGui::Text(std::to_string(m_time).c_str());
 	ImGui::Text(std::to_string(m_timeStep).c_str());
+	if (ImGui::Button("Multiply dt by 2")) {
+		m_dt *= 2.0;
+	}
+	if (ImGui::Button("Divide dt by 2")) {
+		m_dt /= 2.0;
+	}
 	ImGui::InputReal("dt", &m_dt, 0.001, 1.0 / 60.0, "%.6f");
+	
 
 	ImGui::Checkbox("Realtime Rendering", &m_rt);
 
 
-	ImGui::Checkbox("Implicit Time Integration", &m_semi_implicit_CR);
+	ImGui::Checkbox("Implicit Time Integration (W I P)", &m_semi_implicit_CR);
 	ImGui::InputReal("Implict Ratio", &m_semi_implicit_ratio);
 	ImGui::InputInt("Max CR Iterations", &m_max_conj_res_iter);
 	ImGui::InputReal("L2 Norm Threshold", &m_L2_norm_threshold);
@@ -144,6 +151,76 @@ void mpm::MpmEngine::RenderForceController()
 
 	ImGui::InputReal("Mouse power", &m_mousePower);
 
+	if (ImGui::Button("Set Current Point Cloud Deformation Gradients")) {
+		SetDeformationGradients(std::string(m_pointCloudSelect.data()), m_setFe, m_setFp);
+	}
+	if (ImGui::Button("Set All Deformation Gradients")) {
+		for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+			SetDeformationGradients(pointCloudPair.first, m_setFe, m_setFp);
+		}
+	}
+
+	mat2 tempFe = m_setFe;
+
+	ImGui::Text("Fe:");
+	ImGui::InputReal("Fe[0][0]: ", &tempFe[0][0], 0.1, 1.0, "%.6f");
+	ImGui::InputReal("Fe[0][1]: ", &tempFe[0][1], 0.1, 1.0, "%.6f");
+	ImGui::InputReal("Fe[1][0]: ", &tempFe[1][0], 0.1, 1.0, "%.6f");
+	ImGui::InputReal("Fe[1][1]: ", &tempFe[1][1], 0.1, 1.0, "%.6f");
+	// Make sure the Fe is non-singular
+	if (glm::determinant(tempFe) != 0.0) {
+		m_setFe = tempFe;
+	}
+	ImGui::DisplayNamedGlmMatrixMixColor("Fe: ", m_setFe, glm::highp_fvec4(1.0f, 0.0f, 0.0f, 1.0f), glm::highp_fvec4(0.0f, 1.0f, 0.0f, 1.0f));
+
+	
+	
+	if (ImGui::Button("Clear multFeVector")) {
+		m_multFeVector.clear();
+	}
+	if (ImGui::Button("Add multiplicator deformation gradient")) {
+		m_multFeVector.push_back(mat2(1.0));
+	}
+
+	static int multFselect = 0;
+
+	ImGui::InputInt("multFe selection", &multFselect);
+
+	if (multFselect < m_multFeVector.size() && multFselect >= 0) {
+		ImGui::InputReal("multFe[0][0]: ", &m_multFeVector[multFselect][0][0], 0.1, 1.0, "%.6f");
+		ImGui::InputReal("multFe[0][1]: ", &m_multFeVector[multFselect][0][1], 0.1, 1.0, "%.6f");
+		ImGui::InputReal("multFe[1][0]: ", &m_multFeVector[multFselect][1][0], 0.1, 1.0, "%.6f");
+		ImGui::InputReal("multFe[1][1]: ", &m_multFeVector[multFselect][1][1], 0.1, 1.0, "%.6f");
+	}
+
+	for (size_t i = 0; i < m_multFeVector.size(); i++) {
+		std::string multFeStr = "Multiply all Deformation Gradients by multFe(" + std::to_string(i) + "):";
+		if (ImGui::Button(multFeStr.c_str())) {
+			for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+				MultiplyDeformationGradients(pointCloudPair.first, m_multFeVector[i], m_multFp);
+			}
+		}
+		
+		ImGui::DisplayNamedGlmMatrixMixColor("multFe: ", m_multFeVector[i], glm::highp_fvec4(1.0f, 0.0f, 0.0f, 1.0f), glm::highp_fvec4(0.0f, 1.0f, 0.0f, 1.0f));
+	}
+
+	if (ImGui::Button("Set All Point Cloud Parameters")) {
+		for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+			pointCloudPair.second->parameters = m_mpParameters;
+			pointCloudPair.second->mew = m_mpParameters.youngMod / (2.f + 2.f * m_mpParameters.poisson);
+			pointCloudPair.second->lam = m_mpParameters.youngMod * m_mpParameters.poisson / ((1.f + m_mpParameters.poisson) * (1.f - 2.f * m_mpParameters.poisson));
+		}
+	}
+
+	ImGui::InputReal("lam", &m_lam);
+	ImGui::InputReal("mew", &m_mew);
+	if (ImGui::Button("Set All Point Cloud mew and lam")) {
+		for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+			pointCloudPair.second->mew = m_mew;
+			pointCloudPair.second->lam = m_lam;
+		}
+	}
+
 	ImGui::End();
 }
 
@@ -216,6 +293,7 @@ void mpm::MpmEngine::RenderGeometryEditor()
 	if (ImGui::Button("Create PW Line from SDF")) {
 		GenPointCloudPWLine();
 	}
+	ImGui::InputReal("pwLineRounding", &m_pwLineRounding, 0.1, 1.0, "%.6f");
 	ImGui::DisplayNamedGlmRealColor("Number of vertices", m_pwLine->vertices.size(), glm::highp_fvec4(1.0));
 	ImGui::Text("PW Line vertices:");
 	for (int i = 0; i < m_pwLine->vertices.size(); i++) {
@@ -279,6 +357,8 @@ void mpm::MpmEngine::RenderMaterialParametersEditor()
 void mpm::MpmEngine::RenderGridNodeViewer()
 {
 	ImGui::Begin("Grid Node Viewer");
+
+	
 
 	std::string chunkWidthStr = "Chunk width: " + std::to_string(CHUNK_WIDTH);
 	ImGui::Text(chunkWidthStr.c_str());
@@ -390,30 +470,7 @@ void mpm::MpmEngine::RenderMaterialPointViewer()
 	ImGui::InputReal("Min speed clamp (for coloring)", &m_minSpeedClamp, 1.0, 1000.0, "%.1f");
 	ImGui::Checkbox("Visualize Speed", &m_visualizeSpeed);
 
-	if (ImGui::Button("Set Current Point Cloud Reference Configuration")) {
-		SetReferenceConfig(pointCloudSelectStr);
-	}
-	if (ImGui::Button("Set All Reference Configuration")) {
-		for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
-			SetReferenceConfig(pointCloudPair.first);
-		}
-	}
-	if (ImGui::Button("Set All Point Cloud Parameters")) {
-		for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
-			pointCloudPair.second->parameters = m_mpParameters;
-			pointCloudPair.second->mew = m_mpParameters.youngMod / (2.f + 2.f * m_mpParameters.poisson);
-			pointCloudPair.second->lam = m_mpParameters.youngMod * m_mpParameters.poisson / ((1.f + m_mpParameters.poisson) * (1.f - 2.f * m_mpParameters.poisson));
-		}
-	}
-
-	ImGui::InputReal("lam", &m_lam);
-	ImGui::InputReal("mew", &m_mew);
-	if (ImGui::Button("Set All Point Cloud mew and lam")) {
-		for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
-			pointCloudPair.second->mew = m_mew;
-			pointCloudPair.second->lam = m_lam;
-		}
-	}
+	
 
 
 	
@@ -444,6 +501,7 @@ void mpm::MpmEngine::RenderMaterialPointViewer()
 void mpm::MpmEngine::RenderZoomWindow()
 {
 	ImGui::Begin("Zoom Window");
+	ImGui::ColorEdit4("Background color", m_backgroundColor);
 	ImGui::InputReal("Zoom Point x: ", &m_zoomPoint.x, 1.0, 10.0, "%.1f");
 	ImGui::InputReal("Zoom Point y: ", &m_zoomPoint.y, 1.0, 10.0, "%.1f");
 	ImGui::InputReal("Zoom Factor", &m_zoomFactor, 0.5, 2.0, "%.1f");

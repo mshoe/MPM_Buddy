@@ -9,48 +9,48 @@ void mpm::MpmEngine::MpmTimeStepSemiImplicitCRGridUpdate(real dt)
 		bool L_inf_converged;
 
 		MpmCRStep(dt, L2_norm_rk, L2_converged, L_inf_converged);
-		if (L2_converged) {
+		/*if (L2_converged) {
 			break;
-		}
+		}*/
 	}
-	if (m_cr_step == 0) {
+	//if (m_cr_step == 0) {
 
-	}
-	else {
-		if (m_cr_step < m_max_conj_res_iter) {
-			std::cout << "CR converged after " << m_cr_step << " steps" << std::endl;
-		}
-		else {
-			std::cout << "CR did not converge after " << m_max_conj_res_iter << " steps." << std::endl;
-			m_paused = m_pause_if_not_converged;
+	//}
+	//else {
+	//	if (m_cr_step < m_max_conj_res_iter) {
+	//		std::cout << "CR converged after " << m_cr_step << " steps" << std::endl;
+	//	}
+	//	else {
+	//		std::cout << "CR did not converge after " << m_max_conj_res_iter << " steps." << std::endl;
+	//		m_paused = m_pause_if_not_converged;
 
-			// This code is just for finding which node is not convering and doing something to it
-			//void* ptr = glMapNamedBuffer(gridSSBO, GL_READ_WRITE);
-			//GridNode* data = static_cast<GridNode*>(ptr);
-			//for (int i = 0; i < GRID_SIZE_X * GRID_SIZE_Y; i++) {
-			//	GridNode gn = data[i];
-			//	/*if (!gn.converged) {
-			//		converged = false;
-			//	}*/
-			//	if (gn.m > 0.0) {
-			//		real node_norm = glm::length(glm::dot(gn.rk, gn.rk)); // using norm instead of norm squared, cuz more stable
-			//		L2_norm_rk += node_norm;
-			//		if (node_norm > 0.1) {
-			//			if (data[i].m < 0.000001 * m_mpParameters.density) {
-			//				int node_i = i / GRID_SIZE_Y;
-			//				int node_j = i % GRID_SIZE_Y;
-			//				std::cout << "node: (" << node_i << ", " << node_j << ") was too crazy." << std::endl;
-			//				std::cout << "explicit guessed velocity: (" << data[i].v.x << ", " << data[i].v.y << ")." << std::endl;
-			//				std::cout << "semi-implicit guessed velocity: (" << data[i].xk.x << ", " << data[i].xk.y << ")." << std::endl;
-			//				//data[i].xk = vec2(0.0);
-			//			}
-			//		}
-			//	}
-			//}
-			//glUnmapNamedBuffer(gridSSBO);
-		}
-		std::cout << "L2 norm of rk is: " << L2_norm_rk << std::endl;
-	}
+	//		// This code is just for finding which node is not convering and doing something to it
+	//		//void* ptr = glMapNamedBuffer(gridSSBO, GL_READ_WRITE);
+	//		//GridNode* data = static_cast<GridNode*>(ptr);
+	//		//for (int i = 0; i < GRID_SIZE_X * GRID_SIZE_Y; i++) {
+	//		//	GridNode gn = data[i];
+	//		//	/*if (!gn.converged) {
+	//		//		converged = false;
+	//		//	}*/
+	//		//	if (gn.m > 0.0) {
+	//		//		real node_norm = glm::length(glm::dot(gn.rk, gn.rk)); // using norm instead of norm squared, cuz more stable
+	//		//		L2_norm_rk += node_norm;
+	//		//		if (node_norm > 0.1) {
+	//		//			if (data[i].m < 0.000001 * m_mpParameters.density) {
+	//		//				int node_i = i / GRID_SIZE_Y;
+	//		//				int node_j = i % GRID_SIZE_Y;
+	//		//				std::cout << "node: (" << node_i << ", " << node_j << ") was too crazy." << std::endl;
+	//		//				std::cout << "explicit guessed velocity: (" << data[i].v.x << ", " << data[i].v.y << ")." << std::endl;
+	//		//				std::cout << "semi-implicit guessed velocity: (" << data[i].xk.x << ", " << data[i].xk.y << ")." << std::endl;
+	//		//				//data[i].xk = vec2(0.0);
+	//		//			}
+	//		//		}
+	//		//	}
+	//		//}
+	//		//glUnmapNamedBuffer(gridSSBO);
+	//	}
+	//	std::cout << "L2 norm of rk is: " << L2_norm_rk << std::endl;
+	//}
 	MpmCREnd(dt);
 }
 

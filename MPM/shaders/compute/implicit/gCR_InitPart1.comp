@@ -10,10 +10,14 @@ void main() {
 	// get ready for the implicit step by resetting conjugate residual variables
 
 	nodes[node.x][node.y].deltaForce = dvec2(0.0);
-	nodes[node.x][node.y].xk = nodes[node.x][node.y].v; // Initial guess x0 is the explicit v
-	nodes[node.x][node.y].rk = nodes[node.x][node.y].v; // Initial r is b - Ax0, 
+	//nodes[node.x][node.y].xk = nodes[node.x][node.y].v; // Initial guess x0 is the explicit v
+	//nodes[node.x][node.y].rk = nodes[node.x][node.y].v; // Initial r is b - Ax0, 
 														// but we are using the .rk member as u for computing A*u,
 														// so we put v in the .rk member one-time only thing for initialization
+	nodes[node.x][node.y].xk = dvec2(0.0);
+	nodes[node.x][node.y].rk = dvec2(0.0);
+	
+	
 	nodes[node.x][node.y].pk = dvec2(0.0);
 	nodes[node.x][node.y].Ark = dvec2(0.0);
 	nodes[node.x][node.y].Apk = dvec2(0.0);

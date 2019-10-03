@@ -28,6 +28,7 @@ struct MaterialPoint {
 	mat2 FeSVD_U;
 	mat2 FeSVD_S;
 	mat2 FeSVD_V;
+	mat2 A;
 
 	real energy = 0.0;
 	real selectedWpg = 0.0;

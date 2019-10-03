@@ -1,0 +1,79 @@
+#version 450 core
+#extension GL_NV_shader_atomic_float64 : enable
+
+layout (local_size_x = 1024) in;
+
+/*** HEADER ***/
+
+// The Implict step requires a concatenation of G2P and P2G.
+// This is called after 
+
+void main() {
+
+	uint pid = gl_GlobalInvocationID.x;
+	uint N = points.length();
+	if (pid >= N) { // hopefully this isn't a huge performance hit?
+		return;
+	}
+	
+	dvec2 xp = points[pid].x;
+
+	int botLeftNode_i = int(floor(xp.x)) - 1;
+	int botLeftNode_j = int(floor(xp.y)) - 1;
+
+	dmat2 dF = dmat2(0.0);
+	
+	// G2P
+
+	for (int i = 0; i <= 3; ++i) {
+		for (int j = 0; j <= 3; ++j) {
+			int curNode_i = botLeftNode_i + i;
+			int curNode_j = botLeftNode_j + j;
+			double inb = 1.0;
+			InBounds(curNode_i, curNode_j, inb);
+
+			dvec2 dpg = dvec2(curNode_i, curNode_j) - xp;
+			double dx = -dpg.x; // sign matters for gradient
+			double dy = -dpg.y;
+			double wpg = BSpline(dx) * BSpline(dy);
+			dvec2 wpgGrad = dvec2(BSplineSlope(dx) * BSpline(dy),
+								BSpline(dx) * BSplineSlope(dy));
+
+			// node.r will initially be = b - A*x0
+			// after first time step node.r has a different update rule from conjugate residuals
+			dF += outerProduct(nodes[curNode_i][curNode_j].rk, wpgGrad)*inb; // if inb is 0, then no data is changed
+			
+		}
+	}
+
+	// Finally finish computing dF
+	dmat2 Fe = points[pid].Fe;
+	dF = dF * Fe;
+
+	// create some other variables that will be useful later
+	dmat2 Fit = transpose(inverse(Fe));
+	double J = determinant(Fe);
+	dmat2 R;
+	dmat2 S;
+	PolarDecomp(Fe, R, S);
+	
+
+	dmat2 A = dmat2(0.0);
+
+
+	// lam*J*F^-T * (J*F^-T : dF) term
+	A += J*J*Fit*(innerProduct(Fit, dF));
+
+	// lam*(J-1)*d(J*F^-T) term
+	A += (J-1)*cofactorMatrix(dF);
+	A *= lam;
+
+
+	double b = R[1][0]*dF[0][0] + R[1][1]*dF[0][1] - (dF[1][0]*R[0][0] + dF[1][1]*R[0][1]);
+	double a = b / (S[0][0] + S[1][1]);
+	dmat2 dR = R * dmat2(0, a, -a, 0); // column major
+
+
+	// 2*mew*dF - 2*mew*dR term
+	A += 2*mew*(dF - dR);
+}

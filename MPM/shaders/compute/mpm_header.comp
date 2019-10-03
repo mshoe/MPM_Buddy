@@ -21,6 +21,7 @@ struct materialPoint {
 	dmat2 FeSVD_U;
 	dmat2 FeSVD_S;
 	dmat2 FeSVD_V;
+	dmat2 A;
 
 	double energy;
 	double selectedWpg;
@@ -93,6 +94,49 @@ void InBounds(inout int i, inout int j, out double inbounds) {
 	j = (inbounds != 0.0) ? j : 0;
 }
 
+bool isnanVec2(in dvec2 v) {
+	return isnan(v.x) || isnan(v.y);
+}
+
+bool isinfVec2(in dvec2 v) {
+	return isinf(v.x) || isinf(v.y);
+}
+
+uniform double dt = 1/60.0;
+
+uniform dmat2 Dp_inv = 3 * dmat2(1.0); // 3 * dx^2 * I
+uniform dvec2 gravity = dvec2(0.0, -9.81);
+uniform dvec2 globalForce = dvec2(0.0, 0.0);
+
+uniform double mew = 41.66666667;
+uniform double lam = 27.77777778;
+
+const uint NEO_HOOKEAN = 0;
+const uint FIXED_COROTATED = 1;
+const uint SIMPLE_SNOW = 2;
+uniform uint comodel = 1; //FIXED_COROTATED;
+
+uniform double IMPLICIT_RATIO = 1.0;
+uniform double drag = 0.005;
+
+uniform double crit_c = 0.025;
+uniform double crit_s = 0.0075;
+uniform double hardening = 10.0;
+
+uniform double semi_implicit_eps = 0.00001;
+
+
+// FOR EVALUATING CONSTITUTIVE MODELS
+
+dmat2 cofactorMatrix(in dmat2 X) {
+	return dmat2(X[1][1], -X[1][0], // column 1
+				-X[0][1], X[0][0]); // column 2
+}
+
+double innerProduct(in dmat2 X, in dmat2 Y) {
+	return X[0][0]*Y[0][0] + X[1][0]*Y[1][0] + X[0][1]*Y[0][1] + X[1][1]*Y[1][1];
+}
+
 void PolarDecomp(in dmat2 F, out dmat2 R, out dmat2 S) {
 	// calculate the polar decomposition F = RS.
 
@@ -143,44 +187,6 @@ void SVD(in dmat2 R, in dmat2 S, out dmat2 U, out double sig1, out double sig2, 
 	U = R*V;
 }
 
-dmat2 cofactorMatrix(in dmat2 X) {
-	return dmat2(X[1][1], -X[1][0], // column 1
-				-X[0][1], X[0][0]); // column 2
-}
 
-double innerProduct(in dmat2 X, in dmat2 Y) {
-	return X[0][0]*Y[0][0] + X[1][0]*Y[1][0] + X[0][1]*Y[0][1] + X[1][1]*Y[1][1];
-}
-
-bool isnanVec2(in dvec2 v) {
-	return isnan(v.x) || isnan(v.y);
-}
-
-bool isinfVec2(in dvec2 v) {
-	return isinf(v.x) || isinf(v.y);
-}
-
-uniform double dt = 1/60.0;
-
-uniform dmat2 Dp_inv = 3 * dmat2(1.0); // 3 * dx^2 * I
-uniform dvec2 gravity = dvec2(0.0, -9.81);
-uniform dvec2 globalForce = dvec2(0.0, 0.0);
-
-uniform double mew = 41.66666667;
-uniform double lam = 27.77777778;
-
-const uint NEO_HOOKEAN = 0;
-const uint FIXED_COROTATED = 1;
-const uint SIMPLE_SNOW = 2;
-uniform uint comodel = 1; //FIXED_COROTATED;
-
-uniform double IMPLICIT_RATIO = 1.0;
-uniform double drag = 0.005;
-
-uniform double crit_c = 0.025;
-uniform double crit_s = 0.0075;
-uniform double hardening = 10.0;
-
-uniform double semi_implicit_eps = 0.00001;
 
 /* end MPM shaders header */

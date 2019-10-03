@@ -111,6 +111,9 @@
     <ClCompile Include="MpmSemiImplicitDirectSolver.cpp">
       <Filter>Source Files\MPM</Filter>
     </ClCompile>
+    <ClCompile Include="MpmInteractions.cpp">
+      <Filter>Source Files\MPM</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainEngine.h">
