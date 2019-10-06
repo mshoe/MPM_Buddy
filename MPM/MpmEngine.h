@@ -37,6 +37,7 @@ namespace mpm {
 		void RenderScreenShader(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen);
 		void RenderPointClouds(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> pointShader);
 		void RenderGrid(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> gridShader);
+		void RenderMarchingSquares(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> gridShader);
 		void RenderPolygon(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> polygonShader);
 		void RenderPWLine(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> pwLineShader);
 		void RenderGUI();
@@ -165,6 +166,7 @@ namespace mpm {
 		std::shared_ptr<StandardShader> m_zoomWindowShader = nullptr;
 		std::shared_ptr<StandardShader> m_gridShader = nullptr;
 		std::shared_ptr<StandardShader> m_gridShaderVector = nullptr;
+		std::shared_ptr<StandardShader> m_gridShaderMarchingSquares = nullptr;
 
 		std::shared_ptr<StandardShader> m_borderShader = nullptr;
 		std::shared_ptr<StandardShader> m_polygonShader = nullptr;
@@ -218,6 +220,9 @@ namespace mpm {
 		int m_gridPointSizeScalingOption = 0;
 		real m_maxGridVectorLength = 25.0;
 		real m_maxGridVectorVisualLength = 5.0;
+		bool m_viewMarchingSquares = false;
+		double m_isoMass = 5.0;
+		glm::highp_fvec4 m_marchingSquaresColor = glm::highp_fvec4(1.0f);
 		GridNode m_gn; // selecting grid node
 		bool m_selectNodeState = false;
 		void UpdateNodeData();

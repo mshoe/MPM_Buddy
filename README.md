@@ -2,26 +2,19 @@
 
 This program was made using C++ and OpenGL compute shaders.
 It also uses OpenGL for rendering and ImGui for GUI.
+I am using this program for my own research in physics-based animation.
 
 __Video Gallery:__
 https://www.youtube.com/channel/UC4qfNTQgecwtluc0M5HRnTw
 
 __Gif Gallery:__
-Rendering points with elastic potential energy:
-![gif](gifs/RenderingPointsWithEnergy.gif)
-
-Rendering nodes by density and with elastic force vectors:
-![gif](gifs/RenderingGridDensityWithForces.gif)
-
-Snow shear modulus reduction:
-![gif](gifs/ssrSnow.gif)
-
-
-![gif](gifs/smallerGrid.gif)
-
-![gif](gifs/pwLine.gif)
-
-![gif](gifs/polygonSlopeSSR.gif)
+Rendering velocity colored points vs marching squares for green fluid:<br/>
+![gif](gifs/AmorphousObjectsAlive/marchingSquaresVsPoints.gif)<br/>
+Rendering points with elastic potential energy:<br/>
+![gif](gifs/RenderingPointsWithEnergy.gif)<br/>
+![gif](gifs/smallerGrid.gif)<br/>
+![gif](gifs/pwLine.gif)<br/>
+![gif](gifs/polygonSlopeSSR.gif)<br/>
 
 
 Material Point Method (MPM) is an Eulerian-Lagrangian hybrid algorithm for simulating continuum materials.

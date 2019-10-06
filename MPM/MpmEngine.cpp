@@ -44,6 +44,8 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 
 	glCreateVertexArrays(1, &VisualizeVAO);
 
+	// RENDERING SHADERS
+
 	m_pPointCloudShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\pointCloud.vs"}, std::vector<std::string>{"shaders\\graphics\\pointCloudPassThrough.gs"}, std::vector<std::string>{"shaders\\graphics\\pointCloud.fs"}, "shaders\\compute\\mpm_header.comp");
 	//m_pPointCloudVectorShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\pointCloud.vs"}, std::vector<std::string>{"shaders\\graphics\\pointCloudVector.gs"}, std::vector<std::string>{"shaders\\graphics\\pointCloud.fs"}, "shaders\\compute\\mpm_header.comp");
 	//m_pPointCloudShader = std::make_unique<StandardShader>(std::vector<std::string>{"shaders\\graphics\\pointCloud.vs"}, std::vector<std::string>{}, std::vector<std::string>{"shaders\\graphics\\pointCloud.fs"}, "shaders\\compute\\mpm_header.comp");
@@ -53,7 +55,7 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 	m_zoomWindowShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\zoomWindow.vs"}, std::vector<std::string>{}, std::vector<std::string>{"shaders\\graphics\\zoomWindow.fs"}, "shaders\\compute\\mpm_header.comp");
 	m_gridShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\gridShader.vs"}, std::vector<std::string>{"shaders\\graphics\\gridShaderPassThrough.gs"}, std::vector<std::string>{"shaders\\graphics\\gridShader.fs"}, "shaders\\compute\\mpm_header.comp");
 	m_gridShaderVector = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\gridShader.vs"}, std::vector<std::string>{"shaders\\graphics\\gridShaderVector.gs"}, std::vector<std::string>{"shaders\\graphics\\gridShader.fs"}, "shaders\\compute\\mpm_header.comp");
-	
+	m_gridShaderMarchingSquares = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\marchingSquares.vs"}, std::vector<std::string>{"shaders\\graphics\\marchingSquares.gs"}, std::vector<std::string>{"shaders\\graphics\\marchingSquares.fs"}, "shaders\\compute\\mpm_header.comp");
 
 	m_borderShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\polygon.vs"}, std::vector<std::string>{"shaders\\graphics\\border.gs"}, std::vector<std::string>{"shaders\\graphics\\polygon.fs"}, "shaders\\compute\\mpm_header.comp");
 	m_polygonShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\polygon.vs"}, std::vector<std::string>{"shaders\\graphics\\polygon.gs"}, std::vector<std::string>{"shaders\\graphics\\polygon.fs"}, "shaders\\compute\\mpm_header.comp");
@@ -161,6 +163,11 @@ void mpm::MpmEngine::Render()
 		}
 	}
 
+	// Render marching squares
+	if (m_viewMarchingSquares) {
+		RenderMarchingSquares(m_zoomPoint, 1.0, m_openGLScreen, m_gridShaderMarchingSquares);
+	}
+
 	// Render Zoom Border
 	if (m_showZoomBorder) {
 		m_zoomWindowShader->Use();
@@ -172,6 +179,8 @@ void mpm::MpmEngine::Render()
 		
 		m_zoomWindow->RenderLineLoop();
 	}
+
+	
 
 	// Render polygon
 	if (m_renderPolygon) {
@@ -277,6 +286,26 @@ void mpm::MpmEngine::RenderGrid(vec2 zoomPoint, real zoomFactor, std::shared_ptr
 	gridShader->SetInt("selectedVector", m_gridVectorOption);
 	gridShader->SetReal("maxGridVectorLength", m_maxGridVectorLength);
 	gridShader->SetReal("maxGridVectorVisualLength", m_maxGridVectorVisualLength);
+
+	glBindVertexArray(VisualizeVAO);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
+	glDrawArrays(GL_POINTS, 0, (GLsizei)(GRID_SIZE_X * GRID_SIZE_Y));
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
+	glBindVertexArray(0);
+}
+
+void mpm::MpmEngine::RenderMarchingSquares(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> gridShader)
+{
+	gridShader->Use();
+	gridShader->SetReal("zoomFactor", zoomFactor);
+	gridShader->SetVec("zoomPoint", zoomPoint);
+	// iResolution and iSourceResolution should be same for the zoom window we make, and iCenter should be the actual center
+	gridShader->SetVec("iResolution", openGLScreen->sim_dimensions);
+	gridShader->SetVec("iSourceResolution", openGLScreen->screen_dimensions);
+	gridShader->SetVec("iCenter", vec2(openGLScreen->center.x, openGLScreen->screen_dimensions.y - openGLScreen->center.y)); // correct y for glsl
+	gridShader->SetReal("isoMass", m_isoMass);
+	gridShader->SetVec("mscolor", m_marchingSquaresColor);
+	gridShader->SetReal("dt", m_dt);
 
 	glBindVertexArray(VisualizeVAO);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);

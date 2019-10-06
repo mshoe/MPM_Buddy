@@ -6,6 +6,7 @@
 
 void mpm::MpmEngine::RenderGUI()
 {
+	
 	if (m_renderGUI) {
 
 		RenderWindowManager();
@@ -16,7 +17,7 @@ void mpm::MpmEngine::RenderGUI()
 		if (m_renderGridNodeViewer) RenderGridNodeViewer();
 		if (m_renderMaterialPointViewer) RenderMaterialPointViewer();
 		if (m_renderZoomWindow) RenderZoomWindow();
-
+		
 	}
 }
 
@@ -31,6 +32,10 @@ void mpm::MpmEngine::RenderWindowManager()
 	ImGui::Checkbox("Grid Node Viewer", &m_renderGridNodeViewer);
 	ImGui::Checkbox("Material Point Viewer", &m_renderMaterialPointViewer);
 	ImGui::Checkbox("Zoom Window", &m_renderZoomWindow);
+
+	static bool renderImguiDemo = false;
+	ImGui::Checkbox("ImGui Demo", &renderImguiDemo);
+	if (renderImguiDemo) { ImGui::ShowDemoWindow(); }
 
 	ImGui::End();
 }
@@ -273,8 +278,11 @@ void mpm::MpmEngine::RenderGeometryEditor()
 	if (ImGui::Button("Clear Polygon")) {
 		m_polygon->vertices.clear();
 	}
-	if (ImGui::Button("Create polygon")) {
+	if (ImGui::Button("Fill polygon with MPs")) {
 		GenPointCloudPolygon();
+	}
+	if (ImGui::Button("Select grid nodes")) {
+		
 	}
 	ImGui::DisplayNamedGlmRealColor("Number of vertices", m_polygon->vertices.size(), glm::highp_fvec4(1.0));
 	ImGui::Text("Polygon vertices:");
@@ -414,10 +422,46 @@ void mpm::MpmEngine::RenderGridNodeViewer()
 		ImGui::Checkbox("View grid vector", &m_viewGridVector);
 		if (ImGui::CollapsingHeader("View grid vector options")) {
 			ImGui::InputInt("vector option", &m_gridVectorOption);
+			std::string vectorStr = "";
+			switch (m_gridVectorOption) {
+			case -1:
+				vectorStr = "momentum";
+				break;
+			case 0:
+				vectorStr = "velocity";
+				break;
+			case 1:
+				vectorStr = "acceleration";
+				break;
+			case 2:
+				vectorStr = "force";
+				break;
+			case 3:
+				vectorStr = "residual velocity";
+				break;
+			default:
+				break;
+			}
+			vectorStr = "Vector vis: " + vectorStr;
+			ImGui::Text(vectorStr.c_str());
 			ImGui::InputReal("Max grid vector length", &m_maxGridVectorLength, 0.5, 5.0, "%.3f");
 			ImGui::InputReal("Max grid vector visual length", &m_maxGridVectorVisualLength, 0.5, 1.0, "%.3f");
 		}
 	}
+	ImGui::Checkbox("Marching squares", &m_viewMarchingSquares);
+	ImGui::InputReal("Isomass", &m_isoMass, 0.5, 5.0);
+	static float mscolor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	mscolor[0] = m_marchingSquaresColor.x;
+	mscolor[1] = m_marchingSquaresColor.y;
+	mscolor[2] = m_marchingSquaresColor.z;
+	mscolor[3] = m_marchingSquaresColor.w;
+
+	ImGui::ColorEdit4("MS Color", mscolor);
+	m_marchingSquaresColor.x = mscolor[0];
+	m_marchingSquaresColor.y = mscolor[1];
+	m_marchingSquaresColor.z = mscolor[2];
+	m_marchingSquaresColor.w = mscolor[3];
+
 	if (ImGui::CollapsingHeader("Grid Node Data")) {
 		glm::highp_fvec4 min_color = glm::highp_fvec4(1.0, 0.0, 0.0, 1.0);
 		glm::highp_fvec4 max_color = glm::highp_fvec4(0.0, 1.0, 0.0, 1.0);
