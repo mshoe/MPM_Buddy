@@ -7,13 +7,18 @@ I am using this program for my own research in physics-based animation.
 __Video Gallery:__
 https://www.youtube.com/channel/UC4qfNTQgecwtluc0M5HRnTw
 
-__Gif Gallery:__
-Rendering velocity colored points vs marching squares for green fluid:<br/>
+__Gif Gallery:__<br/>
+Rendering speed colored points vs marching squares for green fluid:<br/>
 ![gif](gifs/AmorphousObjectsAlive/marchingSquaresVsPoints.gif)<br/>
+
 Rendering points with elastic potential energy:<br/>
 ![gif](gifs/RenderingPointsWithEnergy.gif)<br/>
+
 ![gif](gifs/smallerGrid.gif)<br/>
-![gif](gifs/pwLine.gif)<br/>
+
+Elastic deformation gradient modification:<br/>
+![gif](gifs/AmorphousObjectsAlive/lineBigger.gif)<br/>
+
 ![gif](gifs/polygonSlopeSSR.gif)<br/>
 
 
