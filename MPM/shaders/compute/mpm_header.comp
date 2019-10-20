@@ -33,6 +33,7 @@ struct gridNode {
 	dvec2 v;
 	dvec2 momentum;
 	dvec2 force;
+	dvec2 nodalAcceleration;
 
 	// for implicit time step / conjugate residuals	
 	dvec2 deltaForce;
@@ -44,6 +45,7 @@ struct gridNode {
 
 	double rkArk;
 	bool converged;
+	bool selected;
 };
 
 layout (std430, binding = 1) buffer pointCloud {

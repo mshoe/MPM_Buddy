@@ -141,236 +141,7 @@ void mpm::MpmEngine::Update()
 	}
 }
 
-void mpm::MpmEngine::Render()
-{
-	glViewport(0, 0, (GLsizei)m_openGLScreen->screen_dimensions.x, (GLsizei)m_openGLScreen->screen_dimensions.y);
-	glClearColor(m_backgroundColor[0], m_backgroundColor[1], m_backgroundColor[2], m_backgroundColor[3]);
-	glClear(GL_COLOR_BUFFER_BIT);
 
-	// RENDER MOUSE SHADER
-	RenderScreenShader(m_zoomPoint, 1.0, m_openGLScreen);
-
-	// Render material point clouds
-	if (m_viewPointClouds) {
-		RenderPointClouds(m_zoomPoint, 1.0, m_openGLScreen, m_pPointCloudShader);
-	}
-
-	// Render grid nodes
-	if (m_viewGrid) {
-		RenderGrid(m_zoomPoint, 1.0, m_openGLScreen, m_gridShader);
-		if (m_viewGridVector) {
-			RenderGrid(m_zoomPoint, 1.0, m_openGLScreen, m_gridShaderVector);
-		}
-	}
-
-	// Render marching squares
-	if (m_viewMarchingSquares) {
-		RenderMarchingSquares(m_zoomPoint, 1.0, m_openGLScreen, m_gridShaderMarchingSquares);
-	}
-
-	// Render Zoom Border
-	if (m_showZoomBorder) {
-		m_zoomWindowShader->Use();
-		m_zoomWindowShader->SetVec("iSourceResolution", m_openGLScreen->screen_dimensions);
-		m_zoomWindowShader->SetVec("iResolution", m_openGLScreen->sim_dimensions);
-		m_zoomWindowShader->SetVec("iCenter", vec2(m_openGLScreen->center.x, m_openGLScreen->screen_dimensions.y - m_openGLScreen->center.y)); // correct y for glsl
-		m_zoomWindowShader->SetReal("zoomFactor", m_zoomFactor);
-		m_zoomWindowShader->SetVec("zoomPoint", m_zoomPoint);
-		
-		m_zoomWindow->RenderLineLoop();
-	}
-
-	
-
-	// Render polygon
-	if (m_renderPolygon) {
-		RenderPolygon(m_zoomPoint, m_zoomFactor, m_openGLScreen, m_polygonShader);
-	}
-
-	if (m_renderPWLine) {
-		RenderPWLine(m_zoomPoint, m_zoomFactor, m_openGLScreen, m_pwLineShader);
-	}
-
-	// Render the grid border
-	m_borderShader->Use();
-	m_borderShader->SetVec("iCenter", vec2(m_openGLScreen->center.x, m_openGLScreen->screen_dimensions.y - m_openGLScreen->center.y)); // correct y for glsl
-	m_borderShader->SetVec("iResolution", m_openGLScreen->sim_dimensions);
-	m_borderShader->SetVec("iSourceResolution", m_openGLScreen->screen_dimensions);
-	m_borderShader->SetInt("CHUNKS_X", m_chunks_x);
-	m_borderShader->SetInt("CHUNKS_Y", m_chunks_y);
-	glBindVertexArray(VisualizeVAO);
-	glDrawArrays(GL_POINTS, 0, (GLsizei)1);
-	glBindVertexArray(0);
-
-	m_zoomWindow->BindFBO();
-	glViewport(0, 0, (GLsizei)m_zoomWindow->screen_dimensions.x, (GLsizei)m_zoomWindow->screen_dimensions.y);
-	glClearColor(m_backgroundColor[0], m_backgroundColor[1], m_backgroundColor[2], m_backgroundColor[3]);
-	glClear(GL_COLOR_BUFFER_BIT);
-	//RenderScreenShader(m_zoomPoint, m_zoomFactor, m_zoomWindow);
-	if (m_viewPointClouds) {
-		RenderPointClouds(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_pPointCloudShader);
-	}
-	if (m_viewGrid) {
-		RenderGrid(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_gridShader);
-		if (m_viewGridVector) {
-			RenderGrid(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_gridShaderVector);
-		}
-	}
-	m_zoomWindow->UnbindFBO();
-
-}
-
-void mpm::MpmEngine::RenderScreenShader(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen)
-{
-	m_mouseShader->Use();
-	m_mouseShader->SetVec("iMouse", m_mouse);
-	m_mouseShader->SetVec("iCenter", vec2(openGLScreen->center.x, openGLScreen->screen_dimensions.y - openGLScreen->center.y)); // correct y for glsl
-	m_mouseShader->SetVec("iResolution", openGLScreen->sim_dimensions);
-	m_mouseShader->SetVec("iSourceResolution", openGLScreen->screen_dimensions);
-	m_mouseShader->SetBool("nodeGraphicsActive", m_nodeGraphicsActive);
-	m_mouseShader->SetInt("selectedNodeI", m_node[0]);
-	m_mouseShader->SetInt("selectedNodeJ", m_node[1]);
-	m_mouseShader->SetReal("zoomFactor", zoomFactor);
-	m_mouseShader->SetVec("zoomPoint", zoomPoint);
-	openGLScreen->Render();
-}
-
-void mpm::MpmEngine::RenderPointClouds(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> pointShader)
-{
-
-	// RENDER POINT CLOUD
-	m_pPointCloudShader->Use();
-	m_pPointCloudShader->SetReal("maxSpeedClamp", m_maxSpeedClamp);
-	m_pPointCloudShader->SetReal("minSpeedClamp", m_minSpeedClamp);
-	m_pPointCloudShader->SetBool("visualizeSpeed", m_visualizeSpeed);
-	m_pPointCloudShader->SetReal("maxEnergyClamp", m_maxEnergyClamp);
-	m_pPointCloudShader->SetReal("minEnergyClamp", m_minEnergyClamp);
-	m_pPointCloudShader->SetBool("visualizeEnergy", m_visualizeEnergy);
-	m_pPointCloudShader->SetReal("zoomFactor", zoomFactor);
-	m_pPointCloudShader->SetVec("zoomPoint", zoomPoint);
-	// iResolution and iSourceResolution should be same for the zoom window we make, and iCenter should be the actual center
-	m_pPointCloudShader->SetVec("iResolution", openGLScreen->sim_dimensions);
-	m_pPointCloudShader->SetVec("iSourceResolution", openGLScreen->screen_dimensions);
-	m_pPointCloudShader->SetVec("iCenter", vec2(openGLScreen->center.x, openGLScreen->screen_dimensions.y - openGLScreen->center.y)); // correct y for glsl
-	//m_pPointCloudShader->SetVec("iCenter", m_openGLScreen->center);
-	glBindVertexArray(VisualizeVAO);
-	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
-		m_pPointCloudShader->SetVec("pointCloudColor", pointCloudPair.second->color);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudPair.second->ssbo);
-		glDrawArrays(GL_POINTS, 0, (GLsizei)pointCloudPair.second->N);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
-	}
-	glBindVertexArray(0);
-}
-
-void mpm::MpmEngine::RenderGrid(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> gridShader)
-{
-	gridShader->Use();
-	gridShader->SetReal("zoomFactor", zoomFactor);
-	gridShader->SetVec("zoomPoint", zoomPoint);
-	// iResolution and iSourceResolution should be same for the zoom window we make, and iCenter should be the actual center
-	gridShader->SetVec("iResolution", openGLScreen->sim_dimensions);
-	gridShader->SetVec("iSourceResolution", openGLScreen->screen_dimensions);
-	gridShader->SetVec("iCenter", vec2(openGLScreen->center.x, openGLScreen->screen_dimensions.y - openGLScreen->center.y)); // correct y for glsl
-	gridShader->SetBool("viewGridMass", m_viewGridMass);
-	gridShader->SetReal("maxNodeMassClamp", m_maxNodeMassClamp);
-	gridShader->SetReal("minNodeMassClamp", m_minNodeMassClamp);
-	gridShader->SetReal("maxPointSize", m_maxNodeMassPointSize);
-	gridShader->SetReal("minNodeMassPointSize", m_minNodeMassPointSize);
-	gridShader->SetReal("maxNodeMassPointSize", m_maxNodeMassPointSize);
-	gridShader->SetInt("gridPointSizeScalingOption", m_gridPointSizeScalingOption);
-	gridShader->SetBool("nodeGraphicsActive", m_nodeGraphicsActive);
-	gridShader->SetInt("selectedNodeI", m_node[0]);
-	gridShader->SetInt("selectedNodeJ", m_node[1]);
-	gridShader->SetReal("dt", m_dt);
-	gridShader->SetInt("selectedVector", m_gridVectorOption);
-	gridShader->SetReal("maxGridVectorLength", m_maxGridVectorLength);
-	gridShader->SetReal("maxGridVectorVisualLength", m_maxGridVectorVisualLength);
-
-	glBindVertexArray(VisualizeVAO);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
-	glDrawArrays(GL_POINTS, 0, (GLsizei)(GRID_SIZE_X * GRID_SIZE_Y));
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
-	glBindVertexArray(0);
-}
-
-void mpm::MpmEngine::RenderMarchingSquares(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> gridShader)
-{
-	gridShader->Use();
-	gridShader->SetReal("zoomFactor", zoomFactor);
-	gridShader->SetVec("zoomPoint", zoomPoint);
-	// iResolution and iSourceResolution should be same for the zoom window we make, and iCenter should be the actual center
-	gridShader->SetVec("iResolution", openGLScreen->sim_dimensions);
-	gridShader->SetVec("iSourceResolution", openGLScreen->screen_dimensions);
-	gridShader->SetVec("iCenter", vec2(openGLScreen->center.x, openGLScreen->screen_dimensions.y - openGLScreen->center.y)); // correct y for glsl
-	gridShader->SetReal("isoMass", m_isoMass);
-	gridShader->SetVec("mscolor", m_marchingSquaresColor);
-	gridShader->SetReal("dt", m_dt);
-
-	glBindVertexArray(VisualizeVAO);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
-	glDrawArrays(GL_POINTS, 0, (GLsizei)(GRID_SIZE_X * GRID_SIZE_Y));
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
-	glBindVertexArray(0);
-}
-
-void mpm::MpmEngine::RenderPolygon(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> polygonShader)
-{
-	if (m_polygon->vertices.size() == 0)
-		return;
-
-	polygonShader->Use();
-	polygonShader->SetVec("iMouse", m_mpm_mouse);
-	polygonShader->SetVec("iCenter", vec2(openGLScreen->center.x, openGLScreen->screen_dimensions.y - openGLScreen->center.y)); // correct y for glsl
-	polygonShader->SetVec("iResolution", openGLScreen->sim_dimensions);
-	polygonShader->SetVec("iSourceResolution", openGLScreen->screen_dimensions);
-	polygonShader->SetBool("lastVertexMouse", m_addPolygonVertexState);
-	GLuint polygonSSBO;
-	glCreateBuffers(1, &polygonSSBO);
-
-	glNamedBufferStorage(
-		polygonSSBO,
-		sizeof(vec2) * m_polygon->vertices.size(),
-		&(m_polygon->vertices.front()),
-		GL_MAP_READ_BIT | GL_MAP_WRITE_BIT // adding write bit for debug purposes
-	);
-	glBindVertexArray(VisualizeVAO);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, polygonSSBO);
-	glDrawArrays(GL_POINTS, 0, (GLsizei)1);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
-	glBindVertexArray(0);
-
-	glDeleteBuffers(1, &polygonSSBO);
-}
-
-void mpm::MpmEngine::RenderPWLine(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> pwLineShader)
-{
-	if (m_pwLine->vertices.size() == 0)
-		return;
-
-	pwLineShader->Use();
-	pwLineShader->SetVec("iMouse", m_mpm_mouse);
-	pwLineShader->SetVec("iCenter", vec2(openGLScreen->center.x, openGLScreen->screen_dimensions.y - openGLScreen->center.y)); // correct y for glsl
-	pwLineShader->SetVec("iResolution", openGLScreen->sim_dimensions);
-	pwLineShader->SetVec("iSourceResolution", openGLScreen->screen_dimensions);
-	pwLineShader->SetBool("lastVertexMouse", m_addPWLineVertexState);
-	GLuint pwLineSSBO;
-	glCreateBuffers(1, &pwLineSSBO);
-
-	glNamedBufferStorage(
-		pwLineSSBO,
-		sizeof(vec2) * m_pwLine->vertices.size(),
-		&(m_pwLine->vertices.front()),
-		GL_MAP_READ_BIT | GL_MAP_WRITE_BIT // adding write bit for debug purposes
-	);
-	glBindVertexArray(VisualizeVAO);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, pwLineSSBO);
-	glDrawArrays(GL_POINTS, 0, (GLsizei)1);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
-	glBindVertexArray(0);
-
-	glDeleteBuffers(1, &pwLineSSBO);
-}
 
 void mpm::MpmEngine::ProcessKeyboardInput(GLFWwindow* window, real lag)
 {
@@ -663,12 +434,12 @@ std::shared_ptr<PointCloud> mpm::MpmEngine::GenPointCloud(const std::string poin
 	real mass = parameters.particleSpacing * parameters.particleSpacing * parameters.density;
 	
 	// gen points from sdf
-	for (real x = 0.f; x < gridDimX; x += parameters.particleSpacing) {
-		for (real y = 0.f; y < gridDimY; y += parameters.particleSpacing) {
+	for (real x = 0.0; x < gridDimX; x += parameters.particleSpacing) {
+		for (real y = 0.0; y < gridDimY; y += parameters.particleSpacing) {
 			
 			glm::vec2 p(x, y);
 			
-			real sd;
+			real sd = 0.0;
 			switch (sdfOption) {
 			case sdf::SDF_OPTION::NORMAL:
 				sd = shape.Sdf(p);
@@ -686,7 +457,7 @@ std::shared_ptr<PointCloud> mpm::MpmEngine::GenPointCloud(const std::string poin
 			if (inverted)
 				sd *= -1.0;
 
-			if (sd < 0.f) {
+			if (sd < 0.0) {
 				MaterialPoint mp;
 				mp.x = p;
 				mp.v = initialVelocity;
@@ -835,6 +606,218 @@ void mpm::MpmEngine::UpdateNodeData()
 		m_gn = data[m_node[0] * GRID_SIZE_X + m_node[1]];
 		glUnmapNamedBuffer(gridSSBO);
 	}
+}
+
+void mpm::MpmEngine::SelectNodesInShape(sdf::Shape& shape, const int gridDimX, const int gridDimY, const real inner_rounding, const real outer_rounding, sdf::SDF_OPTION sdfOption, bool inverted)
+{
+//	std::shared_ptr<PointCloud> pointCloud = std::make_shared<PointCloud>();
+
+	void* ptr = glMapNamedBuffer(gridSSBO, GL_READ_WRITE);
+	GridNode* data = static_cast<GridNode*>(ptr);
+	
+	
+	int count = 0;
+	// gen points from sdf
+	for (int i = 0; i < gridDimX; i++) {
+		for (int j = 0; j < gridDimY; j++) {
+
+			GridNode currNode = data[i * GRID_SIZE_Y + j];
+
+			glm::vec2 p;
+			p.x = real(i);
+			p.y = real(j);// (real(i), real(j));
+
+			real sd = 0.0;
+			switch (sdfOption) {
+			case sdf::SDF_OPTION::NORMAL:
+				sd = shape.Sdf(p);
+				break;
+			case sdf::SDF_OPTION::ROUNDED:
+				sd = shape.SdfRounded(p, outer_rounding);
+				break;
+			case sdf::SDF_OPTION::HOLLOW:
+				sd = shape.SdfHollow(p, inner_rounding, outer_rounding);
+				break;
+			default:
+				break;
+			}
+
+			if (inverted)
+				sd *= -1.0;
+
+			if (sd < 0.0) {
+				currNode.selected = true;
+				//currNode.force = vec2(100.0, 100.0);
+				count++;
+			}
+			else {
+				//currNode.selected = false;
+			}
+
+			data[i * GRID_SIZE_Y + j] = currNode;
+		}
+	}
+	std::cout << "Selected " << count << " nodes.\n";
+	glUnmapNamedBuffer(gridSSBO);
+
+	/*ptr = glMapNamedBuffer(gridSSBO, GL_READ_WRITE);
+	data = static_cast<GridNode*>(ptr);
+	int count2 = 0;
+	for (int i = 0; i < gridDimX; i++) {
+		for (int j = 0; j < gridDimY; j++) {
+
+			GridNode currNode = data[i * GRID_SIZE_Y + j];
+
+			if (currNode.selected)
+				count2++;
+		}
+	}
+
+	std::cout << "count2 = " << count2 << std::endl;
+	glUnmapNamedBuffer(gridSSBO);*/
+	
+}
+
+void mpm::MpmEngine::ClearNodesSelected(const int gridDimX, const int gridDimY)
+{
+	void* ptr = glMapNamedBuffer(gridSSBO, GL_READ_WRITE);
+	GridNode* data = static_cast<GridNode*>(ptr);
+
+
+	int count = 0;
+	// gen points from sdf
+	for (int i = 0; i < gridDimX; i++) {
+		for (int j = 0; j < gridDimY; j++) {
+
+			GridNode currNode = data[i * GRID_SIZE_Y + j];
+
+			if (currNode.selected) {
+				currNode.selected = false;
+				count++;
+				data[i * GRID_SIZE_Y + j] = currNode;
+			}
+
+		}
+	}
+	std::cout << "Cleared selection of " << count << " nodes.\n";
+	glUnmapNamedBuffer(gridSSBO);
+}
+
+void mpm::MpmEngine::CalculateNodalAccelerations(const int gridDimX, const int gridDimY, real accStr)
+{
+	void* ptr = glMapNamedBuffer(gridSSBO, GL_READ_WRITE);
+	GridNode* data = static_cast<GridNode*>(ptr);
+
+	std::vector<std::vector<vec2>> nodal_accs(gridDimX, std::vector<vec2>(gridDimY, vec2(0.0)));
+
+	// temp buffer for node selected var
+	int count = 0;
+	std::vector<std::vector<bool>> nodes_selected(gridDimX, std::vector<bool>(gridDimY, false));
+	for (int i = 0; i < gridDimX; i++) {
+		for (int j = 0; j < gridDimY; j++) {
+
+			if (data[i * GRID_SIZE_Y + j].selected) {
+				nodes_selected[i][j] = data[i * GRID_SIZE_Y + j].selected;
+				count++;
+			}
+		}
+	}
+
+	if (count == 0) {
+		glUnmapNamedBuffer(gridSSBO);
+		std::cout << "Can't compute accelerations since no nodes selected.\n";
+		return;
+	}
+
+	int countIter = 0;
+	bool finished = false;
+	// gen points from sdf
+	while (!finished) {
+		finished = true;
+		for (int i = 0; i < gridDimX; i++) {
+			for (int j = 0; j < gridDimY; j++) {
+
+				GridNode currNode = data[i * GRID_SIZE_Y + j];
+
+				if (currNode.selected) {
+					continue; // don't calculate nodal acceleration for marked nodes
+				}
+
+				finished = false;
+
+				int left = (i - 1) * GRID_SIZE_Y + j;
+				int right = (i + 1) * GRID_SIZE_Y + j;
+				int up = i * GRID_SIZE_Y + j + 1;
+				int down = i * GRID_SIZE_Y + j - 1;
+
+
+				// if left exists
+				if (i > 0 && data[left].selected) {
+					nodal_accs[i][j].x -= accStr;
+					nodes_selected[i][j] = true;
+				}
+				// if right exists
+				if (i < gridDimX - 1 && data[right].selected) {
+					nodal_accs[i][j].x += accStr;
+					nodes_selected[i][j] = true;
+				}
+				// if up exists
+				if (j < gridDimY - 1 && data[up].selected) {
+					nodal_accs[i][j].y += accStr;
+					nodes_selected[i][j] = true;
+				}
+				// if down exists 
+				if (j > 0 && data[down].selected) {
+					nodal_accs[i][j].y -= accStr;
+					nodes_selected[i][j] = true;
+				}
+
+				//currNode.nodalAcceleration = acc;
+				//currNode.selected = true;
+				
+
+				data[i * GRID_SIZE_Y + j] = currNode;
+			}
+		}
+
+		// Write buffer to original data
+		for (int i = 0; i < gridDimX; i++) {
+			for (int j = 0; j < gridDimY; j++) {
+				GridNode currNode = data[i * GRID_SIZE_Y + j];
+				currNode.selected = nodes_selected[i][j];
+				currNode.nodalAcceleration = nodal_accs[i][j];
+				data[i * GRID_SIZE_Y + j] = currNode;
+			}
+		}
+
+		countIter++;
+	}
+	std::cout << "Computed nodal accelerations in " << countIter << " iterations.\n";
+	glUnmapNamedBuffer(gridSSBO);
+}
+
+void mpm::MpmEngine::ClearNodalAcclerations(const int gridDimX, const int gridDimY)
+{
+	void* ptr = glMapNamedBuffer(gridSSBO, GL_READ_WRITE);
+	GridNode* data = static_cast<GridNode*>(ptr);
+
+
+	int count = gridDimX * gridDimY;
+	// gen points from sdf
+	for (int i = 0; i < gridDimX; i++) {
+		for (int j = 0; j < gridDimY; j++) {
+
+			GridNode currNode = data[i * GRID_SIZE_Y + j];
+
+
+			currNode.nodalAcceleration = vec2(0.0);
+			currNode.selected = false;
+
+			data[i * GRID_SIZE_Y + j] = currNode;
+		}
+	}
+	std::cout << "Cleared " << count << " nodal accelerations.\n";
+	glUnmapNamedBuffer(gridSSBO);
 }
 
 void mpm::MpmEngine::ChangeMaterialParameters(GLuint comodel)

@@ -140,6 +140,7 @@
     <ClCompile Include="glm_MATLAB.cpp" />
     <ClCompile Include="MpmCR.cpp" />
     <ClCompile Include="MpmInteractions.cpp" />
+    <ClCompile Include="MpmRender.cpp" />
     <ClCompile Include="MpmSemiImplicitDirectSolver.cpp" />
     <ClCompile Include="OpenGLScreen.cpp" />
     <ClCompile Include="main.cpp" />

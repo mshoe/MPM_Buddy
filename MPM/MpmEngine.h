@@ -33,14 +33,7 @@ namespace mpm {
 		bool CleanupComputeShaderPipeline();
 
 		void Update();
-		void Render();
-		void RenderScreenShader(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen);
-		void RenderPointClouds(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> pointShader);
-		void RenderGrid(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> gridShader);
-		void RenderMarchingSquares(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> gridShader);
-		void RenderPolygon(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> polygonShader);
-		void RenderPWLine(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> pwLineShader);
-		void RenderGUI();
+		
 
 		void ProcessKeyboardInput(GLFWwindow* window, real lag);
 		void ProcessMouseInput(GLFWwindow* window, real lag);
@@ -65,6 +58,18 @@ namespace mpm {
 		void MpmTimeStepSemiImplicitDirectSolve(real dt);
 		void CalculatePointCloudVolumes(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
 
+		//*** RENDERING FUNCTIONS ***//
+	public:
+		void Render();
+	private:
+		void RenderScreenShader(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen);
+		void RenderPointClouds(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> pointShader);
+		void RenderGrid(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> gridShader);
+		void RenderMarchingSquares(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> gridShader);
+		void RenderPolygon(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> polygonShader);
+		void RenderPWLine(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> pwLineShader);
+		
+
 		//*** INTERACTIVE FUNCTIONS ***//
 		void SetDeformationGradients(std::string pointCloudID, mat2 Fe, mat2 Fp);
 		mat2 m_setFe = mat2(1.0);
@@ -75,6 +80,9 @@ namespace mpm {
 		mat2 m_multFp = mat2(1.0);
 
 		//*** GUI FUNCTIONS ***//
+	public:
+		void RenderGUI();
+	private:
 		void RenderWindowManager();
 		void RenderTimeIntegrator();
 		void RenderForceController();
@@ -226,7 +234,15 @@ namespace mpm {
 		GridNode m_gn; // selecting grid node
 		bool m_selectNodeState = false;
 		void UpdateNodeData();
-
+		void SelectNodesInShape(sdf::Shape& shape,
+			const int gridDimX, const int gridDimY,
+			const real inner_rounding, const real outer_rounding, 
+			sdf::SDF_OPTION sdfOption,
+			bool inverted);
+		bool m_collectiveNodeSelectionGraphics = false;
+		void ClearNodesSelected(const int gridDimX, const int gridDimY);
+		void CalculateNodalAccelerations(const int gridDimX, const int gridDimY, real accStr);
+		void ClearNodalAcclerations(const int gridDimX, const int gridDimY);
 
 		real m_drag = 0.5;
 		vec2 m_globalForce = vec2(0.0, -9.81);

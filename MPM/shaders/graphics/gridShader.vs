@@ -22,6 +22,8 @@ uniform bool nodeGraphicsActive;
 uniform int selectedNodeI;
 uniform int selectedNodeJ;
 
+uniform bool collectiveNodeGraphics;
+
 /*** HEADER ***/
 
 // vertices will be the GRID_SIZE_X * GRID_SIZE_Y grid nodes.
@@ -67,12 +69,27 @@ void main() {
         gl_PointSize = 1.0;
     }
 
+    
+
+    if (collectiveNodeGraphics) {
+        if (nodes[nodei][nodej].selected) {
+            vs_nodeColor = vec4(1.0, 1.0, 0.0, 1.0);
+            gl_PointSize = 10.0;
+        }
+    }
+
     if (nodeGraphicsActive) {
         if (nodei == selectedNodeI && nodej == selectedNodeJ) {
             vs_nodeColor = vec4(0.0, 1.0, 0.0, 1.0);
             gl_PointSize = 10.0;
         }
     }
+
+    // if (nodes[nodei][nodej].selected == true) {
+    // //if (nodes[nodei][nodej].force.x > 2.0) {
+    //     vs_nodeColor = vec4(0.0, 1.0, 0.0, 1.0);
+    //     gl_PointSize = 10.0;
+    // }
 
     dvec2 grid_vec = dvec2(GRID_SIZE_X, GRID_SIZE_Y);
 

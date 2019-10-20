@@ -376,6 +376,46 @@ void mpm::MpmEngine::RenderGridNodeViewer()
 	ImGui::InputInt("# chunks (y)", &m_chunks_y, 1, 1);
 	m_chunks_y = glm::clamp(m_chunks_y, 1, 4);
 
+	ImGui::Checkbox("Collective node selection graphics", &m_collectiveNodeSelectionGraphics);
+	if (ImGui::Button("Select nodes in polygon")) {
+		SelectNodesInShape(*m_polygon, m_chunks_x * CHUNK_WIDTH, m_chunks_y * CHUNK_WIDTH, 0.0, 0.0, sdf::SDF_OPTION::NORMAL, m_invertedSdf);
+	}
+	if (ImGui::Button("select nodes in pw line")) {
+		SelectNodesInShape(*m_pwLine, m_chunks_x * CHUNK_WIDTH, m_chunks_y * CHUNK_WIDTH, 0.0, m_pwLineRounding, sdf::SDF_OPTION::ROUNDED, m_invertedSdf);
+	}
+	if (ImGui::Button("Count selected nodes (DEBUG TOOL)")) {
+		void *ptr = glMapNamedBuffer(gridSSBO, GL_READ_WRITE);
+		GridNode* data = static_cast<GridNode*>(ptr);
+		int counted = 0;
+		int convergedCount = 0;
+		for (int i = 0; i < m_chunks_x * CHUNK_WIDTH; i++) {
+			for (int j = 0; j < m_chunks_y * CHUNK_WIDTH; j++) {
+
+				GridNode currNode = data[i * GRID_SIZE_Y + j];
+
+				if (currNode.selected)
+					counted++;
+				if (currNode.converged)
+					convergedCount++;
+			}
+		}
+
+		std::cout << "counted = " << counted << std::endl;
+		std::cout << "convergedCount = " << convergedCount << std::endl;
+		glUnmapNamedBuffer(gridSSBO);
+	}
+	if (ImGui::Button("Clear selection of nodes")) {
+		ClearNodesSelected(m_chunks_x * CHUNK_WIDTH, m_chunks_y * CHUNK_WIDTH);
+	}
+	static real accStr = 5.0;
+	ImGui::InputReal("Acceleration Strength", &accStr, 0.5, 5.0);
+	if (ImGui::Button("Compute nodal accelerations")) {
+		CalculateNodalAccelerations(m_chunks_x * CHUNK_WIDTH, m_chunks_y * CHUNK_WIDTH, accStr);
+	}
+	if (ImGui::Button("Clear nodal accelerations")) {
+		ClearNodalAcclerations(m_chunks_x * CHUNK_WIDTH, m_chunks_y * CHUNK_WIDTH);
+	}
+
 	ImGui::Checkbox("Node Selection Graphics", &m_nodeGraphicsActive);
 	if (ImGui::Button("Select Node")) {
 		m_selectNodeState = true;
@@ -439,6 +479,9 @@ void mpm::MpmEngine::RenderGridNodeViewer()
 			case 3:
 				vectorStr = "residual velocity";
 				break;
+			case 4:
+				vectorStr = "nodal acceleration";
+				break;
 			default:
 				break;
 			}
@@ -479,6 +522,7 @@ void mpm::MpmEngine::RenderGridNodeViewer()
 		real rk_valueSq = glm::dot(m_gn.rk, m_gn.rk);
 		ImGui::DisplayNamedGlmRealColor("|rk|^2", rk_valueSq, max_color);
 		ImGui::DisplayNamedBoolColor("|rk|^2 < 0.0001", m_gn.converged, max_color, min_color);
+		ImGui::DisplayNamedBoolColor("selected", m_gn.selected, max_color, min_color);
 	}
 	ImGui::End();
 }

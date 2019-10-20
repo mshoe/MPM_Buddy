@@ -54,25 +54,25 @@ void main() {
 	// double node_radius = 5;
 	
 
+	// moving node selection graphics to gridShader.vs
+    // // node position in grid space
+    // dvec2 node_pos = dvec2(selectedNodeI, selectedNodeJ);
 
-    // node position in grid space
-    dvec2 node_pos = dvec2(selectedNodeI, selectedNodeJ);
-
-	// Now map normalized pixel position from normalized grid space to actual grid space.
-	dvec2 grid_pixel = norm_grid_pixel * grid_vec;
-	dvec2 d = grid_pixel - node_pos;
-	double bSpl = BSpline(d.x) * BSpline(d.y);
-	double maxBSpl = BSpline(0.0) * BSpline(0.0);
+	// // Now map normalized pixel position from normalized grid space to actual grid space.
+	// dvec2 grid_pixel = norm_grid_pixel * grid_vec;
+	// dvec2 d = grid_pixel - node_pos;
+	// double bSpl = BSpline(d.x) * BSpline(d.y);
+	// double maxBSpl = BSpline(0.0) * BSpline(0.0);
 	
 
-	// double dist_to_node = length(pixel_pos - node_pos) / zoomFactor;
-	// double node_intensity = double(nodeGraphicsActive) * step(-node_radius, -dist_to_node) * (node_radius - dist_to_node) / node_radius;
+	// // double dist_to_node = length(pixel_pos - node_pos) / zoomFactor;
+	// // double node_intensity = double(nodeGraphicsActive) * step(-node_radius, -dist_to_node) * (node_radius - dist_to_node) / node_radius;
 
-	double node_intensity = bSpl / maxBSpl;
+	// double node_intensity = bSpl / maxBSpl;
 
-	// //vec3 node_color = vec3(0.0, node_intensity, node_intensity);
+	// // //vec3 node_color = vec3(0.0, node_intensity, node_intensity);
 
-	color.z = float(node_intensity);
+	// color.z = float(node_intensity);
 
 	//if (intensity > 0.0) {
 	fragColor = vec4(color, 1.0);

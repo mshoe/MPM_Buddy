@@ -33,6 +33,8 @@ void main() {
         vector = nodes[gridNodeI[0]][gridNodeJ[0]].force / grid_vec;
     } else if (selectedVector == 3) { // residual velocity (rk)
         vector = nodes[gridNodeI[0]][gridNodeJ[0]].rk / grid_vec;
+    } else if (selectedVector == 4) { // nodal accelerations
+        vector = nodes[gridNodeI[0]][gridNodeJ[0]].nodalAcceleration / grid_vec;
     }
 
     double vLength = clamp(length(vector), 0.0, maxGridVectorLength);

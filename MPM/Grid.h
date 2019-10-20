@@ -20,7 +20,8 @@ struct GridNode {
 	vec2 v = vec2(0.0);
 	vec2 momentum = vec2(0.0);
 	vec2 force = vec2(0.0);
-	
+	vec2 nodalAcceleration = vec2(0.0);
+
 	vec2 deltaForce = vec2(0.0);
 	vec2 xk = vec2(0.0);
 	vec2 rk = vec2(0.0);
@@ -31,6 +32,11 @@ struct GridNode {
 	GLreal rkArk = 0.0;
 	//GLreal glsl_padding2 = 0.0;
 	bool converged = true;
+	bool packing; // Packing becuz C++ stores bool as 1 byte, but GLSL is reading/writing bool every 4 bytes
+	bool packing2;
+	bool packing3;
+
+	bool selected = false;
 
 
 	friend std::ostream & operator << (std::ostream &out, const GridNode &c) {
@@ -46,6 +52,8 @@ struct GridNode {
 		out << "Ark: " << glm::to_string(c.Ark) << "\n";
 		out << "Apk: " << glm::to_string(c.Apk) << "\n";
 		out << "rkArk: " << c.rkArk << "\n";
+		out << "converged: " << c.converged << "\n";
+		out << "selected: " << c.selected << "\n";
 		//out << "padding2: " << c.glsl_padding2 << "\n";
 		return out;
 	}
