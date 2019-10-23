@@ -512,6 +512,7 @@ void mpm::MpmEngine::RenderGridNodeViewer()
 		ImGui::DisplayNamedGlmVecMixColor("v", m_gn.v, min_color, max_color);
 		ImGui::DisplayNamedGlmVecMixColor("mv", m_gn.momentum, min_color, max_color);
 		ImGui::DisplayNamedGlmVecMixColor("f", m_gn.force, min_color, max_color);
+		ImGui::DisplayNamedGlmVecMixColor("nodal acc", m_gn.nodalAcceleration, min_color, max_color);
 		ImGui::DisplayNamedGlmVecMixColor("df", m_gn.deltaForce, min_color, max_color);
 		ImGui::DisplayNamedGlmVecMixColor("rk", m_gn.rk, min_color, max_color);
 		ImGui::DisplayNamedGlmVecMixColor("xk", m_gn.xk, min_color, max_color);
@@ -542,11 +543,30 @@ void mpm::MpmEngine::RenderMaterialPointViewer()
 	ImGui::InputText("Check point cloud", m_pointCloudSelect.data(), 30);
 	std::string pointCloudSelectStr = std::string(m_pointCloudSelect.data());
 
+	static int numPoints = 0;
+
+	if (m_pointCloudMap.count(pointCloudSelectStr)) {
+		numPoints = m_pointCloudMap[pointCloudSelectStr]->N;
+	}
+	else {
+		numPoints = 0;
+	}
+	
+	std::string numPointsStr = "N: " + std::to_string(numPoints);
+	ImGui::Text(numPointsStr.c_str());
+
+	static int pointIndex = 0;
+
+
+	ImGui::InputInt("Point Index", &pointIndex);
+	pointIndex = glm::min(glm::max(pointIndex, 0), numPoints - 1); // keep point index in bounds
+	
+	
 	if (ImGui::Button("View Particles") && m_paused) {
 		if (m_pointCloudMap.count(pointCloudSelectStr)) {
 			void* ptr = glMapNamedBuffer(m_pointCloudMap[pointCloudSelectStr]->ssbo, GL_READ_ONLY);
 			MaterialPoint* data = static_cast<MaterialPoint*>(ptr);
-			m_mp = data[0];
+			m_mp = data[pointIndex];
 			glUnmapNamedBuffer(m_pointCloudMap[pointCloudSelectStr]->ssbo);
 		}
 	}

@@ -35,4 +35,8 @@ void main() {
 	// should never have 0 mass from grid unless negative masses exist
 	points[pid].vol = (massFromGrid != 0.0) ? points[pid].m / massFromGrid : 0.0;
 
+
+	// Set other basic MP parameters
+	//points[pid].B = dmat2(0.0);
+	//points[pid].P = dmat2(0.0);
 }

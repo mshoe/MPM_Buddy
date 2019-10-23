@@ -45,6 +45,7 @@ struct GridNode {
 		out << "v: " << glm::to_string(c.v) << "\n";
 		out << "mv: " << glm::to_string(c.momentum) << "\n";
 		out << "f: " << glm::to_string(c.force) << "\n";
+		out << "nodal acc: " << glm::to_string(c.nodalAcceleration) << "\n";
 		out << "df: " << glm::to_string(c.deltaForce) << "\n";
 		out << "xk: " << glm::to_string(c.xk) << "\n";
 		out << "rk: " << glm::to_string(c.rk) << "\n";

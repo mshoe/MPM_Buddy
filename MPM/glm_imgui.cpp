@@ -43,6 +43,9 @@ void ImGui::DisplayGlmRealMixColor(real value, real min_element, real max_elemen
 	numStream << std::setprecision(std::numeric_limits<real>::digits10 + 1);
 	numStream << value;
 	real mix_value = glm::clamp((value - min_element) / (max_element - min_element), 0.0, 1.0);
+	if (isnan(mix_value)) {
+		mix_value = 0;
+	}
 	glm::highp_fvec4 color = glm::mix(min_color, max_color, mix_value);
 	ImVec4 imcolor = ImVec4(color.x, color.y, color.z, color.w);
 	ImGui::TextColored(imcolor, numStream.str().c_str());

@@ -17,7 +17,7 @@ struct MaterialPoint {
 	vec2 v;
 	GLreal m;
 	GLreal vol; // initial volume
-	mat2 B;
+	mat2 B = mat2(0.0);
 	mat2 Fe;
 	mat2 Fp;
 	mat2 P;

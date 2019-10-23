@@ -43,6 +43,9 @@ void main() {
 
 			barrier();
 
+			//points[pid].B = dmat2(0.0);
+			//points[pid].P = dmat2(0.0);
+
 			dvec2 momentumAdd = wpg * points[pid].m * (points[pid].v + points[pid].B * Dp_inv * dpg);
 			atomicAdd(nodes[curNode_i][curNode_j].momentum.x, momentumAdd.x);
 			atomicAdd(nodes[curNode_i][curNode_j].momentum.y, momentumAdd.y);
