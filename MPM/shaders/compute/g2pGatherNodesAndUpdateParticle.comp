@@ -51,7 +51,7 @@ void main() {
 
 	// THIS IS WHERE DIFFERENT CONSTITUTIVE MODELS ARE EVALUATED
 
-	// forced only come from elastic deformation gradient
+	// forces only come from elastic deformation gradient
 	if (comodel == NEO_HOOKEAN) {
 		points[pid].Fe = dfp*points[pid].Fe;
 		dmat2 Fe = points[pid].Fe;
@@ -59,6 +59,8 @@ void main() {
 		double J = determinant(Fe);
 		double logJ = double(log(float(J)));
 		points[pid].P = mew*(Fe - Fit) + lam*logJ*Fit;
+
+		// energy for visualization purposes
 		dmat2 FTF = transpose(Fe) * Fe;
 		points[pid].energy = 0.5 * mew * (FTF[0][0] + FTF[1][1] - 2.0 - 2.0 * logJ) + 0.5 * lam * logJ * logJ;
 		points[pid].energy *= points[pid].vol;
