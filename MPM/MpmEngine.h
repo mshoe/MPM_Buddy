@@ -100,7 +100,7 @@ namespace mpm {
 		bool m_renderMaterialPointViewer = true;
 		bool m_renderZoomWindow = true;
 
-		//*** ZOOM WINDOW ***//
+		/******************** ZOOM WINDOW ********************/
 		void InitZoomWindow();
 		std::shared_ptr<ImGuiScreen> m_zoomWindow = nullptr;
 		GLuint m_zoom_VAO, m_zoom_VBO, m_zoom_EBO;
@@ -112,47 +112,10 @@ namespace mpm {
 		vec2 m_zoomPoint = vec2(40.0, 50.0); // ZOOM POINT IN GRID SPACE
 		vec2 m_zoomDim = vec2(GRID_SIZE_X, GRID_SIZE_Y);
 
-		//*** GEOMETRY EDITOR FUNCTIONS ***//
-		bool m_fixedPointCloud = false;
-		bool m_invertedSdf = false;
-		std::shared_ptr<PointCloud> GenPointCloud(const std::string pointCloudID, sdf::Shape& shape,
-			const real gridDimX, const real gridDimY,
-			const real inner_rounding, const real outer_rounding, 
-			const MaterialParameters &parameters,
-			const GLuint comodel, sdf::SDF_OPTION sdfOption, 
-			bool inverted, bool fixed,
-			vec2 initialVelocity, glm::highp_fvec4 color);
-		void ClearCreateStates() {
-			m_createCircleState = false;
-			m_createRectState = false;
-			m_createIsoTriState = false;
-		}
-
-		std::shared_ptr<sdf::Polygon> m_polygon = nullptr;
-		bool m_addPolygonVertexState = false;
-		void GenPointCloudPolygon();
-		int m_polygonCount = 0;
-		bool m_renderPolygon = false;
-
-		std::shared_ptr<sdf::PWLine> m_pwLine = nullptr;
-		bool m_addPWLineVertexState = false;
-		real m_pwLineRounding = 2.0;
-		void GenPointCloudPWLine();
-		int m_pwLineCount = 0;
-		bool m_renderPWLine = false;
-		//void GenPointCloudLineDivider();
-		////std::vector<>
-		//real m_line_m = 2.0;
-		//real m_line_b = -50.0;
-		//real m_line2_m = -2.0;
-		//real m_line2_b = 178.0;
-		
-
-
 		void PrintGridData();
 
 
-		//*** SHADERS ***//
+		/********************SHADERS ********************/
 		std::unique_ptr<ComputeShader> m_gReset = nullptr;
 		std::unique_ptr<ComputeShader> m_p2gScatter = nullptr;
 		std::unique_ptr<ComputeShader> m_p2gGather = nullptr;
@@ -183,6 +146,9 @@ namespace mpm {
 
 
 		std::shared_ptr<OpenGLScreen> m_openGLScreen = nullptr;
+
+
+		/******************** MOUSE STATES ********************/
 		vec4 m_mpm_mouse = vec4(0.0);
 		vec4 m_mouse = vec4(0.0);
 		bool m_leftButtonDown = false;
@@ -203,7 +169,7 @@ namespace mpm {
 		GLuint gridSSBO;
 		GLuint VisualizeVAO;
 
-		// MATERIAL POINT VISUALIZATION STUFF
+		/******************** MATERIAL POINT VIEWER ********************/
 		MaterialPoint m_mp; // selecting material points
 		double m_maxSpeedClamp = 25.0;
 		double m_minSpeedClamp = 0.0;
@@ -213,7 +179,7 @@ namespace mpm {
 		bool m_visualizeEnergy = true;
 		bool m_viewPointClouds = true;
 		
-		// GRID VISUALIZATION STUFF
+		/******************** GRID NODE VIEWER ********************/
 		Grid m_grid;
 		bool m_nodeGraphicsActive = false;
 		int m_node[2] = { 26, 8 };
@@ -228,9 +194,13 @@ namespace mpm {
 		int m_gridPointSizeScalingOption = 0;
 		real m_maxGridVectorLength = 25.0;
 		real m_maxGridVectorVisualLength = 5.0;
+		
+		// marching squares
 		bool m_viewMarchingSquares = false;
 		double m_isoMass = 5.0;
 		glm::highp_fvec4 m_marchingSquaresColor = glm::highp_fvec4(1.0f);
+
+		// grid node control
 		GridNode m_gn; // selecting grid node
 		bool m_selectNodeState = false;
 		void UpdateNodeData();
@@ -244,13 +214,15 @@ namespace mpm {
 		void CalculateNodalAccelerations(const int gridDimX, const int gridDimY, real accStr);
 		void ClearNodalAcclerations(const int gridDimX, const int gridDimY);
 
+
+		/******************** FORCE CONTROLLER ********************/
 		real m_drag = 0.5;
 		vec2 m_globalForce = vec2(0.0, -9.81);
-		//real m_set_dt = 1.0 / 120.0;
 		real m_dt = 1.0 / 120.0;
 		bool m_paused = true;
+		GLreal m_mousePower = 25.0;
 
-		// SEMI-IMPLICIT CR
+		/******************** CONJUGATE RESIDUALS FOR SEMI-IMPLICT TIME INTEGRATION ********************/
 		bool m_semi_implicit_CR = false;
 		real m_semi_implicit_ratio = 1.0;
 		int m_max_conj_res_iter = 300;//30;// GRID_SIZE_X* GRID_SIZE_Y;
@@ -261,19 +233,21 @@ namespace mpm {
 		int m_cr_step = 0;
 		bool m_pause_if_not_converged = true;
 
-		//int m_pointCloudSelect = 0;
+		/******************** TIME INTEGRATOR ********************/
 		int m_timeStep = 0;
 		real m_time = 0.0;
 		bool m_rt = true; // realtime
 
-		GLreal m_mousePower = 25.0;
+		// TRANSFER SCHEMES (PIC/FLIP/APIC)
+		enum class TRANSFER_SCHEME {
+			PIC = 0,
+			FLIP = 1,
+			APIC = 2
+		};
+		TRANSFER_SCHEME m_transferScheme = TRANSFER_SCHEME::APIC;
 
 
-		// Reorganize this stuff
-		unsigned int m_circleCount = 0;
-		unsigned int m_rectCount = 0;
-		unsigned int m_isoTriCount = 0;
-		unsigned int m_lineDivCount = 0;
+		
 
 		//std::vector<PointCloud> m_pointClouds;
 		std::unordered_map<std::string, std::shared_ptr<PointCloud>> m_pointCloudMap;
@@ -282,25 +256,49 @@ namespace mpm {
 
 
 
-		
+		/******************** MATERIAL PARAMETERS EDITOR ********************/
 		MaterialParameters m_mpParameters;
 		MaterialParameters m_neoHookeanParameters;
 		MaterialParameters m_fixedCorotatedParameters;
 		MaterialParameters m_simpleSnowParameters;
-
 		real m_lam = 38888.9;
 		real m_mew = 58333.0;
-
-
 		GLuint m_comodel = FIXED_COROTATIONAL_ELASTICITY;
 		void ChangeMaterialParameters(GLuint);
-		
-
 		float m_backgroundColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-
 		float m_color[4] = { 1.0f, 0.0f, 0.0f, 1.0f}; // color needs to be float
 		vec2 m_initVelocity = vec2(0.0);
+
 		
+
+		/******************** GEOMETRY EDITOR ********************/
+		bool m_fixedPointCloud = false;
+		bool m_invertedSdf = false;
+		std::shared_ptr<PointCloud> GenPointCloud(const std::string pointCloudID, sdf::Shape& shape,
+			const real gridDimX, const real gridDimY,
+			const real inner_rounding, const real outer_rounding,
+			const MaterialParameters& parameters,
+			const GLuint comodel, sdf::SDF_OPTION sdfOption,
+			bool inverted, bool fixed,
+			vec2 initialVelocity, glm::highp_fvec4 color);
+		void ClearCreateStates() {
+			m_createCircleState = false;
+			m_createRectState = false;
+			m_createIsoTriState = false;
+		}
+
+		std::shared_ptr<sdf::Polygon> m_polygon = nullptr;
+		bool m_addPolygonVertexState = false;
+		void GenPointCloudPolygon();
+		int m_polygonCount = 0;
+		bool m_renderPolygon = false;
+
+		std::shared_ptr<sdf::PWLine> m_pwLine = nullptr;
+		bool m_addPWLineVertexState = false;
+		real m_pwLineRounding = 2.0;
+		void GenPointCloudPWLine();
+		int m_pwLineCount = 0;
+		bool m_renderPWLine = false;
 		bool m_createCircleState = false;
 		real m_circle_r = 5.0;
 		real m_circle_inner_radius = 0.0;
@@ -317,6 +315,12 @@ namespace mpm {
 		real m_iso_tri_h = 3.0;
 		real m_iso_tri_inner_radius = 0.0;
 		real m_iso_tri_rounding = 2.0;
+
+		// counters (used for naming point clouds in map)
+		unsigned int m_circleCount = 0;
+		unsigned int m_rectCount = 0;
+		unsigned int m_isoTriCount = 0;
+		unsigned int m_lineDivCount = 0;
 
 		// imgui stuff
 		bool m_renderGUI = true;

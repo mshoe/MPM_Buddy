@@ -20,7 +20,7 @@ void main() {
 	int botLeftNode_j = int(floor(xp.y)) - 1;
 
 	dvec2 vp = dvec2(0.0);
-	dmat2 bp = dmat2(0.0);
+	dmat2 bp = dmat2(0.0); // for updating B (for APIC)
 	dmat2 dfp = dmat2(1.0);
 
 	for (int i = 0; i <= 3; ++i) {

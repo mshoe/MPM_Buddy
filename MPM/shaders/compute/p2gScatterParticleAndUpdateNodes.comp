@@ -8,6 +8,8 @@ layout (local_size_x = 1024) in;
 // uniform int selectedNodeI;
 // uniform int selectedNodeJ;
 
+uniform int transferScheme = 2; // 0 = PIC, 1 = FLIP, 2 = APIC
+
 void main() {
 
 	uint pid = gl_GlobalInvocationID.x;
@@ -43,10 +45,15 @@ void main() {
 
 			barrier();
 
-			//points[pid].B = dmat2(0.0);
-			//points[pid].P = dmat2(0.0);
-
-			dvec2 momentumAdd = wpg * points[pid].m * (points[pid].v + points[pid].B * Dp_inv * dpg);
+			dvec2 momentumAdd;
+			// B is used for APIC transfer
+			if (transferScheme == 2) { // APIC
+				momentumAdd = wpg * points[pid].m * (points[pid].v + points[pid].B * Dp_inv * dpg);
+			} else if (transferScheme == 1) { // FLIP
+				momentumAdd = wpg * points[pid].m * points[pid].v;
+			} else if (transferScheme == 0) { // PIC (but making it same as FLIP for now cuz PIC is gonna take more work)
+				momentumAdd = wpg * points[pid].m * points[pid].v;
+			}
 			atomicAdd(nodes[curNode_i][curNode_j].momentum.x, momentumAdd.x);
 			atomicAdd(nodes[curNode_i][curNode_j].momentum.y, momentumAdd.y);
 

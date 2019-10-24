@@ -51,6 +51,7 @@ void mpm::MpmEngine::MpmTimeStepP2G(real dt)
 		m_p2gScatter->SetReal("dt", dt);
 		m_p2gScatter->SetInt("CHUNKS_X", m_chunks_x);
 		m_p2gScatter->SetInt("CHUNKS_Y", m_chunks_y);
+		m_p2gScatter->SetInt("transferScheme", int(m_transferScheme));
 		//m_p2gScatter->SetInt("selectedNodeI", m_node[0]); // for visualization
 		//m_p2gScatter->SetInt("selectedNodeJ", m_node[1]);
 		int g2p_workgroups = int(glm::ceil(real(pointCloudPair.second->N) / real(G2P_WORKGROUP_SIZE)));

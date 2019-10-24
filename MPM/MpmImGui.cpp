@@ -63,6 +63,13 @@ void mpm::MpmEngine::RenderTimeIntegrator()
 	ImGui::InputInt("Max CR Iterations", &m_max_conj_res_iter);
 	ImGui::InputReal("L2 Norm Threshold", &m_L2_norm_threshold);
 
+	static int transferScheme = int(TRANSFER_SCHEME::APIC);
+	ImGui::InputInt("Transfer scheme", &transferScheme);
+	transferScheme = glm::max(glm::min(transferScheme, int(TRANSFER_SCHEME::APIC)), int(TRANSFER_SCHEME::PIC));
+	m_transferScheme = TRANSFER_SCHEME(transferScheme);
+
+
+
 	if (ImGui::Button("Pause")) {
 		m_paused = !m_paused;
 	}
