@@ -6,14 +6,16 @@ uniform int CHUNKS_X = 4;
 uniform int CHUNKS_Y = 4;
 
 struct materialPoint {
-	dvec2 x;
-	dvec2 v;
-	double m;
-	double vol;
-	dmat2 B;
-	dmat2 Fe;
-	dmat2 Fp;
-	dmat2 P;
+	dvec2 x; // position
+	dvec2 v; // velocity
+	double m; // mass
+	double vol; // volume
+	double Lz; // angular momentum (for RPIC)
+	double padding;
+	dmat2 B; // for APIC
+	dmat2 Fe; // elastic deformation gradient
+	dmat2 Fp; // plastic deformation gradient
+	dmat2 P; // piola-kirchoff stress tensor
 
 	// extra not neccessary to store, but useful for debugging
 	dmat2 FePolar_R;
@@ -106,7 +108,8 @@ bool isinfVec2(in dvec2 v) {
 
 uniform double dt = 1/60.0;
 
-uniform dmat2 Dp_inv = 3 * dmat2(1.0); // 3 * dx^2 * I
+// Inertia tensor is mp.m * Dp
+uniform dmat2 Dp_inv = 3 * dmat2(1.0); // 3 * dx^2 * I, inverse of inertia tensor (without mass)
 uniform dvec2 gravity = dvec2(0.0, -9.81);
 uniform dvec2 globalForce = dvec2(0.0, 0.0);
 
@@ -117,6 +120,11 @@ const uint NEO_HOOKEAN = 0;
 const uint FIXED_COROTATED = 1;
 const uint SIMPLE_SNOW = 2;
 uniform uint comodel = 1; //FIXED_COROTATED;
+
+const uint PIC = 0;
+const uint RPIC = 1;
+const uint APIC = 2;
+uniform uint transferScheme = APIC; // 0 = PIC, 1 = RPIC, 2 = APIC
 
 uniform double IMPLICIT_RATIO = 1.0;
 uniform double drag = 0.005;

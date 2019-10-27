@@ -20,6 +20,7 @@ void main() {
 	int botLeftNode_j = int(floor(xp.y)) - 1;
 
 	dvec2 vp = dvec2(0.0);
+	dvec3 Lp = dvec3(0.0); // angular momentum (for RPIC), needs to be 3D for cross product
 	dmat2 bp = dmat2(0.0); // for updating B (for APIC)
 	dmat2 dfp = dmat2(1.0);
 
@@ -40,13 +41,22 @@ void main() {
 			dvec2 vg = nodes[curNode_i][curNode_j].v*inb; // if inb is 0, then no data is changed
 			dfp += dt*outerProduct(vg, wpgGrad)*inb;
 			vp += wpg*vg*inb;
-			bp += wpg*outerProduct(vg, dpg)*inb;
+			if (transferScheme == APIC) {
+				bp += wpg * outerProduct(vg, dpg)*inb;
+			} else if (transferScheme == RPIC) {
+				Lp += wpg * cross(dvec3(dpg, 0.0), dvec3(vg, 0.0));
+			}
 		}
 	}
 
 	points[pid].v = vp;
-	points[pid].B = bp;
-	//if (!fixedPointCloud)
+	if (transferScheme == APIC) {
+		points[pid].B = bp;
+	} else if (transferScheme == RPIC) {
+		points[pid].Lz = points[pid].m * Lp.z;
+	} else if (transferScheme == PIC) {
+		// nothing here
+	}
 	points[pid].x += dt*vp;//dt*(dvec2(0.0, -9.8));
 
 	// THIS IS WHERE DIFFERENT CONSTITUTIVE MODELS ARE EVALUATED

@@ -146,7 +146,7 @@ void mpm::MpmEngine::RenderGrid(vec2 zoomPoint, real zoomFactor, std::shared_ptr
 	gridShader->SetInt("selectedNodeI", m_node[0]);
 	gridShader->SetInt("selectedNodeJ", m_node[1]);
 	gridShader->SetReal("dt", m_dt);
-	gridShader->SetInt("selectedVector", m_gridVectorOption);
+	gridShader->SetuInt("selectedVector", unsigned int(m_gridVectorOption));
 	gridShader->SetReal("maxGridVectorLength", m_maxGridVectorLength);
 	gridShader->SetReal("maxGridVectorVisualLength", m_maxGridVectorVisualLength);
 	gridShader->SetBool("collectiveNodeGraphics", m_collectiveNodeSelectionGraphics);

@@ -119,7 +119,7 @@ bool MainEngine::Init()
 
 
 	m_mpmEngine = std::make_unique<mpm::MpmEngine>();
-	m_mpmEngine->InitComputeShaderPipeline();
+	//m_mpmEngine->InitComputeShaderPipeline();
 
 	return true;
 }

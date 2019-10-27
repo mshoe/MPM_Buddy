@@ -302,7 +302,7 @@ void mpm::MpmEngine::HandleStates()
 		color.z = (float)glm::clamp(m_color[2], 0, 255) / 255.f;*/
 
 		real inner_rounding = m_circle_r - m_circle_inner_radius;
-		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(circleID, shape, m_chunks_x * CHUNK_WIDTH, m_chunks_y * CHUNK_WIDTH, inner_rounding, m_circle_rounding, m_mpParameters, m_comodel, sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, m_initVelocity, color);
+		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(circleID, shape, real(m_chunks_x) * real(CHUNK_WIDTH), real(m_chunks_y) * real(CHUNK_WIDTH), inner_rounding, m_circle_rounding, m_mpParameters, m_comodel, sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, m_initVelocity, color);
 
 		t2 = high_resolution_clock::now();
 
@@ -332,7 +332,7 @@ void mpm::MpmEngine::HandleStates()
 		
 
 		real inner_rounding = glm::min(m_rect_b, m_rect_h) - m_rect_inner_radius;
-		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(rectID, shape, m_chunks_x * CHUNK_WIDTH, m_chunks_y * CHUNK_WIDTH, inner_rounding, m_rect_rounding, m_mpParameters, m_comodel, sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, m_initVelocity, color);
+		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(rectID, shape, real(m_chunks_x) * real(CHUNK_WIDTH), real(m_chunks_y) * real(CHUNK_WIDTH), inner_rounding, m_rect_rounding, m_mpParameters, m_comodel, sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, m_initVelocity, color);
 
 		t2 = high_resolution_clock::now();
 
@@ -361,7 +361,7 @@ void mpm::MpmEngine::HandleStates()
 		glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
 
 		real inner_rounding = glm::min(m_iso_tri_b, m_iso_tri_h) - m_iso_tri_inner_radius;
-		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(isoTriID, shape, m_chunks_x*CHUNK_WIDTH, m_chunks_y*CHUNK_WIDTH, inner_rounding, m_iso_tri_rounding, m_mpParameters, m_comodel, sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, m_initVelocity, color);
+		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(isoTriID, shape, real(m_chunks_x)*real(CHUNK_WIDTH), real(m_chunks_y)*real(CHUNK_WIDTH), inner_rounding, m_iso_tri_rounding, m_mpParameters, m_comodel, sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, m_initVelocity, color);
 
 		t2 = high_resolution_clock::now();
 
@@ -412,7 +412,7 @@ std::shared_ptr<PointCloud> mpm::MpmEngine::GenPointCloud(const std::string poin
 	const real gridDimX, const real gridDimY, 
 	const real inner_rounding, const real outer_rounding,
 	const MaterialParameters &parameters,
-	const GLuint comodel, sdf::SDF_OPTION sdfOption,
+	const GLuint comodel, enum class sdf::SDF_OPTION sdfOption,
 	bool inverted, bool fixed,
 	vec2 initialVelocity, glm::highp_fvec4 color)
 {
@@ -458,20 +458,9 @@ std::shared_ptr<PointCloud> mpm::MpmEngine::GenPointCloud(const std::string poin
 				sd *= -1.0;
 
 			if (sd < 0.0) {
-				MaterialPoint mp;
-				mp.x = p;
-				mp.v = initialVelocity;
-				mp.m = mass;
+				MaterialPoint mp(p, initialVelocity, GLreal(mass));
 				// calculate mp.vol in a compute shader (not here)
-				mp.B = mat2(0.0);
-				mp.Fe = mat2(1.0);
-				mp.Fp = mat2(1.0);
-				mp.P = mat2(0.0); // initial Piola stress tensor is 0
-				mp.FePolar_R = mat2(1.0);
-				mp.FePolar_S = mat2(1.0);
-				mp.FeSVD_U = mat2(1.0);
-				mp.FeSVD_S = mat2(1.0);
-				mp.FeSVD_V = mat2(1.0);
+				
 				
 				pointCloud->points.push_back(mp);
 			}
@@ -520,7 +509,7 @@ void mpm::MpmEngine::GenPointCloudPolygon()
 
 	glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
 
-	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(polygonID, *m_polygon, m_chunks_x * CHUNK_WIDTH, m_chunks_y * CHUNK_WIDTH, 0.0, 0.0, m_mpParameters, m_comodel, sdf::SDF_OPTION::NORMAL, m_invertedSdf, m_fixedPointCloud, m_initVelocity, color);
+	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(polygonID, *m_polygon, real(m_chunks_x) * real(CHUNK_WIDTH), real(m_chunks_y) * real(CHUNK_WIDTH), 0.0, 0.0, m_mpParameters, m_comodel, sdf::SDF_OPTION::NORMAL, m_invertedSdf, m_fixedPointCloud, m_initVelocity, color);
 
 	t2 = high_resolution_clock::now();
 
@@ -546,7 +535,7 @@ void mpm::MpmEngine::GenPointCloudPWLine()
 
 	glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
 
-	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(pwLineID, *m_pwLine, m_chunks_x * CHUNK_WIDTH, m_chunks_y * CHUNK_WIDTH, 0.0, m_pwLineRounding, m_mpParameters, m_comodel, sdf::SDF_OPTION::ROUNDED, false, m_fixedPointCloud, m_initVelocity, color);
+	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(pwLineID, *m_pwLine, real(m_chunks_x) * real(CHUNK_WIDTH), real(m_chunks_y) * real(CHUNK_WIDTH), 0.0, m_pwLineRounding, m_mpParameters, m_comodel, sdf::SDF_OPTION::ROUNDED, false, m_fixedPointCloud, m_initVelocity, color);
 
 	t2 = high_resolution_clock::now();
 
@@ -596,6 +585,17 @@ void mpm::MpmEngine::PrintGridData()
 		}
 	}
 	glUnmapNamedBuffer(gridSSBO);
+}
+
+void mpm::MpmEngine::UpdatePointCloudData(std::string pointCloudStr)
+{
+	if (m_pointCloudMap.count(pointCloudStr)) {
+		void* ptr = glMapNamedBuffer(m_pointCloudMap[pointCloudStr]->ssbo, GL_READ_ONLY);
+		MaterialPoint* data = static_cast<MaterialPoint*>(ptr);
+		size_t pCloudN = m_pointCloudMap[pointCloudStr]->N;
+		m_pointCloudMap[pointCloudStr]->points = std::vector<MaterialPoint>(data, data + pCloudN);
+		glUnmapNamedBuffer(m_pointCloudMap[pointCloudStr]->ssbo);
+	}
 }
 
 void mpm::MpmEngine::UpdateNodeData()

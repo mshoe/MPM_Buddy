@@ -7,7 +7,7 @@
 
 namespace sdf {
 
-	enum SDF_OPTION {
+	enum class SDF_OPTION {
 		NORMAL,
 		ROUNDED,
 		HOLLOW
@@ -29,7 +29,7 @@ namespace sdf {
 			return glm::max(-SdfRounded(p, -r1), SdfRounded(p, r2));
 		}
 
-		vec2 pos;
+		vec2 pos = vec2(0.0);
 	};
 
 	struct Circle : public Shape {
@@ -46,7 +46,7 @@ namespace sdf {
 			return glm::length(p - pos) - r;
 		}
 
-		real r;
+		real r = 0.0;
 	};
 
 	struct Rectangle : public Shape {
@@ -65,7 +65,7 @@ namespace sdf {
 			return glm::length(glm::max(d, vec2(0.0))) + glm::min(glm::max(d.x, d.y), 0.0);
 		}
 
-		real b, h; // b = horizontal base length, h = vertical height length;
+		real b = 0.0, h = 0.0; // b = horizontal base length, h = vertical height length;
 	};
 
 	struct IsoscelesTriangle : public Shape {
@@ -91,7 +91,7 @@ namespace sdf {
 			return -sqrt(d.x) * glm::sign(d.y);
 		}
 
-		real b, h;
+		real b = 0.0, h = 0.0;
 	};
 
 	//struct LineDivider : public Shape
@@ -149,7 +149,7 @@ namespace sdf {
 
 			real d = glm::dot(p - vertices[0], p - vertices[0]);
 			real s = 1.0;
-			for (int i = 0, j = vertices.size()-1; i < vertices.size(); j = i, i++) {
+			for (size_t i = 0, j = vertices.size()-1; i < vertices.size(); j = i, i++) {
 				vec2 e = vertices[j] - vertices[i];
 				vec2 w = p - vertices[i];
 				vec2 b = w - e * glm::clamp(glm::dot(w, e) / glm::dot(e, e), 0.0, 1.0);

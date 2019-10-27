@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Constants.h"
+#include "glm_imgui.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -32,9 +33,9 @@ struct GridNode {
 	GLreal rkArk = 0.0;
 	//GLreal glsl_padding2 = 0.0;
 	bool converged = true;
-	bool packing; // Packing becuz C++ stores bool as 1 byte, but GLSL is reading/writing bool every 4 bytes
-	bool packing2;
-	bool packing3;
+	bool packing = true; // Packing becuz C++ stores bool as 1 byte, but GLSL is reading/writing bool every 4 bytes
+	bool packing2 = true;
+	bool packing3 = true;
 
 	bool selected = false;
 
@@ -57,6 +58,27 @@ struct GridNode {
 		out << "selected: " << c.selected << "\n";
 		//out << "padding2: " << c.glsl_padding2 << "\n";
 		return out;
+	}
+
+	void ImGuiDisplay() {
+		glm::highp_fvec4 min_color = glm::highp_fvec4(1.0, 0.0, 0.0, 1.0);
+		glm::highp_fvec4 max_color = glm::highp_fvec4(0.0, 1.0, 0.0, 1.0);
+		ImGui::DisplayNamedGlmRealColor("m", m, max_color);
+		ImGui::DisplayNamedGlmVecMixColor("v", v, min_color, max_color);
+		ImGui::DisplayNamedGlmVecMixColor("mv", momentum, min_color, max_color);
+		ImGui::DisplayNamedGlmVecMixColor("f", force, min_color, max_color);
+		ImGui::DisplayNamedGlmVecMixColor("nodal acc", nodalAcceleration, min_color, max_color);
+		ImGui::DisplayNamedGlmVecMixColor("df", deltaForce, min_color, max_color);
+		ImGui::DisplayNamedGlmVecMixColor("rk", rk, min_color, max_color);
+		ImGui::DisplayNamedGlmVecMixColor("xk", xk, min_color, max_color);
+		ImGui::DisplayNamedGlmVecMixColor("pk", pk, min_color, max_color);
+		ImGui::DisplayNamedGlmVecMixColor("Ark", Ark, min_color, max_color);
+		ImGui::DisplayNamedGlmVecMixColor("Apk", Apk, min_color, max_color);
+		ImGui::DisplayNamedGlmRealColor("rkArk", rkArk, max_color);
+		real rk_valueSq = glm::dot(rk, rk);
+		ImGui::DisplayNamedGlmRealColor("|rk|^2", rk_valueSq, max_color);
+		ImGui::DisplayNamedBoolColor("|rk|^2 < 0.0001", converged, max_color, min_color);
+		ImGui::DisplayNamedBoolColor("selected", selected, max_color, min_color);
 	}
 };
 

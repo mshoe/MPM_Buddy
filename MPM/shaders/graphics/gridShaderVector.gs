@@ -9,31 +9,41 @@ out vec4 gs_nodeColor;
 layout (points) in;
 layout (line_strip, max_vertices = 2) out;
 
-uniform int selectedVector = 1;
-uniform double maxGridVectorLength;
-uniform double maxGridVectorVisualLength;
 
 uniform double zoomFactor;
 
+uniform uint selectedVector = 3;
+uniform double maxGridVectorLength;
+uniform double maxGridVectorVisualLength;
+
+const uint VIS_GRID_MOMENTUM = 0;
+const uint VIS_GRID_VELOCITY = 1;
+const uint VIS_GRID_ACCELERATION = 2;
+const uint VIS_GRID_FORCE = 3;
+const uint VIS_GRID_RESIDUAL_VELOCITY = 4;
+const uint VIS_GRID_NODAL_ACCELERATION = 5;
+
 /*** HEADER ***/
+
+
 
 void main() {
 
     dvec2 grid_vec = dvec2(GRID_SIZE_X, GRID_SIZE_Y);
     dvec2 vector = dvec2(0.0, 0.0);
 
-    if (selectedVector == -1) { // momentum
+    if (selectedVector == VIS_GRID_MOMENTUM) { // momentum
         vector = nodes[gridNodeI[0]][gridNodeJ[0]].momentum / grid_vec; // normalizing momentum
-    } else if (selectedVector == 0) { // velocity
+    } else if (selectedVector == VIS_GRID_VELOCITY) { // velocity
         vector = nodes[gridNodeI[0]][gridNodeJ[0]].v / grid_vec; // normalizing velocity?
-    } else if (selectedVector == 1) { // acceleration
+    } else if (selectedVector == VIS_GRID_ACCELERATION) { // acceleration
         double m = (nodes[gridNodeI[0]][gridNodeJ[0]].m == 0) ? 1.0 : nodes[gridNodeI[0]][gridNodeJ[0]].m;
         vector = nodes[gridNodeI[0]][gridNodeJ[0]].force / grid_vec / m;
-    } else if (selectedVector == 2) { // force
+    } else if (selectedVector == VIS_GRID_FORCE) { // force
         vector = nodes[gridNodeI[0]][gridNodeJ[0]].force / grid_vec;
-    } else if (selectedVector == 3) { // residual velocity (rk)
+    } else if (selectedVector == VIS_GRID_RESIDUAL_VELOCITY) { // residual velocity (rk)
         vector = nodes[gridNodeI[0]][gridNodeJ[0]].rk / grid_vec;
-    } else if (selectedVector == 4) { // nodal accelerations
+    } else if (selectedVector == VIS_GRID_NODAL_ACCELERATION) { // nodal accelerations
         vector = nodes[gridNodeI[0]][gridNodeJ[0]].nodalAcceleration / grid_vec;
     }
 

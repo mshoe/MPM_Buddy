@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Constants.h"
+#include "glm_imgui.h"
 
 #include <glad/glad.h>
 #include <vector>
@@ -13,22 +14,26 @@ enum MATERIAL_PARAMETERS_ENUM {
 };
 
 struct MaterialPoint {
+	MaterialPoint(vec2 _x, vec2 _v, GLreal _m) : x(_x), v(_v), m(_m) {}
+	
 	vec2 x;
 	vec2 v;
 	GLreal m;
-	GLreal vol; // initial volume
-	mat2 B = mat2(0.0);
-	mat2 Fe;
-	mat2 Fp;
-	mat2 P;
+	GLreal vol = 0.0; // initial volume
+	real Lz = 0.0; // angular momentum (for RPIC)
+	real padding = 1.5; // padding
+	mat2 B = mat2(0.0); // for APIC
+	mat2 Fe = mat2(1.0);
+	mat2 Fp = mat2(1.0);
+	mat2 P = mat2(0.0);
 
 	// extra not neccessary to store, but useful for debugging:
-	mat2 FePolar_R;
-	mat2 FePolar_S;
-	mat2 FeSVD_U;
-	mat2 FeSVD_S;
-	mat2 FeSVD_V;
-	mat2 A;
+	mat2 FePolar_R = mat2(1.0);
+	mat2 FePolar_S = mat2(1.0);
+	mat2 FeSVD_U = mat2(1.0);
+	mat2 FeSVD_S = mat2(1.0);
+	mat2 FeSVD_V = mat2(1.0);
+	mat2 A = mat2(0.0);
 
 	real energy = 0.0;
 	real selectedWpg = 0.0;
@@ -39,6 +44,7 @@ struct MaterialPoint {
 		out << "v: " << glm::to_string(c.v) << "\n";
 		out << "m: " << c.m << "\n";
 		out << "vol: " << c.vol << "\n";
+		out << "Lz: " << c.Lz << "\n";
 		out << "B: " << glm::to_string(c.B) << "\n";
 		out << "Fe: " << glm::to_string(c.Fe) << "\n";
 		out << "Fe (highp): " << "(" << c.Fe[0][0] << ", " << c.Fe[0][1] << "), (" << c.Fe[1][0] << ", " << c.Fe[1][1] << ")" << "\n";
@@ -52,6 +58,28 @@ struct MaterialPoint {
 		out << "energy: " << c.energy << "\n";
 		out << "selectedWpg: " << c.selectedWpg << "\n";
 		return out;
+	}
+
+	void ImGuiDisplay() {
+		glm::highp_fvec4 min_color = glm::highp_fvec4(1.0, 0.0, 0.0, 1.0);
+		glm::highp_fvec4 max_color = glm::highp_fvec4(0.0, 1.0, 0.0, 1.0);
+
+		ImGui::DisplayNamedGlmVecMixColor("x", x, min_color, max_color);
+		ImGui::DisplayNamedGlmVecMixColor("v", v, min_color, max_color);
+		ImGui::DisplayNamedGlmRealColor("m", m, max_color);
+		ImGui::DisplayNamedGlmRealColor("vol", vol, max_color);
+		ImGui::DisplayNamedGlmRealColor("Lz", Lz, max_color);
+		ImGui::DisplayNamedGlmRealColor("padding", padding, max_color);
+		ImGui::DisplayNamedGlmMatrixMixColor("B", B, min_color, max_color);
+		ImGui::DisplayNamedGlmMatrixMixColor("Fe", Fe, min_color, max_color);
+		ImGui::DisplayNamedGlmMatrixMixColor("Fp", Fp, min_color, max_color);
+		ImGui::DisplayNamedGlmMatrixMixColor("P", P, min_color, max_color);
+		ImGui::DisplayNamedGlmMatrixMixColor("FePolar_R", FePolar_R, min_color, max_color);
+		ImGui::DisplayNamedGlmMatrixMixColor("FePolar_S", FePolar_S, min_color, max_color);
+		ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_U", FeSVD_U, min_color, max_color);
+		ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_S", FeSVD_S, min_color, max_color);
+		ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_V", FeSVD_V, min_color, max_color);
+		ImGui::DisplayNamedGlmRealColor("energy", energy, max_color);
 	}
 };
 
@@ -75,18 +103,18 @@ struct PointCloud {
 		glDeleteBuffers(1, &ssbo);
 	};
 
-	size_t N;
+	size_t N = 0;
 	std::vector<MaterialPoint> points;
 	glm::highp_fvec4 color = glm::highp_fvec4(1.f, 0.f, 0.f, 1.f);
 
 	MaterialParameters parameters;
 
-	real mew;
-	real lam;
+	real mew = 0.0;
+	real lam = 0.0;
 
 	GLuint comodel = 1;
 
-	GLuint ssbo;
+	GLuint ssbo = 0;
 
 	bool fixed = false;
 };

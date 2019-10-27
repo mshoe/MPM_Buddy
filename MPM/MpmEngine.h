@@ -18,6 +18,7 @@
 #include <chrono>
 #include <functional>
 #include <unordered_map>
+#include <map>
 #include <tuple>
 
 //#define MPM_CR_DEBUG 1
@@ -26,7 +27,7 @@ namespace mpm {
 
 	class MpmEngine : public Engine {
 	public:
-		MpmEngine() {}
+		MpmEngine() { InitComputeShaderPipeline();  }
 		~MpmEngine() { CleanupComputeShaderPipeline(); }
 
 		bool InitComputeShaderPipeline();
@@ -70,35 +71,36 @@ namespace mpm {
 		void RenderPWLine(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> pwLineShader);
 		
 
-		//*** INTERACTIVE FUNCTIONS ***//
-		void SetDeformationGradients(std::string pointCloudID, mat2 Fe, mat2 Fp);
-		mat2 m_setFe = mat2(1.0);
-		mat2 m_setFp = mat2(1.0);
-		void MultiplyDeformationGradients(std::string pointCloudID, mat2 multFe, mat2 multFp);
-		std::vector<mat2> m_multFeVector;
-		mat2 m_multFe = mat2(1.0);
-		mat2 m_multFp = mat2(1.0);
 
 		//*** GUI FUNCTIONS ***//
 	public:
 		void RenderGUI();
 	private:
-		void RenderWindowManager();
+		//void RenderWindowManager();
 		void RenderTimeIntegrator();
-		void RenderForceController();
+		void RenderExternalForceController();
+		void RenderInternalForceController();
 		void RenderGeometryEditor();
 		void RenderMaterialParametersEditor();
+		void RenderGridOptions();
 		void RenderGridNodeViewer();
 		void RenderMaterialPointViewer();
 		void RenderZoomWindow();
 
-		bool m_renderTimeIntegrator = true;
-		bool m_renderForceController = true;
-		bool m_renderMaterialParametersEditor = true;
-		bool m_renderGeometryEditor = true;
-		bool m_renderGridNodeViewer = true;
-		bool m_renderMaterialPointViewer = true;
-		bool m_renderZoomWindow = true;
+		// re-used helper functions for imgui
+		void ImGuiSelectPointCloud(std::string& pointCloudSelectStr);
+		void ImGuiDropDown(const std::string& combo_name, size_t &index, const std::vector<std::string>& string_vec);
+
+		// state variables for rendering different windows
+		bool m_renderTimeIntegrator = false;
+		bool m_renderExternalForceController = false;
+		bool m_renderInternalForceController = false;
+		bool m_renderMaterialParametersEditor = false;
+		bool m_renderGeometryEditor = false;
+		bool m_renderGridOptions = false;
+		bool m_renderGridNodeViewer = false;
+		bool m_renderMaterialPointViewer = false;
+		bool m_renderZoomWindow = false;
 
 		/******************** ZOOM WINDOW ********************/
 		void InitZoomWindow();
@@ -170,7 +172,10 @@ namespace mpm {
 		GLuint VisualizeVAO;
 
 		/******************** MATERIAL POINT VIEWER ********************/
-		MaterialPoint m_mp; // selecting material points
+		std::map<std::string, std::shared_ptr<PointCloud>> m_pointCloudMap;
+		std::string m_pointCloudViewSelectStr = "";
+		MaterialPoint m_mp = MaterialPoint(vec2(0.0), vec2(0.0), 0.0); // selecting material points
+		void UpdatePointCloudData(std::string pointCloudStr);
 		double m_maxSpeedClamp = 25.0;
 		double m_minSpeedClamp = 0.0;
 		bool m_visualizeSpeed = true;
@@ -190,7 +195,23 @@ namespace mpm {
 		real m_minNodeMassPointSize = 0.0;
 		real m_maxNodeMassPointSize = 5.0;
 		bool m_viewGridVector = true;
-		int m_gridVectorOption = 2; // VELOCITY = 0, ACCELERATION = 1, FORCE = 2, RESIDUAL = 3
+		enum class GRID_VECTOR_OPTION {
+			MOMENTUM = 0,
+			VELOCITY = 1,
+			ACCELERATION = 2,
+			FORCE = 3,
+			RESIDUAL_VELOCITY = 4,
+			NODAL_ACCELERATION = 5
+		};
+		std::vector<std::string> m_gridVectorOptionStrVec = {
+			"momentum",
+			"velocity",
+			"acceleration",
+			"force",
+			"residual velocity",
+			"nodal acceleration"
+		};
+		GRID_VECTOR_OPTION m_gridVectorOption = GRID_VECTOR_OPTION::FORCE; // VELOCITY = 0, ACCELERATION = 1, FORCE = 2, RESIDUAL = 3
 		int m_gridPointSizeScalingOption = 0;
 		real m_maxGridVectorLength = 25.0;
 		real m_maxGridVectorVisualLength = 5.0;
@@ -215,12 +236,24 @@ namespace mpm {
 		void ClearNodalAcclerations(const int gridDimX, const int gridDimY);
 
 
-		/******************** FORCE CONTROLLER ********************/
+		/******************** EXTERNAL FORCE CONTROLLER ********************/
 		real m_drag = 0.5;
 		vec2 m_globalForce = vec2(0.0, -9.81);
 		real m_dt = 1.0 / 120.0;
 		bool m_paused = true;
 		GLreal m_mousePower = 25.0;
+
+
+
+		/******************** INTERNAL FORCE CONTROLLER ********************/
+		void SetDeformationGradients(std::string pointCloudID, mat2 Fe, mat2 Fp);
+		mat2 m_setFe = mat2(1.0);
+		mat2 m_setFp = mat2(1.0);
+		void MultiplyDeformationGradients(std::string pointCloudID, mat2 multFe, mat2 multFp);
+		std::vector<mat2> m_multFeVector;
+		mat2 m_multFe = mat2(1.0);
+		mat2 m_multFp = mat2(1.0);
+		std::string m_pointCloudControlSelectStr = "";
 
 		/******************** CONJUGATE RESIDUALS FOR SEMI-IMPLICT TIME INTEGRATION ********************/
 		bool m_semi_implicit_CR = false;
@@ -238,11 +271,16 @@ namespace mpm {
 		real m_time = 0.0;
 		bool m_rt = true; // realtime
 
-		// TRANSFER SCHEMES (PIC/FLIP/APIC)
+		// TRANSFER SCHEMES (PIC/RPIC/APIC)
 		enum class TRANSFER_SCHEME {
 			PIC = 0,
-			FLIP = 1,
+			RPIC = 1,
 			APIC = 2
+		};
+		std::vector<std::string> m_transferSchemeStrVec = {
+			"PIC",
+			"RPIC (not working)",
+			"APIC"
 		};
 		TRANSFER_SCHEME m_transferScheme = TRANSFER_SCHEME::APIC;
 
@@ -250,8 +288,8 @@ namespace mpm {
 		
 
 		//std::vector<PointCloud> m_pointClouds;
-		std::unordered_map<std::string, std::shared_ptr<PointCloud>> m_pointCloudMap;
-		std::vector<char> m_pointCloudSelect;
+		
+		//std::vector<char> m_pointCloudSelect;
 
 
 

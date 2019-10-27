@@ -41,17 +41,18 @@ void mpm::MpmEngine::MpmTimeStepP2G(real dt)
 	m_gReset->Use();
 	glDispatchCompute(m_chunks_x, m_chunks_y, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+	m_p2gScatter->Use();
+	m_p2gScatter->SetReal("dt", dt);
+	m_p2gScatter->SetInt("CHUNKS_X", m_chunks_x);
+	m_p2gScatter->SetInt("CHUNKS_Y", m_chunks_y);
+	m_p2gScatter->SetuInt("transferScheme", unsigned int(m_transferScheme));
 	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudPair.second->ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 		/*m_p2gGather->Use();
 		m_p2gGather->SetFloat("dt", dt);
 		glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);*/
-		m_p2gScatter->Use();
-		m_p2gScatter->SetReal("dt", dt);
-		m_p2gScatter->SetInt("CHUNKS_X", m_chunks_x);
-		m_p2gScatter->SetInt("CHUNKS_Y", m_chunks_y);
-		m_p2gScatter->SetInt("transferScheme", int(m_transferScheme));
 		//m_p2gScatter->SetInt("selectedNodeI", m_node[0]); // for visualization
 		//m_p2gScatter->SetInt("selectedNodeJ", m_node[1]);
 		int g2p_workgroups = int(glm::ceil(real(pointCloudPair.second->N) / real(G2P_WORKGROUP_SIZE)));
@@ -77,24 +78,27 @@ void mpm::MpmEngine::MpmTimeStepExplicitGridUpdate(real dt)
 
 void mpm::MpmEngine::MpmTimeStepG2P(real dt)
 {
+
+	m_g2pGather->Use();
+	m_g2pGather->SetReal("dt", dt);
+	m_g2pGather->SetInt("CHUNKS_X", m_chunks_x);
+	m_g2pGather->SetInt("CHUNKS_Y", m_chunks_y);
+	m_g2pGather->SetuInt("transferScheme", (unsigned int)m_transferScheme);
 	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
 
 		//// don't advect fixed point clouds
 		if (pointCloudPair.second->fixed)
 			continue;
 
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudPair.second->ssbo);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
-		m_g2pGather->Use();
-		m_g2pGather->SetReal("dt", dt);
+
 		m_g2pGather->SetReal("lam", pointCloudPair.second->lam);
 		m_g2pGather->SetReal("mew", pointCloudPair.second->mew);
 		m_g2pGather->SetReal("crit_c", pointCloudPair.second->parameters.crit_c);
 		m_g2pGather->SetReal("crit_s", pointCloudPair.second->parameters.crit_s);
 		m_g2pGather->SetReal("hardening", pointCloudPair.second->parameters.hardening);
 		m_g2pGather->SetuInt("comodel", pointCloudPair.second->comodel);
-		m_g2pGather->SetInt("CHUNKS_X", m_chunks_x);
-		m_g2pGather->SetInt("CHUNKS_Y", m_chunks_y);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudPair.second->ssbo);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 		//m_g2pGather->SetBool("fixedPointCloud", pointCloudPair.second->fixed);
 		int g2p_workgroups = int(glm::ceil(real(pointCloudPair.second->N) / real(G2P_WORKGROUP_SIZE)));
 		glDispatchCompute(g2p_workgroups, 1, 1);
