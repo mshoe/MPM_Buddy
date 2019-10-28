@@ -62,14 +62,6 @@ __Current Research:__
 MPM control algorithms.
 Natural triggers for landslides in MPM.
 
-__TODO:__
-
-GLSL -> SPIR-V
-
-Eventually CUDA?
-For 3D, use Optix and marching cubes for raytracing.
-
-
 __MPM in computer graphics:__
 
 https://www.seas.upenn.edu/~cffjiang/mpm.html
