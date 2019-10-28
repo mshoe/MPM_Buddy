@@ -66,8 +66,8 @@ void mpm::MpmEngine::MpmCRInit(real dt) {
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudPair.second->ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 		m_p2g2pDeltaForce->Use();
-		m_p2g2pDeltaForce->SetReal("lam", pointCloudPair.second->lam);
-		m_p2g2pDeltaForce->SetReal("mew", pointCloudPair.second->mew);
+		m_p2g2pDeltaForce->SetReal("lam", pointCloudPair.second->parameters.lam);
+		m_p2g2pDeltaForce->SetReal("mew", pointCloudPair.second->parameters.mew);
 		m_p2g2pDeltaForce->SetInt("CHUNKS_X", m_chunks_x);
 		m_p2g2pDeltaForce->SetInt("CHUNKS_Y", m_chunks_y);
 		int p_workgroups = int(glm::ceil(real(pointCloudPair.second->N) / real(G2P_WORKGROUP_SIZE)));
@@ -88,8 +88,8 @@ void mpm::MpmEngine::MpmCRInit(real dt) {
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudPair.second->ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 		m_p2g2pDeltaForce->Use();
-		m_p2g2pDeltaForce->SetReal("lam", pointCloudPair.second->lam);
-		m_p2g2pDeltaForce->SetReal("mew", pointCloudPair.second->mew);
+		m_p2g2pDeltaForce->SetReal("lam", pointCloudPair.second->parameters.lam);
+		m_p2g2pDeltaForce->SetReal("mew", pointCloudPair.second->parameters.mew);
 		m_p2g2pDeltaForce->SetInt("CHUNKS_X", m_chunks_x);
 		m_p2g2pDeltaForce->SetInt("CHUNKS_Y", m_chunks_y);
 		int p_workgroups = int(glm::ceil(real(pointCloudPair.second->N) / real(G2P_WORKGROUP_SIZE)));
@@ -164,8 +164,8 @@ bool mpm::MpmEngine::MpmCRStep(real dt, real& L2_norm_rk, bool& L2_converged, bo
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudPair.second->ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 		m_p2g2pDeltaForce->Use();
-		m_p2g2pDeltaForce->SetReal("lam", pointCloudPair.second->lam);
-		m_p2g2pDeltaForce->SetReal("mew", pointCloudPair.second->mew);
+		m_p2g2pDeltaForce->SetReal("lam", pointCloudPair.second->parameters.lam);
+		m_p2g2pDeltaForce->SetReal("mew", pointCloudPair.second->parameters.mew);
 		m_p2g2pDeltaForce->SetInt("CHUNKS_X", m_chunks_x);
 		m_p2g2pDeltaForce->SetInt("CHUNKS_Y", m_chunks_y);
 		int p_workgroups = int(glm::ceil(real(pointCloudPair.second->N) / real(G2P_WORKGROUP_SIZE)));

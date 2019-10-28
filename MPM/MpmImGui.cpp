@@ -60,8 +60,12 @@ void mpm::MpmEngine::RenderGUI()
 				if (ImGui::MenuItem("External Force Controller", "", m_renderExternalForceController)) {
 					m_renderExternalForceController = !m_renderExternalForceController;
 				}
-				if (ImGui::MenuItem("Internal Force Controller", "", m_renderInternalForceController)) {
-					m_renderInternalForceController = !m_renderInternalForceController;
+				ImGui::Separator();
+				if (ImGui::MenuItem("Deformation Gradient Controller", "", m_renderDeformationGradientController)) {
+					m_renderDeformationGradientController = !m_renderDeformationGradientController;
+				}
+				if (ImGui::MenuItem("Material Parameter Controller", "", m_renderMaterialParameterController)) {
+					m_renderMaterialParameterController = !m_renderMaterialParameterController;
 				}
 				ImGui::EndMenu();
 			}
@@ -71,7 +75,8 @@ void mpm::MpmEngine::RenderGUI()
 		//RenderWindowManager();
 		if (m_renderTimeIntegrator) RenderTimeIntegrator();
 		if (m_renderExternalForceController) RenderExternalForceController();
-		if (m_renderInternalForceController) RenderInternalForceController();
+		if (m_renderDeformationGradientController) RenderDeformationGradientController();
+		if (m_renderMaterialParameterController) RenderMaterialParameterController();
 		if (m_renderGeometryEditor) RenderGeometryEditor();
 		if (m_renderMaterialParametersEditor) RenderMaterialParametersEditor();
 		if (m_renderGridOptions) RenderGridOptions();
@@ -238,82 +243,140 @@ void mpm::MpmEngine::RenderExternalForceController()
 	}
 }
 
-void mpm::MpmEngine::RenderInternalForceController() {
-	if (ImGui::Begin("MPM Internal Force Controller", &m_renderInternalForceController)) {
+void mpm::MpmEngine::RenderDeformationGradientController() {
+	if (ImGui::Begin("MPM Deformation Gradient Controller", &m_renderDeformationGradientController)) {
 
+		static std::string pointCloudSelectStr = "";
+		ImGuiSelectPointCloud(pointCloudSelectStr);
 
-		ImGuiSelectPointCloud(m_pointCloudControlSelectStr);
+		
+		static std::vector<mat2> controlFeVec = { mat2(1.0) };
+		//mat2 tempFe = m_setFe;
 
-		if (ImGui::Button("Set Current Point Cloud Deformation Gradients")) {
-			SetDeformationGradients(m_pointCloudControlSelectStr, m_setFe, m_setFp);
+		//ImGui::Text("Fe:");
+		//ImGui::InputReal("Fe[0][0]: ", &tempFe[0][0], 0.1, 1.0, "%.6f");
+		//ImGui::InputReal("Fe[0][1]: ", &tempFe[0][1], 0.1, 1.0, "%.6f");
+		//ImGui::InputReal("Fe[1][0]: ", &tempFe[1][0], 0.1, 1.0, "%.6f");
+		//ImGui::InputReal("Fe[1][1]: ", &tempFe[1][1], 0.1, 1.0, "%.6f");
+		//// Make sure the Fe is non-singular
+		//if (glm::determinant(tempFe) != 0.0) {
+		//	m_setFe = tempFe;
+		//}
+		//ImGui::DisplayNamedGlmMatrixMixColor("Fe: ", m_setFe, glm::highp_fvec4(1.0f, 0.0f, 0.0f, 1.0f), glm::highp_fvec4(0.0f, 1.0f, 0.0f, 1.0f));
+
+		/*if (ImGui::Button("Set Selection PC Deformation Gradients")) {
+			SetDeformationGradients(pointCloudDefGradControlSelectStr, m_setFe, m_setFp);
 		}
 		if (ImGui::Button("Set All Deformation Gradients")) {
 			for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
 				SetDeformationGradients(pointCloudPair.first, m_setFe, m_setFp);
 			}
+		}*/
+
+		std::string vecSizeStr = "Number of control deformation gradients: " + std::to_string(int(controlFeVec.size()));
+		ImGui::Text(vecSizeStr.c_str());
+
+		if (ImGui::Button("Clear control deformation gradient vector")) {
+			controlFeVec.clear();
+		}
+		if (ImGui::Button("Add control deformation gradient")) {
+			controlFeVec.push_back(mat2(1.0));
 		}
 
-		mat2 tempFe = m_setFe;
+		static int Fselect = 0;
 
-		ImGui::Text("Fe:");
-		ImGui::InputReal("Fe[0][0]: ", &tempFe[0][0], 0.1, 1.0, "%.6f");
-		ImGui::InputReal("Fe[0][1]: ", &tempFe[0][1], 0.1, 1.0, "%.6f");
-		ImGui::InputReal("Fe[1][0]: ", &tempFe[1][0], 0.1, 1.0, "%.6f");
-		ImGui::InputReal("Fe[1][1]: ", &tempFe[1][1], 0.1, 1.0, "%.6f");
-		// Make sure the Fe is non-singular
-		if (glm::determinant(tempFe) != 0.0) {
-			m_setFe = tempFe;
-		}
-		ImGui::DisplayNamedGlmMatrixMixColor("Fe: ", m_setFe, glm::highp_fvec4(1.0f, 0.0f, 0.0f, 1.0f), glm::highp_fvec4(0.0f, 1.0f, 0.0f, 1.0f));
+		ImGui::InputInt("multFe selection", &Fselect);
 
+		Fselect = glm::max(glm::min(Fselect, int(controlFeVec.size()) - 1), 0);
 
-
-		if (ImGui::Button("Clear multFeVector")) {
-			m_multFeVector.clear();
-		}
-		if (ImGui::Button("Add multiplicator deformation gradient")) {
-			m_multFeVector.push_back(mat2(1.0));
+		if (Fselect < controlFeVec.size() && Fselect >= 0) {
+			ImGui::InputReal("Fe[0][0]: ", &controlFeVec[Fselect][0][0], 0.1, 1.0, "%.6f");
+			ImGui::InputReal("Fe[0][1]: ", &controlFeVec[Fselect][0][1], 0.1, 1.0, "%.6f");
+			ImGui::InputReal("Fe[1][0]: ", &controlFeVec[Fselect][1][0], 0.1, 1.0, "%.6f");
+			ImGui::InputReal("Fe[1][1]: ", &controlFeVec[Fselect][1][1], 0.1, 1.0, "%.6f");
 		}
 
-		static int multFselect = 0;
+		for (size_t i = 0; i < controlFeVec.size(); i++) {
+			std::string currFeStr = "Fe(" + std::to_string(i) + ")";
+			ImGui::DisplayNamedGlmMatrixMixColor("multFe: ", controlFeVec[i], glm::highp_fvec4(1.0f, 0.0f, 0.0f, 1.0f), glm::highp_fvec4(0.0f, 1.0f, 0.0f, 1.0f));
 
-		ImGui::InputInt("multFe selection", &multFselect);
-
-		if (multFselect < m_multFeVector.size() && multFselect >= 0) {
-			ImGui::InputReal("multFe[0][0]: ", &m_multFeVector[multFselect][0][0], 0.1, 1.0, "%.6f");
-			ImGui::InputReal("multFe[0][1]: ", &m_multFeVector[multFselect][0][1], 0.1, 1.0, "%.6f");
-			ImGui::InputReal("multFe[1][0]: ", &m_multFeVector[multFselect][1][0], 0.1, 1.0, "%.6f");
-			ImGui::InputReal("multFe[1][1]: ", &m_multFeVector[multFselect][1][1], 0.1, 1.0, "%.6f");
-		}
-
-		for (size_t i = 0; i < m_multFeVector.size(); i++) {
-			std::string multFeStr = "Multiply all Deformation Gradients by multFe(" + std::to_string(i) + "):";
-			if (ImGui::Button(multFeStr.c_str())) {
+			std::string setFeStr = "Set '" + pointCloudSelectStr + "' deformation gradients to " + currFeStr;
+			if (ImGui::Button(setFeStr.c_str())) {
+				SetDeformationGradients(pointCloudSelectStr, controlFeVec[i], mat2(1.0));
+			}
+			std::string setAllFeStr = "Set all point cloud deformation gradients to " + currFeStr;
+			if (ImGui::Button(setAllFeStr.c_str())) {
 				for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
-					MultiplyDeformationGradients(pointCloudPair.first, m_multFeVector[i], m_multFp);
+					SetDeformationGradients(pointCloudPair.first, controlFeVec[i], mat2(1.0));
+				}
+			}
+			std::string multFeStr = "Multiply '" + pointCloudSelectStr + "' deformation gradients by " + currFeStr;
+			if (ImGui::Button(multFeStr.c_str())) {
+				MultiplyDeformationGradients(pointCloudSelectStr, controlFeVec[i], mat2(1.0));
+			}
+			std::string multAllFeStr = "Multiply all point cloud deformation gradients by " + currFeStr;
+			if (ImGui::Button(multAllFeStr.c_str())) {
+				for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+					MultiplyDeformationGradients(pointCloudPair.first, controlFeVec[i], mat2(1.0));
 				}
 			}
 
-			ImGui::DisplayNamedGlmMatrixMixColor("multFe: ", m_multFeVector[i], glm::highp_fvec4(1.0f, 0.0f, 0.0f, 1.0f), glm::highp_fvec4(0.0f, 1.0f, 0.0f, 1.0f));
+			
 		}
 
-		if (ImGui::Button("Set All Point Cloud Parameters")) {
+		
+
+		ImGui::End();
+	}
+}
+
+void mpm::MpmEngine::RenderMaterialParameterController() {
+
+	if (ImGui::Begin("MPM Material Parameter Controller")) {
+
+		static MaterialParameters materialParametersControl;
+		static std::string currPointCloud = "";
+		static std::string pointCloudSelectStr = "";
+		ImGuiSelectPointCloud(pointCloudSelectStr);
+
+		if (currPointCloud != pointCloudSelectStr && m_pointCloudMap.count(pointCloudSelectStr)) {
+			currPointCloud = pointCloudSelectStr;
+			materialParametersControl = m_pointCloudMap[currPointCloud]->parameters;
+		}
+
+		ImGui::InputReal("Young's Modulus", &materialParametersControl.youngMod);
+		ImGui::InputReal("Poisson's Ratio", &materialParametersControl.poisson);
+		if (ImGui::Button("Calculate Lame Parameters")) {
+			materialParametersControl.CalculateLameParameters();
+		}
+		ImGui::InputReal("Lame's 1st Parameter (lambda)", &materialParametersControl.lam);
+		ImGui::InputReal("Lame 2nd Parameter (mew, shear modulus)", &materialParametersControl.mew);
+		ImGui::InputReal("Critical Compression", &materialParametersControl.crit_c);
+		ImGui::InputReal("Critical Stretch", &materialParametersControl.crit_s);
+		ImGui::InputReal("Hardening coefficient", &materialParametersControl.hardening);
+
+
+		std::string setCurrPointCloudStr = "Set '" + currPointCloud + "' material parameters";
+		if (ImGui::Button(setCurrPointCloudStr.c_str())) {
+			if (m_pointCloudMap.count(currPointCloud)) {
+				m_pointCloudMap[currPointCloud]->parameters = materialParametersControl;
+			}
+		}
+		if (ImGui::Button("Set all point cloud material parameters")) {
 			for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
-				pointCloudPair.second->parameters = m_mpParameters;
-				pointCloudPair.second->mew = m_mpParameters.youngMod / (2.f + 2.f * m_mpParameters.poisson);
-				pointCloudPair.second->lam = m_mpParameters.youngMod * m_mpParameters.poisson / ((1.f + m_mpParameters.poisson) * (1.f - 2.f * m_mpParameters.poisson));
+				pointCloudPair.second->parameters = materialParametersControl;
+				//pointCloudPair.second->mew = m_mpParameters.youngMod / (2.f + 2.f * m_mpParameters.poisson);
+				//pointCloudPair.second->lam = m_mpParameters.youngMod * m_mpParameters.poisson / ((1.f + m_mpParameters.poisson) * (1.f - 2.f * m_mpParameters.poisson));
 			}
 		}
 
-		ImGui::InputReal("lam", &m_lam);
-		ImGui::InputReal("mew", &m_mew);
+		/*
 		if (ImGui::Button("Set All Point Cloud mew and lam")) {
 			for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
-				pointCloudPair.second->mew = m_mew;
-				pointCloudPair.second->lam = m_lam;
+				pointCloudPair.second->mew = m_controlMaterialParameters.mew;
+				pointCloudPair.second->lam = m_controlMaterialParameters.lam;
 			}
-		}
-
+		}*/
 		ImGui::End();
 	}
 }
@@ -326,6 +389,8 @@ void mpm::MpmEngine::RenderGeometryEditor()
 
 		ImGui::Checkbox("Fixed point cloud", &m_fixedPointCloud);
 		ImGui::Checkbox("Inverted SDF (DANGER)", &m_invertedSdf);
+
+		ImGui::InputReal("Point Spacing", &m_particleSpacing, 0.01, 0.1, "%.2f");
 
 		ImGui::InputReal("Circle Radius", &m_circle_r, 0.1, 1.0, "%.1f");
 		ImGui::InputReal("Circle Inner Radius", &m_circle_inner_radius, 0.1, 1.0, "%.1f");
@@ -412,23 +477,25 @@ void mpm::MpmEngine::RenderMaterialParametersEditor()
 
 		//ImGui::InputInt3("Color", m_color);
 
+		static size_t energy_model = size_t(m_comodel);
+		ImGuiDropDown("Energy model", energy_model, m_energyModelsStrVec);
+		if (m_comodel != ENERGY_MODEL(energy_model)) {
+			ChangeEnergyModel(ENERGY_MODEL(energy_model));
+		}
 		switch (m_comodel) {
-		case NEO_HOOKEAN_ELASTICITY:
+		case ENERGY_MODEL::NEO_HOOKEAN_ELASTICITY:
 			ImGui::InputReal("Young's Modulus", &m_mpParameters.youngMod, 1.0, 10.0, "%.1f");
 			ImGui::InputReal("Poisson's Ratio", &m_mpParameters.poisson, 0.005, 0.05, "%.3f");
-			ImGui::InputReal("Point Spacing", &m_mpParameters.particleSpacing, 0.01, 0.1, "%.2f");
 			ImGui::InputReal("Density", &m_mpParameters.density, 0.01, 0.1, "%.2f");
 			break;
-		case FIXED_COROTATIONAL_ELASTICITY:
+		case ENERGY_MODEL::FIXED_COROTATIONAL_ELASTICITY:
 			ImGui::InputReal("Young's Modulus", &m_mpParameters.youngMod, 1.0, 10.0, "%.1f");
 			ImGui::InputReal("Poisson's Ratio", &m_mpParameters.poisson, 0.005, 0.05, "%.3f");
-			ImGui::InputReal("Point Spacing", &m_mpParameters.particleSpacing, 0.01, 0.1, "%.2f");
 			ImGui::InputReal("Density", &m_mpParameters.density, 0.01, 0.1, "%.2f");
 			break;
-		case SIMPLE_SNOW:
+		case ENERGY_MODEL::SIMPLE_SNOW:
 			ImGui::InputReal("Young's Modulus", &m_mpParameters.youngMod, 1.0, 10.0, "%.1f");
 			ImGui::InputReal("Poisson's Ratio", &m_mpParameters.poisson, 0.005, 0.05, "%.3f");
-			ImGui::InputReal("Point Spacing", &m_mpParameters.particleSpacing, 0.01, 0.1, "%.2f");
 			ImGui::InputReal("Density", &m_mpParameters.density, 0.01, 0.1, "%.2f");
 			ImGui::InputReal("Critical Compression", &m_mpParameters.crit_c, 0.001, 0.01, "%.4f");
 			ImGui::InputReal("Critical Stretch", &m_mpParameters.crit_s, 0.001, 0.01, "%.4f");
@@ -437,18 +504,6 @@ void mpm::MpmEngine::RenderMaterialParametersEditor()
 		default:
 			break;
 		}
-
-		if (ImGui::Button("Neo-Hookean Elasticity")) {
-			ChangeMaterialParameters(NEO_HOOKEAN_ELASTICITY);
-		}
-		if (ImGui::Button("Fixed Corotated Elasticity")) {
-			ChangeMaterialParameters(FIXED_COROTATIONAL_ELASTICITY);
-		}
-		if (ImGui::Button("Stovakhim Snow (2013)")) {
-			ChangeMaterialParameters(SIMPLE_SNOW);
-		}
-		std::string comodelStr = "constitutive model: " + std::to_string(m_comodel);
-		ImGui::Text(comodelStr.c_str());
 		ImGui::End();
 	}
 }

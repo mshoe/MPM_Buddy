@@ -82,25 +82,22 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 	);
 
 	// initialize material parameters here for now
-	m_neoHookeanParameters.youngMod = 90000.0;
-	m_neoHookeanParameters.poisson = 0.3;
-	m_neoHookeanParameters.particleSpacing = 0.25;
-	m_neoHookeanParameters.density = 40;
+	m_energyModels[size_t(ENERGY_MODEL::NEO_HOOKEAN_ELASTICITY)].youngMod = 90000.0;
+	m_energyModels[size_t(ENERGY_MODEL::NEO_HOOKEAN_ELASTICITY)].poisson = 0.3;
+	m_energyModels[size_t(ENERGY_MODEL::NEO_HOOKEAN_ELASTICITY)].density = 40;
 	
-	m_fixedCorotatedParameters.youngMod = 90000.0;
-	m_fixedCorotatedParameters.poisson = 0.3;
-	m_fixedCorotatedParameters.particleSpacing = 0.25;
-	m_fixedCorotatedParameters.density = 40;
+	m_energyModels[size_t(ENERGY_MODEL::FIXED_COROTATIONAL_ELASTICITY)].youngMod = 90000.0;
+	m_energyModels[size_t(ENERGY_MODEL::FIXED_COROTATIONAL_ELASTICITY)].poisson = 0.3;
+	m_energyModels[size_t(ENERGY_MODEL::FIXED_COROTATIONAL_ELASTICITY)].density = 40;
 
-	m_simpleSnowParameters.youngMod = 140000.0;
-	m_simpleSnowParameters.poisson = 0.2;
-	m_simpleSnowParameters.particleSpacing = 0.25;
-	m_simpleSnowParameters.density = 40;
-	m_simpleSnowParameters.crit_c = 0.025;
-	m_simpleSnowParameters.crit_s = 0.0075;
-	m_simpleSnowParameters.hardening = 10.0;
+	m_energyModels[size_t(ENERGY_MODEL::SIMPLE_SNOW)].youngMod = 140000.0;
+	m_energyModels[size_t(ENERGY_MODEL::SIMPLE_SNOW)].poisson = 0.2;
+	m_energyModels[size_t(ENERGY_MODEL::SIMPLE_SNOW)].density = 40;
+	m_energyModels[size_t(ENERGY_MODEL::SIMPLE_SNOW)].crit_c = 0.025;
+	m_energyModels[size_t(ENERGY_MODEL::SIMPLE_SNOW)].crit_s = 0.0075;
+	m_energyModels[size_t(ENERGY_MODEL::SIMPLE_SNOW)].hardening = 10.0;
 
-	m_mpParameters = m_fixedCorotatedParameters;
+	m_mpParameters = m_energyModels[size_t(ENERGY_MODEL::FIXED_COROTATIONAL_ELASTICITY)];
 
 	m_polygon = std::make_shared<sdf::Polygon>();
 	m_pwLine = std::make_shared<sdf::PWLine>();
@@ -166,7 +163,7 @@ void mpm::MpmEngine::ProcessKeyboardInput(GLFWwindow* window, real lag)
 
 	if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {
 		for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
-			SetDeformationGradients(pointCloudPair.first, mat2(1.0), m_setFp);
+			SetDeformationGradients(pointCloudPair.first, mat2(1.0), mat2(1.0));
 		}
 	}
 
@@ -302,7 +299,7 @@ void mpm::MpmEngine::HandleStates()
 		color.z = (float)glm::clamp(m_color[2], 0, 255) / 255.f;*/
 
 		real inner_rounding = m_circle_r - m_circle_inner_radius;
-		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(circleID, shape, real(m_chunks_x) * real(CHUNK_WIDTH), real(m_chunks_y) * real(CHUNK_WIDTH), inner_rounding, m_circle_rounding, m_mpParameters, m_comodel, sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, m_initVelocity, color);
+		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(circleID, shape, real(m_chunks_x) * real(CHUNK_WIDTH), real(m_chunks_y) * real(CHUNK_WIDTH), inner_rounding, m_circle_rounding, m_particleSpacing, m_mpParameters, m_comodel, sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, m_initVelocity, color);
 
 		t2 = high_resolution_clock::now();
 
@@ -332,7 +329,7 @@ void mpm::MpmEngine::HandleStates()
 		
 
 		real inner_rounding = glm::min(m_rect_b, m_rect_h) - m_rect_inner_radius;
-		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(rectID, shape, real(m_chunks_x) * real(CHUNK_WIDTH), real(m_chunks_y) * real(CHUNK_WIDTH), inner_rounding, m_rect_rounding, m_mpParameters, m_comodel, sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, m_initVelocity, color);
+		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(rectID, shape, real(m_chunks_x) * real(CHUNK_WIDTH), real(m_chunks_y) * real(CHUNK_WIDTH), inner_rounding, m_rect_rounding, m_particleSpacing, m_mpParameters, m_comodel, sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, m_initVelocity, color);
 
 		t2 = high_resolution_clock::now();
 
@@ -361,7 +358,7 @@ void mpm::MpmEngine::HandleStates()
 		glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
 
 		real inner_rounding = glm::min(m_iso_tri_b, m_iso_tri_h) - m_iso_tri_inner_radius;
-		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(isoTriID, shape, real(m_chunks_x)*real(CHUNK_WIDTH), real(m_chunks_y)*real(CHUNK_WIDTH), inner_rounding, m_iso_tri_rounding, m_mpParameters, m_comodel, sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, m_initVelocity, color);
+		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(isoTriID, shape, real(m_chunks_x)*real(CHUNK_WIDTH), real(m_chunks_y)*real(CHUNK_WIDTH), inner_rounding, m_iso_tri_rounding, m_particleSpacing, m_mpParameters, m_comodel, sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, m_initVelocity, color);
 
 		t2 = high_resolution_clock::now();
 
@@ -408,11 +405,62 @@ void mpm::MpmEngine::HandleStates()
 	}
 }
 
-std::shared_ptr<PointCloud> mpm::MpmEngine::GenPointCloud(const std::string pointCloudID, sdf::Shape& shape,
+void mpm::MpmEngine::GenPointCloudPolygon()
+{
+	if (!m_paused)
+		return;
+
+	using namespace std::chrono;
+	time_point<high_resolution_clock> t1;
+	time_point<high_resolution_clock> t2;
+	t1 = high_resolution_clock::now();
+
+
+
+
+	std::string polygonID = "polygon" + std::to_string(m_polygonCount);
+	m_polygonCount++;
+
+	glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
+
+	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(polygonID, *m_polygon, real(m_chunks_x) * real(CHUNK_WIDTH), real(m_chunks_y) * real(CHUNK_WIDTH), 0.0, 0.0, m_particleSpacing, m_mpParameters, m_comodel, sdf::SDF_OPTION::NORMAL, m_invertedSdf, m_fixedPointCloud, m_initVelocity, color);
+
+	t2 = high_resolution_clock::now();
+
+	std::cout << "Finished generating " << pointCloud->N << " points for '" << polygonID << "' point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
+
+}
+
+void mpm::MpmEngine::GenPointCloudPWLine()
+{
+	if (!m_paused)
+		return;
+
+	using namespace std::chrono;
+	time_point<high_resolution_clock> t1;
+	time_point<high_resolution_clock> t2;
+	t1 = high_resolution_clock::now();
+
+
+
+
+	std::string pwLineID = "line" + std::to_string(m_pwLineCount);
+	m_pwLineCount++;
+
+	glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
+
+	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(pwLineID, *m_pwLine, real(m_chunks_x) * real(CHUNK_WIDTH), real(m_chunks_y) * real(CHUNK_WIDTH), 0.0, m_pwLineRounding, m_particleSpacing, m_mpParameters, m_comodel, sdf::SDF_OPTION::ROUNDED, false, m_fixedPointCloud, m_initVelocity, color);
+
+	t2 = high_resolution_clock::now();
+
+	std::cout << "Finished generating " << pointCloud->N << " points for '" << pwLineID << "' point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
+}
+
+std::shared_ptr<mpm::PointCloud> mpm::MpmEngine::GenPointCloud(const std::string pointCloudID, sdf::Shape& shape,
 	const real gridDimX, const real gridDimY, 
 	const real inner_rounding, const real outer_rounding,
-	const MaterialParameters &parameters,
-	const GLuint comodel, enum class sdf::SDF_OPTION sdfOption,
+	const real particle_spacing, const MaterialParameters &parameters,
+	const ENERGY_MODEL comodel, enum class sdf::SDF_OPTION sdfOption,
 	bool inverted, bool fixed,
 	vec2 initialVelocity, glm::highp_fvec4 color)
 {
@@ -420,22 +468,23 @@ std::shared_ptr<PointCloud> mpm::MpmEngine::GenPointCloud(const std::string poin
 
 	pointCloud->color = color;
 	pointCloud->parameters = parameters;
+	pointCloud->parameters.CalculateLameParameters();/*
 	pointCloud->mew = parameters.youngMod / (2.f + 2.f* parameters.poisson);
-	pointCloud->lam = parameters.youngMod * parameters.poisson / ((1.f + parameters.poisson) * (1.f - 2.f * parameters.poisson));
+	pointCloud->lam = parameters.youngMod * parameters.poisson / ((1.f + parameters.poisson) * (1.f - 2.f * parameters.poisson));*/
 
-	std::cout << "mew: " << pointCloud->mew << ", lam: " << pointCloud->lam << std::endl;
-	m_mew = pointCloud->mew;
-	m_lam = pointCloud->lam;
+	std::cout << "mew: " << pointCloud->parameters.mew << ", lam: " << pointCloud->parameters.lam << std::endl;
+	//m_mew = pointCloud->mew;
+	//m_lam = pointCloud->lam;
 
 	pointCloud->comodel = comodel;
 
 	pointCloud->fixed = fixed;
 
-	real mass = parameters.particleSpacing * parameters.particleSpacing * parameters.density;
+	real mass = particle_spacing * particle_spacing * parameters.density;
 	
 	// gen points from sdf
-	for (real x = 0.0; x < gridDimX; x += parameters.particleSpacing) {
-		for (real y = 0.0; y < gridDimY; y += parameters.particleSpacing) {
+	for (real x = 0.0; x < gridDimX; x += particle_spacing) {
+		for (real y = 0.0; y < gridDimY; y += particle_spacing) {
 			
 			glm::vec2 p(x, y);
 			
@@ -491,56 +540,7 @@ std::shared_ptr<PointCloud> mpm::MpmEngine::GenPointCloud(const std::string poin
 	return pointCloud;
 }
 
-void mpm::MpmEngine::GenPointCloudPolygon()
-{
-	if (!m_paused)
-		return;
 
-	using namespace std::chrono;
-	time_point<high_resolution_clock> t1;
-	time_point<high_resolution_clock> t2;
-	t1 = high_resolution_clock::now();
-
-
-	
-
-	std::string polygonID = "polygon" + std::to_string(m_polygonCount);
-	m_polygonCount++;
-
-	glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
-
-	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(polygonID, *m_polygon, real(m_chunks_x) * real(CHUNK_WIDTH), real(m_chunks_y) * real(CHUNK_WIDTH), 0.0, 0.0, m_mpParameters, m_comodel, sdf::SDF_OPTION::NORMAL, m_invertedSdf, m_fixedPointCloud, m_initVelocity, color);
-
-	t2 = high_resolution_clock::now();
-
-	std::cout << "Finished generating " << pointCloud->N << " points for '" << polygonID << "' point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
-
-}
-
-void mpm::MpmEngine::GenPointCloudPWLine()
-{
-	if (!m_paused)
-		return;
-
-	using namespace std::chrono;
-	time_point<high_resolution_clock> t1;
-	time_point<high_resolution_clock> t2;
-	t1 = high_resolution_clock::now();
-
-
-
-
-	std::string pwLineID = "line" + std::to_string(m_pwLineCount);
-	m_pwLineCount++;
-
-	glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
-
-	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(pwLineID, *m_pwLine, real(m_chunks_x) * real(CHUNK_WIDTH), real(m_chunks_y) * real(CHUNK_WIDTH), 0.0, m_pwLineRounding, m_mpParameters, m_comodel, sdf::SDF_OPTION::ROUNDED, false, m_fixedPointCloud, m_initVelocity, color);
-
-	t2 = high_resolution_clock::now();
-
-	std::cout << "Finished generating " << pointCloud->N << " points for '" << pwLineID << "' point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
-}
 
 //void mpm::MpmEngine::GenPointCloudLineDivider()
 //{
@@ -820,34 +820,15 @@ void mpm::MpmEngine::ClearNodalAcclerations(const int gridDimX, const int gridDi
 	glUnmapNamedBuffer(gridSSBO);
 }
 
-void mpm::MpmEngine::ChangeMaterialParameters(GLuint comodel)
+void mpm::MpmEngine::ChangeEnergyModel(ENERGY_MODEL comodel)
 {
 	// save the current material parameters
-	switch (m_comodel) {
-	case NEO_HOOKEAN_ELASTICITY:
-		m_neoHookeanParameters = m_mpParameters;
-		break;
-	case FIXED_COROTATIONAL_ELASTICITY:
-		m_fixedCorotatedParameters = m_mpParameters;
-		break;
-	case SIMPLE_SNOW:
-		m_simpleSnowParameters = m_mpParameters;
-		break;
-	default:
-		break;
+
+	if (comodel >= ENERGY_MODEL::Count) {
+		return; // not sure if this error check makes sense
 	}
+
+	m_energyModels[size_t(m_comodel)] = m_mpParameters;
 	m_comodel = comodel;
-	switch (m_comodel) {
-	case NEO_HOOKEAN_ELASTICITY:
-		m_mpParameters = m_neoHookeanParameters;
-		break;
-	case FIXED_COROTATIONAL_ELASTICITY:
-		m_mpParameters = m_fixedCorotatedParameters;
-		break;
-	case SIMPLE_SNOW:
-		m_mpParameters = m_simpleSnowParameters;
-		break;
-	default:
-		break;
-	}
+	m_mpParameters = m_energyModels[size_t(comodel)];
 }

@@ -79,7 +79,8 @@ namespace mpm {
 		//void RenderWindowManager();
 		void RenderTimeIntegrator();
 		void RenderExternalForceController();
-		void RenderInternalForceController();
+		void RenderDeformationGradientController();
+		void RenderMaterialParameterController();
 		void RenderGeometryEditor();
 		void RenderMaterialParametersEditor();
 		void RenderGridOptions();
@@ -94,7 +95,8 @@ namespace mpm {
 		// state variables for rendering different windows
 		bool m_renderTimeIntegrator = false;
 		bool m_renderExternalForceController = false;
-		bool m_renderInternalForceController = false;
+		bool m_renderDeformationGradientController = false;
+		bool m_renderMaterialParameterController = false;
 		bool m_renderMaterialParametersEditor = false;
 		bool m_renderGeometryEditor = false;
 		bool m_renderGridOptions = false;
@@ -247,13 +249,7 @@ namespace mpm {
 
 		/******************** INTERNAL FORCE CONTROLLER ********************/
 		void SetDeformationGradients(std::string pointCloudID, mat2 Fe, mat2 Fp);
-		mat2 m_setFe = mat2(1.0);
-		mat2 m_setFp = mat2(1.0);
 		void MultiplyDeformationGradients(std::string pointCloudID, mat2 multFe, mat2 multFp);
-		std::vector<mat2> m_multFeVector;
-		mat2 m_multFe = mat2(1.0);
-		mat2 m_multFp = mat2(1.0);
-		std::string m_pointCloudControlSelectStr = "";
 
 		/******************** CONJUGATE RESIDUALS FOR SEMI-IMPLICT TIME INTEGRATION ********************/
 		bool m_semi_implicit_CR = false;
@@ -296,13 +292,19 @@ namespace mpm {
 
 		/******************** MATERIAL PARAMETERS EDITOR ********************/
 		MaterialParameters m_mpParameters;
-		MaterialParameters m_neoHookeanParameters;
+		std::vector<MaterialParameters> m_energyModels = std::vector<MaterialParameters>(size_t(ENERGY_MODEL::Count), MaterialParameters());
+		std::vector<std::string> m_energyModelsStrVec = {
+			"Neohookean Elasticity",
+			"Fixed Corotational Elasticity",
+			"Snow (Stomakhin et. al 2013)"
+		};
+		/*MaterialParameters m_neoHookeanParameters;
 		MaterialParameters m_fixedCorotatedParameters;
-		MaterialParameters m_simpleSnowParameters;
-		real m_lam = 38888.9;
-		real m_mew = 58333.0;
-		GLuint m_comodel = FIXED_COROTATIONAL_ELASTICITY;
-		void ChangeMaterialParameters(GLuint);
+		MaterialParameters m_simpleSnowParameters;*/
+		//real m_lam = 38888.9;
+		//real m_mew = 58333.0;
+		ENERGY_MODEL m_comodel = ENERGY_MODEL::FIXED_COROTATIONAL_ELASTICITY;
+		void ChangeEnergyModel(ENERGY_MODEL);
 		float m_backgroundColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 		float m_color[4] = { 1.0f, 0.0f, 0.0f, 1.0f}; // color needs to be float
 		vec2 m_initVelocity = vec2(0.0);
@@ -315,8 +317,8 @@ namespace mpm {
 		std::shared_ptr<PointCloud> GenPointCloud(const std::string pointCloudID, sdf::Shape& shape,
 			const real gridDimX, const real gridDimY,
 			const real inner_rounding, const real outer_rounding,
-			const MaterialParameters& parameters,
-			const GLuint comodel, sdf::SDF_OPTION sdfOption,
+			const real particle_spacing, const MaterialParameters& parameters,
+			const ENERGY_MODEL comodel, sdf::SDF_OPTION sdfOption,
 			bool inverted, bool fixed,
 			vec2 initialVelocity, glm::highp_fvec4 color);
 		void ClearCreateStates() {
@@ -324,6 +326,8 @@ namespace mpm {
 			m_createRectState = false;
 			m_createIsoTriState = false;
 		}
+
+		real m_particleSpacing = 0.25;
 
 		std::shared_ptr<sdf::Polygon> m_polygon = nullptr;
 		bool m_addPolygonVertexState = false;

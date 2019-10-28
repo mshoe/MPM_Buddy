@@ -90,13 +90,12 @@ void mpm::MpmEngine::MpmTimeStepG2P(real dt)
 		if (pointCloudPair.second->fixed)
 			continue;
 
-
-		m_g2pGather->SetReal("lam", pointCloudPair.second->lam);
-		m_g2pGather->SetReal("mew", pointCloudPair.second->mew);
+		m_g2pGather->SetReal("lam", pointCloudPair.second->parameters.lam);
+		m_g2pGather->SetReal("mew", pointCloudPair.second->parameters.mew);
 		m_g2pGather->SetReal("crit_c", pointCloudPair.second->parameters.crit_c);
 		m_g2pGather->SetReal("crit_s", pointCloudPair.second->parameters.crit_s);
 		m_g2pGather->SetReal("hardening", pointCloudPair.second->parameters.hardening);
-		m_g2pGather->SetuInt("comodel", pointCloudPair.second->comodel);
+		m_g2pGather->SetuInt("comodel", unsigned int(pointCloudPair.second->comodel));
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudPair.second->ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 		//m_g2pGather->SetBool("fixedPointCloud", pointCloudPair.second->fixed);
