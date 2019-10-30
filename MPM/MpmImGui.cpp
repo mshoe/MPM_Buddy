@@ -69,6 +69,12 @@ void mpm::MpmEngine::RenderGUI()
 				}
 				ImGui::EndMenu();
 			}
+			if (ImGui::BeginMenu("Experimental")) {
+				if (ImGui::MenuItem("CPU Mode", "", m_renderCPUMode)) {
+					m_renderCPUMode = !m_renderCPUMode;
+				}
+				ImGui::EndMenu();
+			}
 			ImGui::EndMainMenuBar();
 		}
 
@@ -83,7 +89,7 @@ void mpm::MpmEngine::RenderGUI()
 		if (m_renderGridNodeViewer) RenderGridNodeViewer();
 		if (m_renderMaterialPointViewer) RenderMaterialPointViewer();
 		if (m_renderZoomWindow) RenderZoomWindow();
-		
+		if (m_renderCPUMode) RenderCPUMode();
 		
 		if (renderImguiDemo) { ImGui::ShowDemoWindow(); }
 	}
@@ -136,49 +142,47 @@ void mpm::MpmEngine::RenderTimeIntegrator()
 
 
 
-		if (ImGui::Button("Pause")) {
-			m_paused = !m_paused;
-		}
+		ImGui::Checkbox("Paused", &m_paused);
 		if (ImGui::Button("Advance") && m_paused) {
-			MpmTimeStep(m_dt);
+			MpmTimeStep_GLSL(m_dt);
 			UpdatePointCloudData(m_pointCloudViewSelectStr);
 			UpdateNodeData();
 		}
 		if (ImGui::Button("Advance 10") && m_paused) {
 			for (int i = 0; i < 10; i++) {
-				MpmTimeStep(m_dt);
+				MpmTimeStep_GLSL(m_dt);
 			}
 			UpdatePointCloudData(m_pointCloudViewSelectStr);
 			UpdateNodeData();
 		}
 		if (ImGui::Button("Advance 100") && m_paused) {
 			for (int i = 0; i < 100; i++) {
-				MpmTimeStep(m_dt);
+				MpmTimeStep_GLSL(m_dt);
 			}
 			UpdatePointCloudData(m_pointCloudViewSelectStr);
 			UpdateNodeData();
 		}
 		if (ImGui::Button("Reset")) {
-			MpmReset();
+			MpmReset_GLSL();	
 		}
 		ImGui::Text("MPM Algorithm Breakdown");
 		if (ImGui::Button("P2G") && m_paused) {
-			MpmTimeStepP2G(m_dt);
+			MpmTimeStepP2G_GLSL(m_dt);
 			UpdatePointCloudData(m_pointCloudViewSelectStr);
 			UpdateNodeData();
 		}
 		if (ImGui::Button("Explicit Grid Update") && m_paused) {
-			MpmTimeStepExplicitGridUpdate(m_dt);
+			MpmTimeStepExplicitGridUpdate_GLSL(m_dt);
 			UpdatePointCloudData(m_pointCloudViewSelectStr);
 			UpdateNodeData();
 		}
 		if (ImGui::Button("Semi-Implicit Grid Update") && m_paused) {
-			MpmTimeStepSemiImplicitCRGridUpdate(m_dt);
+			MpmTimeStepSemiImplicitCRGridUpdate_GLSL(m_dt);
 			UpdatePointCloudData(m_pointCloudViewSelectStr);
 			UpdateNodeData();
 		}
 		if (ImGui::Button("G2P") && m_paused) {
-			MpmTimeStepG2P(m_dt);
+			MpmTimeStepG2P_GLSL(m_dt);
 			UpdatePointCloudData(m_pointCloudViewSelectStr);
 			UpdateNodeData();
 		}
@@ -186,7 +190,7 @@ void mpm::MpmEngine::RenderTimeIntegrator()
 		ImGui::Text("Conjugate residual steps (used after \"Explicit Grid Update\"");
 		if (ImGui::Button("CR Init") && m_paused) {
 			m_cr_step = 0;
-			MpmCRInit(m_dt);
+			MpmCRInit_GLSL(m_dt);
 			UpdatePointCloudData(m_pointCloudViewSelectStr);
 			UpdateNodeData();
 		}
@@ -213,18 +217,13 @@ void mpm::MpmEngine::RenderTimeIntegrator()
 		}
 		ImGui::Text((std::string("CR step: ") + std::to_string(m_cr_step)).c_str());*/
 		if (ImGui::Button("CR End") && m_paused) {
-			MpmCREnd(m_dt);
+			MpmCREnd_GLSL(m_dt);
 			UpdatePointCloudData(m_pointCloudViewSelectStr);
 			UpdateNodeData();
 		}
 		//ImGui::DisplayNamedBoolColor("CR Convergence", converged, )
-
-
-
-
-
-		ImGui::End();
 	}
+	ImGui::End();
 }
 
 void mpm::MpmEngine::RenderExternalForceController()
@@ -239,8 +238,9 @@ void mpm::MpmEngine::RenderExternalForceController()
 
 		ImGui::InputReal("Mouse power", &m_mousePower);
 
-		ImGui::End();
 	}
+
+	ImGui::End();
 }
 
 void mpm::MpmEngine::RenderDeformationGradientController() {
@@ -319,15 +319,10 @@ void mpm::MpmEngine::RenderDeformationGradientController() {
 				for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
 					MultiplyDeformationGradients(pointCloudPair.first, controlFeVec[i], mat2(1.0));
 				}
-			}
-
-			
+			}	
 		}
-
-		
-
-		ImGui::End();
 	}
+	ImGui::End();
 }
 
 void mpm::MpmEngine::RenderMaterialParameterController() {
@@ -377,8 +372,8 @@ void mpm::MpmEngine::RenderMaterialParameterController() {
 				pointCloudPair.second->lam = m_controlMaterialParameters.lam;
 			}
 		}*/
-		ImGui::End();
 	}
+	ImGui::End();
 }
 
 void mpm::MpmEngine::RenderGeometryEditor()
@@ -461,10 +456,8 @@ void mpm::MpmEngine::RenderGeometryEditor()
 		for (int i = 0; i < m_pwLine->vertices.size(); i++) {
 			ImGui::DisplayGlmVec(m_pwLine->vertices[i]);
 		}
-
-
-		ImGui::End();
 	}
+	ImGui::End();
 }
 
 void mpm::MpmEngine::RenderMaterialParametersEditor()
@@ -504,8 +497,8 @@ void mpm::MpmEngine::RenderMaterialParametersEditor()
 		default:
 			break;
 		}
-		ImGui::End();
 	}
+	ImGui::End();
 }
 
 void mpm::MpmEngine::RenderGridOptions()
@@ -633,21 +626,23 @@ void mpm::MpmEngine::RenderGridOptions()
 				m_node[1] = node_j;
 			}
 		}
-
-		ImGui::End();
 	}
+	ImGui::End();
 }
 
 void mpm::MpmEngine::RenderGridNodeViewer()
 {
-	if (ImGui::Button("Select Node")) {
-		m_selectNodeState = true;
+	if (ImGui::Begin("Grid Node Viewer", &m_renderGridNodeViewer)) {
+		if (ImGui::Button("Select Node")) {
+			m_selectNodeState = true;
+		}
+		ImGui::InputInt2("Grid Node:", m_node);
+		if (ImGui::Button("Get node data") && m_paused) {
+			UpdateNodeData();
+		}
+		m_gn.ImGuiDisplay();
 	}
-	ImGui::InputInt2("Grid Node:", m_node);
-	if (ImGui::Button("Get node data") && m_paused) {
-		UpdateNodeData();
-	}
-	m_gn.ImGuiDisplay();
+	ImGui::End();
 }
 
 void mpm::MpmEngine::RenderMaterialPointViewer()
@@ -713,8 +708,9 @@ void mpm::MpmEngine::RenderMaterialPointViewer()
 			m_mp.ImGuiDisplay();
 		}
 
-		ImGui::End();
+		
 	}
+	ImGui::End();
 }
 
 void mpm::MpmEngine::RenderZoomWindow()
@@ -734,10 +730,48 @@ void mpm::MpmEngine::RenderZoomWindow()
 			ImVec4(1, 1, 1, 1),
 			ImVec4(1, 1, 1, 1)
 		);
-
-
-		ImGui::End();
 	}
+	ImGui::End();
+}
+
+void mpm::MpmEngine::RenderCPUMode()
+{
+	if (ImGui::Begin("CPU Mode", &m_renderCPUMode)) {
+		static bool cpu_mode = false;
+		ImGui::Checkbox("CPU Mode", &cpu_mode);
+		if (cpu_mode) {
+			m_algo_code = MPM_ALGORITHM_CODE::CPP;
+		}
+		else {
+			m_algo_code = MPM_ALGORITHM_CODE::GLSL;
+		}
+
+		ImGui::Text(std::to_string(m_time).c_str());
+		ImGui::Text(std::to_string(m_timeStep).c_str());
+		if (ImGui::Button("Multiply dt by 2")) {
+			m_dt *= 2.0;
+		}
+		if (ImGui::Button("Divide dt by 2")) {
+			m_dt /= 2.0;
+		}
+		ImGui::InputReal("dt", &m_dt, 0.001, 1.0 / 60.0, "%.6f");
+
+		ImGui::Checkbox("Paused", &m_paused);
+		
+
+		if (ImGui::Button("Advance") && m_paused) {
+			MpmTimeStep_CPP(m_dt);
+			MapCPUPointCloudsToGPU();
+			MapCPUGridToGPU();
+		}
+		
+		if (ImGui::Button("Reset")) {
+			MpmReset_CPP();
+		}
+
+
+	}
+	ImGui::End();
 }
 
 void mpm::MpmEngine::ImGuiSelectPointCloud(std::string& pointCloudSelectStr)

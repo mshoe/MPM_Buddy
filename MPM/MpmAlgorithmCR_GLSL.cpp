@@ -1,14 +1,14 @@
 #include "MpmEngine.h"
 
-void mpm::MpmEngine::MpmTimeStepSemiImplicitCRGridUpdate(real dt)
+void mpm::MpmEngine::MpmTimeStepSemiImplicitCRGridUpdate_GLSL(real dt)
 {
-	MpmCRInit(dt);
+	MpmCRInit_GLSL(dt);
 	real L2_norm_rk = 0.0;
 	for (m_cr_step = 0; m_cr_step < m_max_conj_res_iter; m_cr_step++) {
 		bool L2_converged;
 		bool L_inf_converged;
 
-		MpmCRStep(dt, L2_norm_rk, L2_converged, L_inf_converged);
+		MpmCRStep_GLSL(dt, L2_norm_rk, L2_converged, L_inf_converged);
 		/*if (L2_converged) {
 			break;
 		}*/
@@ -51,10 +51,10 @@ void mpm::MpmEngine::MpmTimeStepSemiImplicitCRGridUpdate(real dt)
 	//	}
 	//	std::cout << "L2 norm of rk is: " << L2_norm_rk << std::endl;
 	//}
-	MpmCREnd(dt);
+	MpmCREnd_GLSL(dt);
 }
 
-void mpm::MpmEngine::MpmCRInit(real dt) {
+void mpm::MpmEngine::MpmCRInit_GLSL(real dt) {
 	// IMPLICIT INIT PART 1
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 	m_gConjugateResidualsInitPart1->Use();
@@ -106,7 +106,7 @@ void mpm::MpmEngine::MpmCRInit(real dt) {
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
-bool mpm::MpmEngine::MpmCRStep(real dt, real& L2_norm_rk, bool& L2_converged, bool& L_inf_converged)
+bool mpm::MpmEngine::MpmCRStep_GLSL(real dt, real& L2_norm_rk, bool& L2_converged, bool& L_inf_converged)
 {
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 	m_gConjugateResidualsStepPart1->Use();
@@ -183,7 +183,7 @@ bool mpm::MpmEngine::MpmCRStep(real dt, real& L2_norm_rk, bool& L2_converged, bo
 	return L2_converged;
 }
 
-void mpm::MpmEngine::MpmCREnd(real dt) {
+void mpm::MpmEngine::MpmCREnd_GLSL(real dt) {
 
 	// IMPLICIT CONCLUSION
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);

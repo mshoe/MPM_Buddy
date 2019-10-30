@@ -46,18 +46,38 @@ namespace mpm {
 		int m_chunks_x = 4;
 		int m_chunks_y = 4;
 
-		//*** MPM FUNCTIONS ***//
-		void MpmReset();
-		void MpmTimeStep(real dt);
-		void MpmTimeStepP2G(real dt);
-		void MpmTimeStepExplicitGridUpdate(real dt);
-		void MpmTimeStepG2P(real dt);
-		void MpmTimeStepSemiImplicitCRGridUpdate(real dt);
-		void MpmCRInit(real dt);
-		bool MpmCRStep(real dt, real& L2_norm_rk, bool& L2_converged, bool& L_inf_converged);
-		void MpmCREnd(real dt);
-		void MpmTimeStepSemiImplicitDirectSolve(real dt);
-		void CalculatePointCloudVolumes(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
+		enum class MPM_ALGORITHM_CODE {
+			GLSL = 0,
+			CPP = 1
+		};
+
+		MPM_ALGORITHM_CODE m_algo_code = MPM_ALGORITHM_CODE::GLSL;
+
+		/******************** MPM FUNCTIONS GLSL COMPUTE SHADER IMPLEMENTATION ********************/
+		void MpmReset_GLSL();
+		void MpmTimeStep_GLSL(real dt);
+		void MpmTimeStepP2G_GLSL(real dt);
+		void MpmTimeStepExplicitGridUpdate_GLSL(real dt);
+		void MpmTimeStepG2P_GLSL(real dt);
+		void MpmTimeStepSemiImplicitCRGridUpdate_GLSL(real dt);
+		void MpmCRInit_GLSL(real dt);
+		bool MpmCRStep_GLSL(real dt, real& L2_norm_rk, bool& L2_converged, bool& L_inf_converged);
+		void MpmCREnd_GLSL(real dt);
+		//void MpmTimeStepSemiImplicitDirectSolve(real dt);
+		void CalculatePointCloudVolumes_GLSL(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
+
+		/******************** MPM FUNCTIONS CPU C++ IMPLEMENTATION ********************/
+		void MpmReset_CPP();
+		void MpmTimeStep_CPP(real dt);
+		void MpmTimeStepP2G_CPP(real dt);
+		void MpmTimeStepExplicitGridUpdate_CPP(real dt);
+		void MpmTimeStepG2P_CPP(real dt);
+
+		void GetPointCloudVolumesFromGPUtoCPU(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
+		
+		void MapCPUPointCloudsToGPU();
+		void MapCPUGridToGPU();
+
 
 		//*** RENDERING FUNCTIONS ***//
 	public:
@@ -87,6 +107,7 @@ namespace mpm {
 		void RenderGridNodeViewer();
 		void RenderMaterialPointViewer();
 		void RenderZoomWindow();
+		void RenderCPUMode();
 
 		// re-used helper functions for imgui
 		void ImGuiSelectPointCloud(std::string& pointCloudSelectStr);
@@ -103,6 +124,7 @@ namespace mpm {
 		bool m_renderGridNodeViewer = false;
 		bool m_renderMaterialPointViewer = false;
 		bool m_renderZoomWindow = false;
+		bool m_renderCPUMode = false;
 
 		/******************** ZOOM WINDOW ********************/
 		void InitZoomWindow();

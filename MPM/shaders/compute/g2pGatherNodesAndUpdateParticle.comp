@@ -156,7 +156,7 @@ void main() {
 		points[pid].Fe = Fe;
 		points[pid].Fp = Fp;
 
-		// update R since Fe is updated
+		// update R since Fe is updated (for recomputing SVD for debugging)
 		PolarDecomp(Fe, R, S);
 		points[pid].FePolar_R = R;
 		points[pid].FePolar_S = S;
@@ -184,5 +184,4 @@ void main() {
 		points[pid].energy = mew * ((sig1 - 1.0)*(sig1 - 1.0) + (sig2 - 1.0)*(sig2 - 1.0)) + 0.5 * lam * (Je - 1.0)*(Je - 1.0);
 		points[pid].energy *= pcof * points[pid].vol;
 	}
-
 }

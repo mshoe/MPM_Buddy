@@ -1,6 +1,8 @@
 #include "MpmEngine.h"
 
-void mpm::MpmEngine::MpmReset()
+
+
+void mpm::MpmEngine::MpmReset_GLSL()
 {
 	m_pointCloudMap.clear();
 	m_timeStep = 0;
@@ -11,7 +13,7 @@ void mpm::MpmEngine::MpmReset()
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
-void mpm::MpmEngine::MpmTimeStep(real dt)
+void mpm::MpmEngine::MpmTimeStep_GLSL(real dt)
 {
 #ifdef MPM_DEBUG
 	using namespace std::chrono;
@@ -19,23 +21,26 @@ void mpm::MpmEngine::MpmTimeStep(real dt)
 	time_point<high_resolution_clock> t2;
 	t1 = high_resolution_clock::now();
 #endif
-	MpmTimeStepP2G(dt);
+	MpmTimeStepP2G_GLSL(dt);
 
-	MpmTimeStepExplicitGridUpdate(dt);
+	MpmTimeStepExplicitGridUpdate_GLSL(dt);
 
 	// Here we decide how we do the semi-implicit time step, if we are doing one
 	if (m_semi_implicit_CR) {
-		MpmTimeStepSemiImplicitCRGridUpdate(dt);
+		MpmTimeStepSemiImplicitCRGridUpdate_GLSL(dt);
 	}
 
-	MpmTimeStepG2P(dt);
+	MpmTimeStepG2P_GLSL(dt);
+
+	m_timeStep++;
+	m_time += m_dt;
 #ifdef MPM_DEBUG
 	t2 = high_resolution_clock::now();
 	std::cout << "Finished calculating timestep in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
 #endif
 }
 
-void mpm::MpmEngine::MpmTimeStepP2G(real dt)
+void mpm::MpmEngine::MpmTimeStepP2G_GLSL(real dt)
 {
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 	m_gReset->Use();
@@ -61,7 +66,7 @@ void mpm::MpmEngine::MpmTimeStepP2G(real dt)
 	}
 }
 
-void mpm::MpmEngine::MpmTimeStepExplicitGridUpdate(real dt)
+void mpm::MpmEngine::MpmTimeStepExplicitGridUpdate_GLSL(real dt)
 {
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 	m_gUpdate->Use();
@@ -76,7 +81,7 @@ void mpm::MpmEngine::MpmTimeStepExplicitGridUpdate(real dt)
 
 
 
-void mpm::MpmEngine::MpmTimeStepG2P(real dt)
+void mpm::MpmEngine::MpmTimeStepG2P_GLSL(real dt)
 {
 
 	m_g2pGather->Use();
@@ -105,13 +110,11 @@ void mpm::MpmEngine::MpmTimeStepG2P(real dt)
 	}
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, 0);
-	m_timeStep++;
-	m_time += dt;
 }
 
 
 
-void mpm::MpmEngine::CalculatePointCloudVolumes(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud)
+void mpm::MpmEngine::CalculatePointCloudVolumes_GLSL(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud)
 {
 	using namespace std::chrono;
 

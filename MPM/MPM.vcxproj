@@ -138,14 +138,15 @@
     <ClCompile Include="external\src\glad\glad.c" />
     <ClCompile Include="glm_imgui.cpp" />
     <ClCompile Include="glm_MATLAB.cpp" />
-    <ClCompile Include="MpmCR.cpp" />
+    <ClCompile Include="MpmAlgorithm_CPP.cpp" />
+    <ClCompile Include="MpmAlgorithmCR_GLSL.cpp" />
     <ClCompile Include="MpmInteractions.cpp" />
     <ClCompile Include="MpmRender.cpp" />
     <ClCompile Include="MpmSemiImplicitDirectSolver.cpp" />
     <ClCompile Include="OpenGLScreen.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainEngine.cpp" />
-    <ClCompile Include="MpmAlgorithm.cpp" />
+    <ClCompile Include="MpmAlgorithm_GLSL.cpp" />
     <ClCompile Include="MpmEngine.cpp" />
     <ClCompile Include="MpmImGui.cpp" />
   </ItemGroup>

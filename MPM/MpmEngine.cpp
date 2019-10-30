@@ -124,17 +124,31 @@ void mpm::MpmEngine::InitZoomWindow() {
 void mpm::MpmEngine::Update()
 {
 	if (!m_paused) {
-		if (!m_rt) {
-			MpmTimeStep(m_dt);
-		}
-		else {
-			real curr_dt = 0.0;
-			real rt_dt = 1.0 / 60.0;
-			while (curr_dt < rt_dt) {
-				MpmTimeStep(m_dt);
-				curr_dt += m_dt;
+		switch (m_algo_code) {
+		case MPM_ALGORITHM_CODE::GLSL:
+			if (!m_rt) {
+				MpmTimeStep_GLSL(m_dt);
+				
 			}
+			else {
+				real curr_dt = 0.0;
+				real rt_dt = 1.0 / 60.0;
+				while (curr_dt < rt_dt) {
+					MpmTimeStep_GLSL(m_dt);
+					curr_dt += m_dt;
+				}
+			}
+			break;
+		case MPM_ALGORITHM_CODE::CPP:	
+			MpmTimeStep_CPP(m_dt);
+			MapCPUPointCloudsToGPU();
+			MapCPUGridToGPU();
+			break;
+		default:
+			break;
 		}
+
+		
 	}
 }
 
@@ -184,7 +198,7 @@ void mpm::MpmEngine::ProcessKeyboardInput(GLFWwindow* window, real lag)
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS) {
-			MpmReset();
+			MpmReset_GLSL();
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
@@ -527,11 +541,16 @@ std::shared_ptr<mpm::PointCloud> mpm::MpmEngine::GenPointCloud(const std::string
 			pointCloud->ssbo,
 			sizeof(MaterialPoint) * pointCloud->points.size(),
 			&(pointCloud->points.front().x.x),
-			GL_MAP_READ_BIT
+			GL_MAP_READ_BIT | GL_MAP_WRITE_BIT // add write bit for cpu mode
 		);
 
 		// Calculate volumes for the point cloud (volumes stored in SSBO on GPU)
-		CalculatePointCloudVolumes(pointCloudID, pointCloud);
+		CalculatePointCloudVolumes_GLSL(pointCloudID, pointCloud);
+
+		if (m_algo_code == MPM_ALGORITHM_CODE::CPP) {
+			// for CPU mode calculate volumes
+			GetPointCloudVolumesFromGPUtoCPU(pointCloudID, pointCloud);
+		}
 
 
 		m_pointCloudMap[pointCloudID] = pointCloud;
@@ -831,4 +850,23 @@ void mpm::MpmEngine::ChangeEnergyModel(ENERGY_MODEL comodel)
 	m_energyModels[size_t(m_comodel)] = m_mpParameters;
 	m_comodel = comodel;
 	m_mpParameters = m_energyModels[size_t(comodel)];
+}
+
+
+void mpm::MpmEngine::MapCPUPointCloudsToGPU()
+{
+	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+		void* ptr = glMapNamedBuffer(pointCloudPair.second->ssbo, GL_WRITE_ONLY);
+		MaterialPoint* data = static_cast<MaterialPoint*>(ptr);
+		memcpy(data, pointCloudPair.second->points.data(), pointCloudPair.second->points.size() * sizeof(MaterialPoint));
+		glUnmapNamedBuffer(pointCloudPair.second->ssbo);
+	}
+}
+
+void mpm::MpmEngine::MapCPUGridToGPU()
+{
+	void* ptr = glMapNamedBuffer(gridSSBO, GL_WRITE_ONLY);
+	GridNode* data = static_cast<GridNode*>(ptr);
+	memcpy(data, m_grid.nodes.data(), m_grid.nodes.size() * sizeof(GridNode));
+	glUnmapNamedBuffer(gridSSBO);
 }

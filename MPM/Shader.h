@@ -183,7 +183,7 @@ public:
 			headerCode = headerStream.str();
 		}
 		catch (std::ifstream::failure e) {
-			std::cout << "ERROR::SHADER::HAEDER_FILE_NOT_SUCCESFULLY_READ" << std::endl;
+			std::cout << "ERROR::SHADER::HEADER_FILE_NOT_SUCCESFULLY_READ" << std::endl;
 		}
 
 		// 1. Vertex shader
