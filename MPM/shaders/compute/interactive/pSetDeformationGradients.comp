@@ -4,6 +4,7 @@ layout (local_size_x = 1024) in;
 
 uniform dmat2 setFe = dmat2(1.0);
 uniform dmat2 setFp = dmat2(1.0);
+uniform bool setSelected = false;
 
 /*** HEADER ***/
 
@@ -12,6 +13,9 @@ void main() {
 	uint pid = gl_GlobalInvocationID.x;
 	uint N = points.length();
 	if (pid > N) {
+		return;
+	}
+	if (setSelected && !(points[pid].selected > 0.1)) {
 		return;
 	}
 

@@ -1,0 +1,44 @@
+const dmat2 Dp_inv = 3 * dmat2(1.0); // 3 * dx^2 * I, inverse of inertia tensor (without mass)
+const uint PIC = 0;
+const uint RPIC = 1;
+const uint APIC = 2;
+uniform uint transferScheme = APIC; // 0 = PIC, 1 = RPIC, 2 = APIC
+
+int GetGridNodeIndex(int node_i, int node_j) {
+	return node_i * CHUNKS_Y * CHUNK_WIDTH + node_j;
+}
+
+double QuadBSpline(in double x) {
+	x = abs(x);
+	return (x < 0.5) ? 	step(0.0, x)*(0.75 - x*x) :
+						step(x, 1.5)*0.5*(1.5 - x)*(1.5-x);
+}
+
+double QuadBSplineSlope(in double x) {
+	double absx = abs(x);
+	return (absx < 0.5) ? 	step(0.0, absx)*(-2*x) : 
+						step(absx, 1.5)*(x - 1.5*x/absx);
+}
+
+double BSpline(in double x) {
+	x = abs(x);
+	return (x < 1.0) ? 	step(0.0, x)*(0.5*x*x*x - x*x + 2.0/3.0) :
+						step(x, 2.0)*(2.0-x)*(2.0-x)*(2.0-x)/6.0;
+}
+
+double BSplineSlope(in double x) {
+	double absx = abs(x);
+	return (absx < 1.0) ? 	step(0.0, absx)*(1.5*x*absx-2*x) : 
+						step(absx, 2.0)*(-x*absx/2 + 2*x - 2*x/absx);
+}
+
+void InBounds(inout int i, inout int j, out double inbounds) {
+	double r1 = double(int((0 <= i) && (i < CHUNK_WIDTH * CHUNKS_X)));
+	double r2 = double(int((0 <= j) && (j < CHUNK_WIDTH * CHUNKS_Y)));
+	inbounds = r1 * r2;
+
+	// also sets i and j to 0 if they are out of bounds, 
+	// so they don't produce an error when accessing arrays
+	i = (inbounds != 0.0) ? i : 0;
+	j = (inbounds != 0.0) ? j : 0;
+}

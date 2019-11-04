@@ -1,0 +1,78 @@
+const uint NEO_HOOKEAN = 0;
+const uint FIXED_COROTATED = 1;
+const uint SIMPLE_SNOW = 2;
+uniform uint comodel = 1; //FIXED_COROTATED;
+
+uniform double mew = 41.66666667;
+uniform double lam = 27.77777778;
+
+uniform double crit_c = 0.025;
+uniform double crit_s = 0.0075;
+uniform double hardening = 10.0;
+
+bool isnanVec2(in dvec2 v) {
+	return isnan(v.x) || isnan(v.y);
+}
+
+bool isinfVec2(in dvec2 v) {
+	return isinf(v.x) || isinf(v.y);
+}
+
+dmat2 cofactorMatrix(in dmat2 X) {
+	return dmat2(X[1][1], -X[1][0], // column 1
+				-X[0][1], X[0][0]); // column 2
+}
+
+double innerProduct(in dmat2 X, in dmat2 Y) {
+	return X[0][0]*Y[0][0] + X[1][0]*Y[1][0] + X[0][1]*Y[0][1] + X[1][1]*Y[1][1];
+}
+
+void PolarDecomp(in dmat2 F, out dmat2 R, out dmat2 S) {
+	// calculate the polar decomposition F = RS.
+
+	double x = F[0][0] + F[1][1];
+	double y = F[0][1] - F[1][0]; // glsl is column major. This is really F_21 - F_12 in row major notation
+
+	double d = sqrt(x*x + y*y);
+
+	double c = x/d;
+	double s = -y/d;
+	R = (d == 0.0) ? dmat2(1.0, 0.0, 0.0, 1.0) : dmat2(c, -s, s, c);
+	S = transpose(R) * F;
+}
+
+void SVD(in dmat2 R, in dmat2 S, out dmat2 U, out double sig1, out double sig2, out dmat2 V) {
+
+	// check if S is diagonal (S is symmetric for sure)
+	double c_hat, s_hat;
+	
+	if (S[1][0] == 0) {
+		c_hat = 1.0;
+		s_hat = 0.0;
+		sig1 = S[0][0];
+		sig2 = S[1][1];
+	} else {
+		double tau = 0.5 * (S[0][0] - S[1][1]);
+		double w = sqrt(tau*tau + S[1][0]*S[1][0]);
+		double t = (tau > 0) ? S[1][0]/(tau + w) : S[1][0]/(tau - w);
+		c_hat = 1.0 / sqrt(t*t + 1.0);
+		s_hat = -t * c_hat;
+		sig1 = c_hat*c_hat*S[0][0] - 2.0*c_hat*s_hat*S[1][0] + s_hat*s_hat*S[1][1];
+		sig2 = s_hat*s_hat*S[0][0] + 2.0*c_hat*s_hat*S[1][0] + c_hat*c_hat*S[1][1];
+	}
+
+	double c, s;
+	if (sig1 < sig2) {
+		// swap the singular values so sig1 > sig2
+		double temp = sig1;
+		sig1 = sig2;
+		sig2 = temp;
+		c = -s_hat;
+		s = c_hat;
+	} else {
+		c = c_hat;
+		s = s_hat;
+	}
+	V = dmat2(c, -s, s, c);
+	U = R*V;
+}

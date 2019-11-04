@@ -109,6 +109,8 @@ void mpm::MpmEngine::RenderPointClouds(vec2 zoomPoint, real zoomFactor, std::sha
 	m_pPointCloudShader->SetReal("maxEnergyClamp", m_maxEnergyClamp);
 	m_pPointCloudShader->SetReal("minEnergyClamp", m_minEnergyClamp);
 	m_pPointCloudShader->SetBool("visualizeEnergy", m_visualizeEnergy);
+	m_pPointCloudShader->SetBool("visualizeSelected", m_visualizeSelected);
+	m_pPointCloudShader->SetVec("pointSelectColor", m_pointSelectColor);
 	m_pPointCloudShader->SetReal("zoomFactor", zoomFactor);
 	m_pPointCloudShader->SetVec("zoomPoint", zoomPoint);
 	// iResolution and iSourceResolution should be same for the zoom window we make, and iCenter should be the actual center
@@ -201,7 +203,7 @@ void mpm::MpmEngine::RenderPolygon(vec2 zoomPoint, real zoomFactor, std::shared_
 	glBindVertexArray(VisualizeVAO);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, polygonSSBO);
 	glDrawArrays(GL_POINTS, 0, (GLsizei)1);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, 0);
 	glBindVertexArray(0);
 
 	glDeleteBuffers(1, &polygonSSBO);

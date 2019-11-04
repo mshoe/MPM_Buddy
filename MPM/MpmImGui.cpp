@@ -17,6 +17,10 @@ void mpm::MpmEngine::RenderGUI()
 				if (ImGui::MenuItem("ImGui Demo", "", renderImguiDemo)) {
 					renderImguiDemo = !renderImguiDemo;
 				}
+				if (ImGui::MenuItem("Re-initialize shader pipeline")) {
+					CleanupComputeShaderPipeline();
+					InitComputeShaderPipeline();
+				}
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Edit"))
@@ -282,6 +286,11 @@ void mpm::MpmEngine::RenderDeformationGradientController() {
 		if (ImGui::Button("Add control deformation gradient")) {
 			controlFeVec.push_back(mat2(1.0));
 		}
+		static bool multSelected = false;
+		static bool setSelected = false;
+
+		ImGui::Checkbox("Set Fe for selected points", &setSelected);
+		ImGui::Checkbox("Mult Fe for selected points", &multSelected);
 
 		static int Fselect = 0;
 
@@ -302,22 +311,22 @@ void mpm::MpmEngine::RenderDeformationGradientController() {
 
 			std::string setFeStr = "Set '" + pointCloudSelectStr + "' deformation gradients to " + currFeStr;
 			if (ImGui::Button(setFeStr.c_str())) {
-				SetDeformationGradients(pointCloudSelectStr, controlFeVec[i], mat2(1.0));
+				SetDeformationGradients(pointCloudSelectStr, controlFeVec[i], mat2(1.0), setSelected);
 			}
 			std::string setAllFeStr = "Set all point cloud deformation gradients to " + currFeStr;
 			if (ImGui::Button(setAllFeStr.c_str())) {
 				for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
-					SetDeformationGradients(pointCloudPair.first, controlFeVec[i], mat2(1.0));
+					SetDeformationGradients(pointCloudPair.first, controlFeVec[i], mat2(1.0), setSelected);
 				}
 			}
 			std::string multFeStr = "Multiply '" + pointCloudSelectStr + "' deformation gradients by " + currFeStr;
 			if (ImGui::Button(multFeStr.c_str())) {
-				MultiplyDeformationGradients(pointCloudSelectStr, controlFeVec[i], mat2(1.0));
+				MultiplyDeformationGradients(pointCloudSelectStr, controlFeVec[i], mat2(1.0), multSelected);
 			}
 			std::string multAllFeStr = "Multiply all point cloud deformation gradients by " + currFeStr;
 			if (ImGui::Button(multAllFeStr.c_str())) {
 				for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
-					MultiplyDeformationGradients(pointCloudPair.first, controlFeVec[i], mat2(1.0));
+					MultiplyDeformationGradients(pointCloudPair.first, controlFeVec[i], mat2(1.0), multSelected);
 				}
 			}	
 		}
@@ -696,6 +705,19 @@ void mpm::MpmEngine::RenderMaterialPointViewer()
 		ImGui::InputReal("Min speed clamp (for coloring)", &m_minSpeedClamp, 1.0, 1000.0, "%.1f");
 		ImGui::Checkbox("Visualize Speed", &m_visualizeSpeed);
 
+		ImGui::Checkbox("Visuzelize seslected points", &m_visualizeSelected);
+		static float selectColor[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
+		selectColor[0] = m_pointSelectColor.x;
+		selectColor[1] = m_pointSelectColor.y;
+		selectColor[2] = m_pointSelectColor.z;
+		selectColor[3] = m_pointSelectColor.w;
+		ImGui::ColorEdit4("Selected points color", selectColor);
+
+		if (ImGui::Button("Select points in polygon")) {
+			for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+				SelectPointsInPolygon(pointCloudPair.first);
+			}
+		}
 
 		if (m_pointCloudMap.count(m_pointCloudViewSelectStr)) {
 			m_mp = m_pointCloudMap[m_pointCloudViewSelectStr]->points[pointIndex];
@@ -746,6 +768,15 @@ void mpm::MpmEngine::RenderCPUMode()
 			m_algo_code = MPM_ALGORITHM_CODE::GLSL;
 		}
 
+		if (ImGui::Button("32 x 32 grid")) {
+			m_chunks_x = 1;
+			m_chunks_y = 1;
+		}
+		if (ImGui::Button("Small circle")) {
+			m_circle_r = 2;
+			m_particleSpacing = 0.5;
+		}
+
 		ImGui::Text(std::to_string(m_time).c_str());
 		ImGui::Text(std::to_string(m_timeStep).c_str());
 		if (ImGui::Button("Multiply dt by 2")) {
@@ -758,6 +789,9 @@ void mpm::MpmEngine::RenderCPUMode()
 
 		ImGui::Checkbox("Paused", &m_paused);
 		
+		ImGui::Checkbox("Semi Implict Time Integration", &m_semiImplicitCPP);
+		ImGui::InputDouble("Implicit Ratio (beta)", &m_beta, 0.05, 0.1);
+		m_beta = glm::max(glm::min(1.0, m_beta), 0.0);
 
 		if (ImGui::Button("Advance") && m_paused) {
 			MpmTimeStep_CPP(m_dt);

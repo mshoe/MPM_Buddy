@@ -1,0 +1,17 @@
+#version 450 core
+#extension GL_NV_shader_atomic_float64 : enable
+
+layout (local_size_x = 1024) in;
+
+/*** HEADER ***/
+
+void main() {
+
+	uint pid = gl_GlobalInvocationID.x;
+	uint N = points.length();
+	if (pid > N) {
+		return;
+	}
+
+    points[pid].selected = 0.0;
+}

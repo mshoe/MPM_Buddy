@@ -1,0 +1,52 @@
+#version 450 core
+#extension GL_NV_shader_atomic_float64 : enable
+
+layout (local_size_x = 1024) in;
+
+/*** HEADER ***/
+
+layout (std430, binding = 3) buffer polygonVertices {
+	dvec2 vertices[];
+};
+
+double polygonSdf(dvec2 p) {
+    if (vertices.length() < 3)
+        return 1.0;
+
+    double d = dot(p - vertices[0], p - vertices[0]);
+    double s = 1.0;
+    for (int i = 0, j = vertices.length()-1; i < vertices.length(); j = i, i++) {
+        dvec2 e = vertices[j] - vertices[i];
+        dvec2 w = p - vertices[i];
+        dvec2 b = w - e * clamp(dot(w, e) / dot(e, e), 0.0, 1.0);
+        d = min(d, dot(b, b));
+        bvec3 c = bvec3(p.y >= vertices[i].y, p.y < vertices[j].y, e.x * w.y > e.y * w.x);
+        if (all(c) || all(not(c)))
+            s *= -1.0;
+    }
+    return s * sqrt(d);
+}
+
+
+
+
+void main() {
+
+	uint pid = gl_GlobalInvocationID.x;
+	uint N = points.length();
+	if (pid > N) {
+		return;
+	}
+
+	dvec2 xp = points[pid].x;
+
+    double polygonSdfValue = polygonSdf(xp);
+
+    bool insidePolygon = polygonSdfValue < 0.0;
+
+    if (insidePolygon) {
+        points[pid].selected = 1.0;
+    }
+
+	
+}

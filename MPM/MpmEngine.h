@@ -71,7 +71,11 @@ namespace mpm {
 		void MpmTimeStep_CPP(real dt);
 		void MpmTimeStepP2G_CPP(real dt);
 		void MpmTimeStepExplicitGridUpdate_CPP(real dt);
+		void MpmTimeStepSemiImplicitGridUpdate_CPP(real dt, real beta);
 		void MpmTimeStepG2P_CPP(real dt);
+
+		bool m_semiImplicitCPP = false;
+		double m_beta = 1.0;
 
 		void GetPointCloudVolumesFromGPUtoCPU(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
 		
@@ -155,6 +159,8 @@ namespace mpm {
 		// INTERACTIONS
 		std::unique_ptr<ComputeShader> m_pSetDeformationGradients = nullptr;
 		std::unique_ptr<ComputeShader> m_pMultDeformationGradients = nullptr;
+		std::unique_ptr<ComputeShader> m_pLassoTool = nullptr;
+		std::unique_ptr<ComputeShader> m_pClearPointSelection = nullptr;
 
 		// RENDERING
 		std::shared_ptr<StandardShader> m_pPointCloudShader = nullptr;
@@ -207,6 +213,10 @@ namespace mpm {
 		double m_minEnergyClamp = 0.0;
 		bool m_visualizeEnergy = true;
 		bool m_viewPointClouds = true;
+		bool m_visualizeSelected = false;
+		glm::highp_fvec4 m_pointSelectColor = glm::highp_fvec4(1.0, 1.0, 0.0, 1.0);
+		void SelectPointsInPolygon(std::string pointCloudID);
+		void ClearPointSelection(std::string pointCloudID);
 		
 		/******************** GRID NODE VIEWER ********************/
 		Grid m_grid;
@@ -270,8 +280,8 @@ namespace mpm {
 
 
 		/******************** INTERNAL FORCE CONTROLLER ********************/
-		void SetDeformationGradients(std::string pointCloudID, mat2 Fe, mat2 Fp);
-		void MultiplyDeformationGradients(std::string pointCloudID, mat2 multFe, mat2 multFp);
+		void SetDeformationGradients(std::string pointCloudID, mat2 Fe, mat2 Fp, bool multSelected);
+		void MultiplyDeformationGradients(std::string pointCloudID, mat2 multFe, mat2 multFp, bool setSelected);
 
 		/******************** CONJUGATE RESIDUALS FOR SEMI-IMPLICT TIME INTEGRATION ********************/
 		bool m_semi_implicit_CR = false;

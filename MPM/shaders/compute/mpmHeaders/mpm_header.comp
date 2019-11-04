@@ -1,0 +1,66 @@
+const int GRID_SIZE_X = 32*4;
+const int GRID_SIZE_Y = 32*4;
+int CHUNK_WIDTH = 32;
+uniform int CHUNKS_X = 4;
+uniform int CHUNKS_Y = 4;
+
+uniform double dt = 1/60.0;
+uniform dvec2 gravity = dvec2(0.0, -9.81);
+uniform dvec2 globalForce = dvec2(0.0, 0.0);
+uniform double IMPLICIT_RATIO = 1.0;
+uniform double drag = 0.005;
+uniform double semi_implicit_eps = 0.00001;
+
+struct materialPoint {
+	dvec2 x; // position
+	dvec2 v; // velocity
+	double m; // mass
+	double vol; // volume
+	double Lz; // angular momentum (for RPIC)
+	double padding;
+	dmat2 B; // for APIC
+	dmat2 Fe; // elastic deformation gradient
+	dmat2 Fp; // plastic deformation gradient
+	dmat2 P; // piola-kirchoff stress tensor
+
+	// extra not neccessary to store, but useful for debugging
+	dmat2 FePolar_R;
+	dmat2 FePolar_S;
+	dmat2 FeSVD_U;
+	dmat2 FeSVD_S;
+	dmat2 FeSVD_V;
+	dmat2 A;
+
+	double energy;
+	double selected;
+};
+
+struct gridNode {
+	double m;
+	double opengl_padding;
+	dvec2 v;
+	dvec2 momentum;
+	dvec2 force;
+	dvec2 nodalAcceleration;
+
+	// for implicit time step / conjugate residuals	
+	dvec2 deltaForce;
+	dvec2 xk; // velocity guess
+	dvec2 rk;
+	dvec2 pk;
+	dvec2 Ark;
+	dvec2 Apk;
+
+	double rkArk;
+	bool converged;
+	bool selected;
+};
+
+layout (std430, binding = 1) buffer pointCloud {
+	materialPoint points[];
+};
+
+
+layout (std430, binding = 2) buffer particleGrid {
+	gridNode nodes[GRID_SIZE_X][GRID_SIZE_Y];
+};

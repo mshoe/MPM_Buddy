@@ -4,6 +4,7 @@ layout (local_size_x = 1024) in;
 
 uniform dmat2 multFe = dmat2(1.0);
 uniform dmat2 multFp = dmat2(1.0);
+uniform bool multSelected = false;
 
 /*** HEADER ***/
 
@@ -15,6 +16,9 @@ void main() {
 		return;
 	}
 
+	if (multSelected && !(points[pid].selected > 0.1)) {
+		return;
+	}
     // update volume (assuming multFe is non-singular)
     points[pid].vol = 1.0 / determinant(multFe * multFp) * points[pid].vol;
 

@@ -186,7 +186,8 @@
     <None Include="shaders\compute\implicit\gCR_InitPart3.comp" />
     <None Include="shaders\compute\implicit\gCR_StepPart1.comp" />
     <None Include="shaders\compute\implicit\gCR_StepPart2.comp" />
-    <None Include="shaders\compute\mpm_header.comp" />
+    <None Include="shaders\compute\interactive\pMultiplyDeformationGradients.comp" />
+    <None Include="shaders\compute\interactive\pSetDeformationGradients.comp" />
     <None Include="shaders\compute\p2gCalculateVolumes.comp" />
     <None Include="shaders\compute\p2gGatherParticlesAndUpdateNode.comp" />
     <None Include="shaders\compute\p2gScatterParticleAndUpdateNodes.comp" />

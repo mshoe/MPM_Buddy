@@ -19,47 +19,125 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 	glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &work_group_size);
 	std::cout << "max work group size: " << work_group_size << std::endl;
 
+	std::string computePath = "shaders\\compute\\";
+	std::string mpmHeadersPath = "shaders\\compute\\mpmHeaders\\";
+	std::string graphicsPath = "shaders\\graphics\\";
+	std::string interactivePath = "shaders\\compute\\interactive\\";
+	std::string implicitPath = "shaders\\compute\\implicit\\";
+
 	// first compile shaders
-	m_gReset = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\gResetNodes.comp"}, "shaders\\compute\\mpm_header.comp");
-	m_p2gScatter = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\p2gScatterParticleAndUpdateNodes.comp"}, "shaders\\compute\\mpm_header.comp");
-	//m_p2gGather = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\p2gGatherParticlesAndUpdateNode.comp"}, "shaders\\compute\\mpm_header.comp");
-	m_gUpdate = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\gUpdateNodes.comp"}, "shaders\\compute\\mpm_header.comp");
+	m_gReset = std::make_unique<ComputeShader>(
+		std::vector<std::string>{computePath + "gResetNodes.comp"},
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
+	m_p2gScatter = std::make_unique<ComputeShader>(
+		std::vector<std::string>{computePath + "p2gScatterParticleAndUpdateNodes.comp"}, 
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp", mpmHeadersPath + "shapeFunctions.comp"});
+	m_gUpdate = std::make_unique<ComputeShader>(
+		std::vector<std::string>{computePath + "gUpdateNodes.comp"}, 
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
 
-	m_g2pGather = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\g2pGatherNodesAndUpdateParticle.comp"}, "shaders\\compute\\mpm_header.comp");
-	m_p2gCalcVolumes = std::make_unique<ComputeShader>(std::vector<std::string> {"shaders\\compute\\p2gCalculateVolumes.comp"}, "shaders\\compute\\mpm_header.comp");
-	m_g2pCalcVolumes = std::make_unique<ComputeShader>(std::vector<std::string> {"shaders\\compute\\g2pCalculateVolumes.comp"}, "shaders\\compute\\mpm_header.comp");
+	m_g2pGather = std::make_unique<ComputeShader>(
+		std::vector<std::string>{computePath + "g2pGatherNodesAndUpdateParticle.comp"}, 
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp", mpmHeadersPath + "shapeFunctions.comp", mpmHeadersPath + "energyFunctions.comp"});
+	m_p2gCalcVolumes = std::make_unique<ComputeShader>(
+		std::vector<std::string>{computePath + "p2gCalculateVolumes.comp"}, 
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp", mpmHeadersPath + "shapeFunctions.comp"});
+	m_g2pCalcVolumes = std::make_unique<ComputeShader>(
+		std::vector<std::string>{computePath + "g2pCalculateVolumes.comp"}, 
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp", mpmHeadersPath + "shapeFunctions.comp"});
 
-	m_pSetDeformationGradients = std::make_unique<ComputeShader>(std::vector<std::string> {"shaders\\compute\\interactive\\pSetDeformationGradients.comp"}, "shaders\\compute\\mpm_header.comp");
-	m_pMultDeformationGradients = std::make_unique<ComputeShader>(std::vector<std::string> {"shaders\\compute\\interactive\\pMultiplyDeformationGradients.comp"}, "shaders\\compute\\mpm_header.comp");
+
+	// interactive / control shaders
+	m_pSetDeformationGradients = std::make_unique<ComputeShader>(
+		std::vector<std::string>{interactivePath + "pSetDeformationGradients.comp"}, 
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
+	m_pMultDeformationGradients = std::make_unique<ComputeShader>(
+		std::vector<std::string>{interactivePath + "pMultiplyDeformationGradients.comp"}, 
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
+	m_pLassoTool = std::make_unique<ComputeShader>(
+		std::vector<std::string>{interactivePath + "pLassoTool.comp"}, 
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
+	m_pClearPointSelection = std::make_unique<ComputeShader>(
+		std::vector<std::string>{interactivePath + "pClearPointSelection.comp"}, 
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
+
+
 
 	// implict time integration shaders
-	m_p2g2pDeltaForce = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\implicit\\g2p2gDeltaForce.comp"}, "shaders\\compute\\mpm_header.comp");
-	m_gConjugateResidualsInitPart1 = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\implicit\\gCR_InitPart1.comp"}, "shaders\\compute\\mpm_header.comp");
-	m_gConjugateResidualsInitPart2 = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\implicit\\gCR_InitPart2.comp"}, "shaders\\compute\\mpm_header.comp");
-	m_gConjugateResidualsInitPart3 = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\implicit\\gCR_InitPart3.comp"}, "shaders\\compute\\mpm_header.comp");
+	m_p2g2pDeltaForce = std::make_unique<ComputeShader>(
+		std::vector<std::string>{implicitPath + "g2p2gDeltaForce.comp"}, 
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp", mpmHeadersPath + "shapeFunctions.comp", mpmHeadersPath + "energyFunctions.comp"});
+	m_gConjugateResidualsInitPart1 = std::make_unique<ComputeShader>(
+		std::vector<std::string>{implicitPath + "gCR_InitPart1.comp"}, 
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
+	m_gConjugateResidualsInitPart2 = std::make_unique<ComputeShader>(
+		std::vector<std::string>{implicitPath + "gCR_InitPart2.comp"}, 
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
+	m_gConjugateResidualsInitPart3 = std::make_unique<ComputeShader>(
+		std::vector<std::string>{implicitPath + "gCR_InitPart3.comp"}, 
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
 
-	m_gConjugateResidualsStepPart1 = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\implicit\\gCR_StepPart1.comp"}, "shaders\\compute\\mpm_header.comp");
-	m_gConjugateResidualsStepPart2 = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\implicit\\gCR_StepPart2.comp"}, "shaders\\compute\\mpm_header.comp");
-	m_gConjugateResidualsConclusion = std::make_unique<ComputeShader>(std::vector<std::string>{"shaders\\compute\\implicit\\gCR_Conclusion.comp"}, "shaders\\compute\\mpm_header.comp");
+	m_gConjugateResidualsStepPart1 = std::make_unique<ComputeShader>(
+		std::vector<std::string>{implicitPath + "gCR_StepPart1.comp"}, 
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
+	m_gConjugateResidualsStepPart2 = std::make_unique<ComputeShader>(
+		std::vector<std::string>{implicitPath + "gCR_StepPart2.comp"}, 
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
+	m_gConjugateResidualsConclusion = std::make_unique<ComputeShader>(
+		std::vector<std::string>{implicitPath + "gCR_Conclusion.comp"}, 
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
 
 	glCreateVertexArrays(1, &VisualizeVAO);
 
 	// RENDERING SHADERS
 
-	m_pPointCloudShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\pointCloud.vs"}, std::vector<std::string>{"shaders\\graphics\\pointCloudPassThrough.gs"}, std::vector<std::string>{"shaders\\graphics\\pointCloud.fs"}, "shaders\\compute\\mpm_header.comp");
-	//m_pPointCloudVectorShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\pointCloud.vs"}, std::vector<std::string>{"shaders\\graphics\\pointCloudVector.gs"}, std::vector<std::string>{"shaders\\graphics\\pointCloud.fs"}, "shaders\\compute\\mpm_header.comp");
-	//m_pPointCloudShader = std::make_unique<StandardShader>(std::vector<std::string>{"shaders\\graphics\\pointCloud.vs"}, std::vector<std::string>{}, std::vector<std::string>{"shaders\\graphics\\pointCloud.fs"}, "shaders\\compute\\mpm_header.comp");
-	m_mouseShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\mouseShader.vs"}, std::vector<std::string>{}, std::vector<std::string>{"shaders\\graphics\\mouseShader.fs"}, "shaders\\compute\\mpm_header.comp");
-	//m_nodeShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\nodeSelectionShader.vs"}, std::vector<std::string>{"shaders\\graphics\\nodeSelectionShader.fs"}, "shaders\\compute\\mpm_header.comp");
+	m_pPointCloudShader = std::make_shared<StandardShader>(
+		std::vector<std::string>{graphicsPath + "pointCloud.vs"}, 
+		std::vector<std::string>{graphicsPath + "pointCloudPassThrough.gs"}, 
+		std::vector<std::string>{graphicsPath + "pointCloud.fs"}, 
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
+	m_mouseShader = std::make_shared<StandardShader>(
+		std::vector<std::string>{graphicsPath + "mouseShader.vs"}, 
+		std::vector<std::string>{}, 
+		std::vector<std::string>{graphicsPath + "mouseShader.fs"}, 
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
+	
+	m_zoomWindowShader = std::make_shared<StandardShader>(
+		std::vector<std::string>{graphicsPath + "zoomWindow.vs"}, 
+		std::vector<std::string>{}, 
+		std::vector<std::string>{graphicsPath + "zoomWindow.fs"}, 
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
+	m_gridShader = std::make_shared<StandardShader>(
+		std::vector<std::string>{graphicsPath + "gridShader.vs"}, 
+		std::vector<std::string>{graphicsPath + "gridShaderPassThrough.gs"}, 
+		std::vector<std::string>{graphicsPath + "gridShader.fs"}, 
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
+	m_gridShaderVector = std::make_shared<StandardShader>(
+		std::vector<std::string>{graphicsPath + "gridShader.vs"}, 
+		std::vector<std::string>{graphicsPath + "gridShaderVector.gs"}, 
+		std::vector<std::string>{graphicsPath + "gridShader.fs"}, 
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
+	m_gridShaderMarchingSquares = std::make_shared<StandardShader>(
+		std::vector<std::string>{graphicsPath + "marchingSquares.vs"}, 
+		std::vector<std::string>{graphicsPath + "marchingSquares.gs"}, 
+		std::vector<std::string>{graphicsPath + "marchingSquares.fs"}, 
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
 
-	m_zoomWindowShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\zoomWindow.vs"}, std::vector<std::string>{}, std::vector<std::string>{"shaders\\graphics\\zoomWindow.fs"}, "shaders\\compute\\mpm_header.comp");
-	m_gridShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\gridShader.vs"}, std::vector<std::string>{"shaders\\graphics\\gridShaderPassThrough.gs"}, std::vector<std::string>{"shaders\\graphics\\gridShader.fs"}, "shaders\\compute\\mpm_header.comp");
-	m_gridShaderVector = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\gridShader.vs"}, std::vector<std::string>{"shaders\\graphics\\gridShaderVector.gs"}, std::vector<std::string>{"shaders\\graphics\\gridShader.fs"}, "shaders\\compute\\mpm_header.comp");
-	m_gridShaderMarchingSquares = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\marchingSquares.vs"}, std::vector<std::string>{"shaders\\graphics\\marchingSquares.gs"}, std::vector<std::string>{"shaders\\graphics\\marchingSquares.fs"}, "shaders\\compute\\mpm_header.comp");
-
-	m_borderShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\polygon.vs"}, std::vector<std::string>{"shaders\\graphics\\border.gs"}, std::vector<std::string>{"shaders\\graphics\\polygon.fs"}, "shaders\\compute\\mpm_header.comp");
-	m_polygonShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\polygon.vs"}, std::vector<std::string>{"shaders\\graphics\\polygon.gs"}, std::vector<std::string>{"shaders\\graphics\\polygon.fs"}, "shaders\\compute\\mpm_header.comp");
-	m_pwLineShader = std::make_shared<StandardShader>(std::vector<std::string>{"shaders\\graphics\\polygon.vs"}, std::vector<std::string>{"shaders\\graphics\\pwLine.gs"}, std::vector<std::string>{"shaders\\graphics\\polygon.fs"}, "shaders\\compute\\mpm_header.comp");
+	m_borderShader = std::make_shared<StandardShader>(
+		std::vector<std::string>{graphicsPath + "polygon.vs"}, 
+		std::vector<std::string>{graphicsPath + "border.gs"}, 
+		std::vector<std::string>{graphicsPath + "polygon.fs"}, 
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
+	m_polygonShader = std::make_shared<StandardShader>(
+		std::vector<std::string>{graphicsPath + "polygon.vs"}, 
+		std::vector<std::string>{graphicsPath + "polygon.gs"}, 
+		std::vector<std::string>{graphicsPath + "polygon.fs"}, 
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
+	m_pwLineShader = std::make_shared<StandardShader>(
+		std::vector<std::string>{graphicsPath + "polygon.vs"}, 
+		std::vector<std::string>{graphicsPath + "pwLine.gs"}, 
+		std::vector<std::string>{graphicsPath + "polygon.fs"}, 
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
 
 
 	m_openGLScreen = std::make_shared<OpenGLScreen>();
@@ -139,10 +217,22 @@ void mpm::MpmEngine::Update()
 				}
 			}
 			break;
-		case MPM_ALGORITHM_CODE::CPP:	
-			MpmTimeStep_CPP(m_dt);
-			MapCPUPointCloudsToGPU();
-			MapCPUGridToGPU();
+		case MPM_ALGORITHM_CODE::CPP:
+			if (!m_rt) {
+				MpmTimeStep_CPP(m_dt);
+				MapCPUPointCloudsToGPU();
+				MapCPUGridToGPU();
+			}
+			else {
+				real curr_dt = 0.0;
+				real rt_dt = 1.0 / 60.0;
+				while (curr_dt < rt_dt) {
+					MpmTimeStep_CPP(m_dt);
+					curr_dt += m_dt;
+				}
+				MapCPUPointCloudsToGPU();
+				MapCPUGridToGPU();
+			}
 			break;
 		default:
 			break;
@@ -175,11 +265,11 @@ void mpm::MpmEngine::ProcessKeyboardInput(GLFWwindow* window, real lag)
 		}
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {
+	/*if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {
 		for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
-			SetDeformationGradients(pointCloudPair.first, mat2(1.0), mat2(1.0));
+			SetDeformationGradients(pointCloudPair.first, mat2(1.0), mat2(1.0), false);
 		}
-	}
+	}*/
 
 	if (m_paused) {
 		if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
@@ -559,38 +649,6 @@ std::shared_ptr<mpm::PointCloud> mpm::MpmEngine::GenPointCloud(const std::string
 	return pointCloud;
 }
 
-
-
-//void mpm::MpmEngine::GenPointCloudLineDivider()
-//{
-//	if (!m_paused)
-//		return;
-//
-//	using namespace std::chrono;
-//	time_point<high_resolution_clock> t1;
-//	time_point<high_resolution_clock> t2;
-//	t1 = high_resolution_clock::now();
-//
-//
-//	m_isoTriCount++;
-//	//sdf::sdFunc dCircle(sdf::DemoCircle);
-//	sdf::LineDivider shape1(m_line_m, m_line_b);
-//	sdf::LineDivider shape2(m_line2_m, m_line2_b);
-//	sdf::Intersection andShape;
-//	andShape.shapes.push_back(shape1);
-//	andShape.shapes.push_back(shape2);
-//	std::string lineDivID = "lineDiv" + std::to_string(m_lineDivCount);
-//
-//	glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
-//
-//	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(lineDivID, andShape, GRID_SIZE_X, GRID_SIZE_Y, 0.0, 0.0, m_mpParameters, m_comodel, false, m_invertedSdf, m_fixedPointCloud, m_initVelocity, color);
-//
-//	t2 = high_resolution_clock::now();
-//
-//	std::cout << "Finished generating " << pointCloud->N << " points for '" << lineDivID << "' point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
-//
-//}
-
 void mpm::MpmEngine::PrintGridData()
 {
 	void *ptr = glMapNamedBuffer(gridSSBO, GL_READ_ONLY);
@@ -627,217 +685,6 @@ void mpm::MpmEngine::UpdateNodeData()
 	}
 }
 
-void mpm::MpmEngine::SelectNodesInShape(sdf::Shape& shape, const int gridDimX, const int gridDimY, const real inner_rounding, const real outer_rounding, sdf::SDF_OPTION sdfOption, bool inverted)
-{
-//	std::shared_ptr<PointCloud> pointCloud = std::make_shared<PointCloud>();
-
-	void* ptr = glMapNamedBuffer(gridSSBO, GL_READ_WRITE);
-	GridNode* data = static_cast<GridNode*>(ptr);
-	
-	
-	int count = 0;
-	// gen points from sdf
-	for (int i = 0; i < gridDimX; i++) {
-		for (int j = 0; j < gridDimY; j++) {
-
-			GridNode currNode = data[i * GRID_SIZE_Y + j];
-
-			glm::vec2 p;
-			p.x = real(i);
-			p.y = real(j);// (real(i), real(j));
-
-			real sd = 0.0;
-			switch (sdfOption) {
-			case sdf::SDF_OPTION::NORMAL:
-				sd = shape.Sdf(p);
-				break;
-			case sdf::SDF_OPTION::ROUNDED:
-				sd = shape.SdfRounded(p, outer_rounding);
-				break;
-			case sdf::SDF_OPTION::HOLLOW:
-				sd = shape.SdfHollow(p, inner_rounding, outer_rounding);
-				break;
-			default:
-				break;
-			}
-
-			if (inverted)
-				sd *= -1.0;
-
-			if (sd < 0.0) {
-				currNode.selected = true;
-				//currNode.force = vec2(100.0, 100.0);
-				count++;
-			}
-			else {
-				//currNode.selected = false;
-			}
-
-			data[i * GRID_SIZE_Y + j] = currNode;
-		}
-	}
-	std::cout << "Selected " << count << " nodes.\n";
-	glUnmapNamedBuffer(gridSSBO);
-
-	/*ptr = glMapNamedBuffer(gridSSBO, GL_READ_WRITE);
-	data = static_cast<GridNode*>(ptr);
-	int count2 = 0;
-	for (int i = 0; i < gridDimX; i++) {
-		for (int j = 0; j < gridDimY; j++) {
-
-			GridNode currNode = data[i * GRID_SIZE_Y + j];
-
-			if (currNode.selected)
-				count2++;
-		}
-	}
-
-	std::cout << "count2 = " << count2 << std::endl;
-	glUnmapNamedBuffer(gridSSBO);*/
-	
-}
-
-void mpm::MpmEngine::ClearNodesSelected(const int gridDimX, const int gridDimY)
-{
-	void* ptr = glMapNamedBuffer(gridSSBO, GL_READ_WRITE);
-	GridNode* data = static_cast<GridNode*>(ptr);
-
-
-	int count = 0;
-	// gen points from sdf
-	for (int i = 0; i < gridDimX; i++) {
-		for (int j = 0; j < gridDimY; j++) {
-
-			GridNode currNode = data[i * GRID_SIZE_Y + j];
-
-			if (currNode.selected) {
-				currNode.selected = false;
-				count++;
-				data[i * GRID_SIZE_Y + j] = currNode;
-			}
-
-		}
-	}
-	std::cout << "Cleared selection of " << count << " nodes.\n";
-	glUnmapNamedBuffer(gridSSBO);
-}
-
-void mpm::MpmEngine::CalculateNodalAccelerations(const int gridDimX, const int gridDimY, real accStr)
-{
-	void* ptr = glMapNamedBuffer(gridSSBO, GL_READ_WRITE);
-	GridNode* data = static_cast<GridNode*>(ptr);
-
-	std::vector<std::vector<vec2>> nodal_accs(gridDimX, std::vector<vec2>(gridDimY, vec2(0.0)));
-
-	// temp buffer for node selected var
-	int count = 0;
-	std::vector<std::vector<bool>> nodes_selected(gridDimX, std::vector<bool>(gridDimY, false));
-	for (int i = 0; i < gridDimX; i++) {
-		for (int j = 0; j < gridDimY; j++) {
-
-			if (data[i * GRID_SIZE_Y + j].selected) {
-				nodes_selected[i][j] = data[i * GRID_SIZE_Y + j].selected;
-				count++;
-			}
-		}
-	}
-
-	if (count == 0) {
-		glUnmapNamedBuffer(gridSSBO);
-		std::cout << "Can't compute accelerations since no nodes selected.\n";
-		return;
-	}
-
-	int countIter = 0;
-	bool finished = false;
-	// gen points from sdf
-	while (!finished) {
-		finished = true;
-		for (int i = 0; i < gridDimX; i++) {
-			for (int j = 0; j < gridDimY; j++) {
-
-				GridNode currNode = data[i * GRID_SIZE_Y + j];
-
-				if (currNode.selected) {
-					continue; // don't calculate nodal acceleration for marked nodes
-				}
-
-				finished = false;
-
-				int left = (i - 1) * GRID_SIZE_Y + j;
-				int right = (i + 1) * GRID_SIZE_Y + j;
-				int up = i * GRID_SIZE_Y + j + 1;
-				int down = i * GRID_SIZE_Y + j - 1;
-
-
-				// if left exists
-				if (i > 0 && data[left].selected) {
-					nodal_accs[i][j].x -= accStr;
-					nodes_selected[i][j] = true;
-				}
-				// if right exists
-				if (i < gridDimX - 1 && data[right].selected) {
-					nodal_accs[i][j].x += accStr;
-					nodes_selected[i][j] = true;
-				}
-				// if up exists
-				if (j < gridDimY - 1 && data[up].selected) {
-					nodal_accs[i][j].y += accStr;
-					nodes_selected[i][j] = true;
-				}
-				// if down exists 
-				if (j > 0 && data[down].selected) {
-					nodal_accs[i][j].y -= accStr;
-					nodes_selected[i][j] = true;
-				}
-
-				//currNode.nodalAcceleration = acc;
-				//currNode.selected = true;
-				
-
-				data[i * GRID_SIZE_Y + j] = currNode;
-			}
-		}
-
-		// Write buffer to original data
-		for (int i = 0; i < gridDimX; i++) {
-			for (int j = 0; j < gridDimY; j++) {
-				GridNode currNode = data[i * GRID_SIZE_Y + j];
-				currNode.selected = nodes_selected[i][j];
-				currNode.nodalAcceleration = nodal_accs[i][j];
-				data[i * GRID_SIZE_Y + j] = currNode;
-			}
-		}
-
-		countIter++;
-	}
-	std::cout << "Computed nodal accelerations in " << countIter << " iterations.\n";
-	glUnmapNamedBuffer(gridSSBO);
-}
-
-void mpm::MpmEngine::ClearNodalAcclerations(const int gridDimX, const int gridDimY)
-{
-	void* ptr = glMapNamedBuffer(gridSSBO, GL_READ_WRITE);
-	GridNode* data = static_cast<GridNode*>(ptr);
-
-
-	int count = gridDimX * gridDimY;
-	// gen points from sdf
-	for (int i = 0; i < gridDimX; i++) {
-		for (int j = 0; j < gridDimY; j++) {
-
-			GridNode currNode = data[i * GRID_SIZE_Y + j];
-
-
-			currNode.nodalAcceleration = vec2(0.0);
-			currNode.selected = false;
-
-			data[i * GRID_SIZE_Y + j] = currNode;
-		}
-	}
-	std::cout << "Cleared " << count << " nodal accelerations.\n";
-	glUnmapNamedBuffer(gridSSBO);
-}
 
 void mpm::MpmEngine::ChangeEnergyModel(ENERGY_MODEL comodel)
 {

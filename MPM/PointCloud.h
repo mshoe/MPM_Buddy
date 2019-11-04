@@ -38,8 +38,11 @@ namespace mpm {
 		mat2 FeSVD_V = mat2(1.0);
 		mat2 A = mat2(0.0);
 
+
+
 		real energy = 0.0;
-		real selectedWpg = 0.0;
+
+		real selected = 0.0;
 
 		friend std::ostream& operator << (std::ostream& out, const MaterialPoint& c) {
 			out << std::setprecision(std::numeric_limits<double>::digits10 + 1);
@@ -59,7 +62,7 @@ namespace mpm {
 			out << "FeSVD_S: " << glm::to_string(c.FeSVD_S) << "\n";
 			out << "FeSVD_V: " << glm::to_string(c.FeSVD_V) << "\n";
 			out << "energy: " << c.energy << "\n";
-			out << "selectedWpg: " << c.selectedWpg << "\n";
+			out << "selectedWpg: " << c.selected << "\n";
 			return out;
 		}
 
@@ -83,7 +86,27 @@ namespace mpm {
 			ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_S", FeSVD_S, min_color, max_color);
 			ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_V", FeSVD_V, min_color, max_color);
 			ImGui::DisplayNamedGlmRealColor("energy", energy, max_color);
+			//ImGui::DisplayNamedBoolColor("padding1", padding1, max_color, min_color);
+			ImGui::DisplayNamedGlmRealColor("selected", selected, max_color);
+			//ImGui::DisplayNamedBoolColor("padding2", padding2, max_color, min_color);
+			//ImGui::DisplayNamedBoolColor("padding3", padding3, max_color, min_color);
 		}
+	};
+
+	struct MaterialPointPhysicalProperties {
+		real m;
+		real vol = 0.0; // initial volume
+	};
+
+	struct ElasticityProperties : public MaterialPointPhysicalProperties {
+		real lam = 38888.9;
+		real mew = 58333.0;
+	};
+
+	struct SnowProperties : public ElasticityProperties {
+		real crit_c = 0.025;
+		real crit_s = 0.0075;
+		real hardening = 10.0;
 	};
 
 	struct MaterialParameters {
@@ -118,6 +141,8 @@ namespace mpm {
 
 		size_t N = 0;
 		std::vector<MaterialPoint> points;
+		std::vector<MaterialPointPhysicalProperties> properties;
+
 		glm::highp_fvec4 color = glm::highp_fvec4(1.f, 0.f, 0.f, 1.f);
 
 		MaterialParameters parameters;

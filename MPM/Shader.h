@@ -9,7 +9,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
-
+#include <chrono>
 
 class AdvancedShader {
 public:
@@ -103,8 +103,15 @@ protected:
 	GLuint m_ID;
 
 	bool CompileShaders(std::vector<GLuint>& shaders, const std::vector<std::string>& shaderPaths, const std::string &headerCode, GLenum shaderType) {
+		using namespace std::chrono;
+
+
 		shaders.resize(shaderPaths.size());
 		for (size_t i = 0; i < shaderPaths.size(); i++) {
+			std::cout << "Compiling:" << shaderPaths[i] << std::endl;
+			high_resolution_clock clock;
+			time_point<high_resolution_clock> t1 = clock.now();
+
 			std::string shaderCode;
 			std::ifstream shaderFile;
 			shaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
@@ -127,6 +134,9 @@ protected:
 			{
 				if (!shaderFile.eof()) {
 					std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
+					time_point<high_resolution_clock> t2 = clock.now();
+					duration_cast<seconds>(t2 - t1);
+					std::cout << "Failed compiling in " << duration_cast<seconds>(t2 - t1).count() << " seconds." << std::endl;
 					return false;
 				}
 			}
@@ -135,7 +145,13 @@ protected:
 			glShaderSource(shaders[i], 1, &cShaderCode, NULL);
 			glCompileShader(shaders[i]);
 			checkCompileErrors(shaders[i], shaderPaths[i]);
+
+			time_point<high_resolution_clock> t2 = clock.now();
+			std::cout << "Finished compiling in " << duration_cast<seconds>(t2 - t1).count() << " seconds." << std::endl;
 		}
+		
+		
+		
 		return true;
 	}
 
@@ -168,19 +184,21 @@ protected:
 
 class StandardShader : public AdvancedShader {
 public:
-	StandardShader(const std::vector<std::string> &vertexPaths, const std::vector<std::string> &geometryPaths, const std::vector<std::string> &fragmentPaths, std::string headerPath)
+	StandardShader(const std::vector<std::string> &vertexPaths, const std::vector<std::string> &geometryPaths, const std::vector<std::string> &fragmentPaths, const std::vector<std::string> &headerPaths)
 	{
 		// First get the header file str into a std::string
-		std::string headerCode;
+		std::string headerCode = "";
 		std::ifstream headerFile;
 		headerFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 		try
 		{
-			headerFile.open(headerPath);
-			std::stringstream headerStream;
-			headerStream << headerFile.rdbuf();
-			headerFile.close();
-			headerCode = headerStream.str();
+			for (size_t i = 0; i < headerPaths.size(); i++) {
+				headerFile.open(headerPaths[i]);
+				std::stringstream headerStream;
+				headerStream << headerFile.rdbuf();
+				headerFile.close();
+				headerCode += headerStream.str() + "\n";
+			}
 		}
 		catch (std::ifstream::failure e) {
 			std::cout << "ERROR::SHADER::HEADER_FILE_NOT_SUCCESFULLY_READ" << std::endl;
@@ -228,28 +246,38 @@ public:
 
 class ComputeShader : public AdvancedShader {
 public:
-	ComputeShader(std::vector<std::string> computePaths, std::string headerPath) {
+	ComputeShader(std::vector<std::string> computePaths, const std::vector<std::string>& headerPaths) {
+		using namespace std::chrono;
 		// Constructs compute shader using compute paths? and a header file
 
 		// First get the header file str into a std::string
-		std::string headerCode;
+		std::string headerCode = "";
 		std::ifstream headerFile;
 		headerFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 		try
 		{
-			headerFile.open(headerPath);
-			std::stringstream headerStream;
-			headerStream << headerFile.rdbuf();
-			headerFile.close();
-			headerCode = headerStream.str();
+			for (size_t i = 0; i < headerPaths.size(); i++) {
+				headerFile.open(headerPaths[i]);
+				std::stringstream headerStream;
+				headerStream << headerFile.rdbuf();
+				headerFile.close();
+				headerCode += headerStream.str() + "\n";
+			}
 		}
 		catch (std::ifstream::failure e) {
-			std::cout << "ERROR::SHADER::HAEDER_FILE_NOT_SUCCESFULLY_READ" << std::endl;
+			std::cout << "ERROR::SHADER::HEADER_FILE_NOT_SUCCESFULLY_READ" << std::endl;
 		}
 
 		std::vector<GLuint> computes;
 		computes.resize(computePaths.size());
 		for (size_t i = 0; i < computePaths.size(); i++) {
+			std::cout << "Compiling:" << computePaths[i] << std::endl;
+			high_resolution_clock clock;
+			time_point<high_resolution_clock> t1 = clock.now();
+
+			std::string shaderCode;
+			std::ifstream shaderFile;
+
 			std::string compPath = computePaths[i];
 			std::string compCode;
 			std::ifstream cShaderFile;
@@ -287,6 +315,10 @@ public:
 			glShaderSource(computes[i], 1, &cShaderCode, NULL);
 			glCompileShader(computes[i]);
 			checkCompileErrors(computes[i], "COMPUTE");
+
+			time_point<high_resolution_clock> t2 = clock.now();
+			duration_cast<seconds>(t2 - t1);
+			std::cout << "Finished compiling in " << duration_cast<seconds>(t2 - t1).count() << " seconds." << std::endl;
 		}
 
 		// shader Program

@@ -19,9 +19,6 @@
     <Filter Include="Header Files\Math">
       <UniqueIdentifier>{70af37af-54fd-4a42-873e-a9d0b693da5a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files\Shaders\headers">
-      <UniqueIdentifier>{e76ba204-a47c-48da-a261-427e8f420524}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\apps">
       <UniqueIdentifier>{950170f3-76ad-4159-989e-f09f02a86be1}</UniqueIdentifier>
     </Filter>
@@ -54,6 +51,9 @@
     </Filter>
     <Filter Include="Resource Files\imgui">
       <UniqueIdentifier>{0d307b49-52f2-4923-9998-82104a644055}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Shaders\compute\interactive">
+      <UniqueIdentifier>{3efa31c6-618f-4565-9bae-d7cd0ee49c15}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -223,9 +223,6 @@
     <None Include="shaders\graphics\mouseShader.vs">
       <Filter>Resource Files\Shaders\graphics</Filter>
     </None>
-    <None Include="shaders\compute\mpm_header.comp">
-      <Filter>Resource Files\Shaders\headers</Filter>
-    </None>
     <None Include="shaders\compute\implicit\g2p2gDeltaForce.comp">
       <Filter>Resource Files\Shaders\compute\implicit</Filter>
     </None>
@@ -258,6 +255,12 @@
     </None>
     <None Include="shaders\graphics\gridShader.fs">
       <Filter>Resource Files\Shaders\graphics</Filter>
+    </None>
+    <None Include="shaders\compute\interactive\pMultiplyDeformationGradients.comp">
+      <Filter>Resource Files\Shaders\compute\interactive</Filter>
+    </None>
+    <None Include="shaders\compute\interactive\pSetDeformationGradients.comp">
+      <Filter>Resource Files\Shaders\compute\interactive</Filter>
     </None>
   </ItemGroup>
 </Project>
