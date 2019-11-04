@@ -95,9 +95,7 @@ void mpm::MpmEngine::SelectNodesInShape(sdf::Shape& shape, const int gridDimX, c
 
 			GridNode currNode = data[i * GRID_SIZE_Y + j];
 
-			glm::vec2 p;
-			p.x = real(i);
-			p.y = real(j);// (real(i), real(j));
+			vec2 p = vec2(real(i), real(j));
 
 			real sd = 0.0;
 			switch (sdfOption) {

@@ -346,6 +346,7 @@ namespace mpm {
 		/******************** GEOMETRY EDITOR ********************/
 		bool m_fixedPointCloud = false;
 		bool m_invertedSdf = false;
+		void HandleGeometryStates();
 		std::shared_ptr<PointCloud> GenPointCloud(const std::string pointCloudID, sdf::Shape& shape,
 			const real gridDimX, const real gridDimY,
 			const real inner_rounding, const real outer_rounding,

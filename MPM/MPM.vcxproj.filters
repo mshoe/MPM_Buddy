@@ -102,9 +102,6 @@
     <ClCompile Include="external\imgui\imgui.cpp">
       <Filter>Resource Files\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="MpmSemiImplicitDirectSolver.cpp">
-      <Filter>Source Files\MPM</Filter>
-    </ClCompile>
     <ClCompile Include="MpmInteractions.cpp">
       <Filter>Source Files\MPM</Filter>
     </ClCompile>
@@ -118,6 +115,9 @@
       <Filter>Source Files\MPM</Filter>
     </ClCompile>
     <ClCompile Include="MpmAlgorithmCR_GLSL.cpp">
+      <Filter>Source Files\MPM</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmGeometry.cpp">
       <Filter>Source Files\MPM</Filter>
     </ClCompile>
   </ItemGroup>

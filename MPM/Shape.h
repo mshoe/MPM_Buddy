@@ -165,6 +165,9 @@ namespace sdf {
 			vertices.push_back(v);
 		}
 
+		// TODO: Define the polygon w.r.t. the center so it can be easily moved around by moving the center
+		//vec2 center;
+
 
 		// first and last vertex are assumed connected
 		// assumed at least 3 vertices before calling Sdf functions
