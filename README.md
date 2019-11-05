@@ -8,7 +8,7 @@ __Video Gallery:__<br/>
 https://www.youtube.com/channel/UC4qfNTQgecwtluc0M5HRnTw<br/>
 
 __Nice GUI:__<br/>
-![pic](gifs/random/niceGUI.png)<br/>
+![pic](gifs/random/niceGUI.PNG)<br/>
 
 __Gif Gallery:__<br/>
 Rendering speed colored points vs marching squares for green fluid:<br/>
