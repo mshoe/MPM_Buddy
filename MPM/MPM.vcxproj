@@ -136,6 +136,8 @@
     <ClCompile Include="external\imgui\imgui_impl_opengl3.cpp" />
     <ClCompile Include="external\imgui\imgui_widgets.cpp" />
     <ClCompile Include="external\src\glad\glad.c" />
+    <ClCompile Include="MpmEngineInitialization.cpp" />
+    <ClCompile Include="MpmGeometryImGui.cpp" />
     <ClCompile Include="glm_imgui.cpp" />
     <ClCompile Include="glm_MATLAB.cpp" />
     <ClCompile Include="MpmAlgorithm_CPP.cpp" />

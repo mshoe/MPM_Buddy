@@ -4,7 +4,7 @@
 class OpenGLScreen {
 public:
 	OpenGLScreen();
-	~OpenGLScreen();
+	virtual ~OpenGLScreen();
 
 	void Render();
 

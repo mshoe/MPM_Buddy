@@ -65,21 +65,7 @@ void mpm::MpmEngine::Render()
 	glDrawArrays(GL_POINTS, 0, (GLsizei)1);
 	glBindVertexArray(0);
 
-	m_zoomWindow->BindFBO();
-	glViewport(0, 0, (GLsizei)m_zoomWindow->screen_dimensions.x, (GLsizei)m_zoomWindow->screen_dimensions.y);
-	glClearColor(m_backgroundColor[0], m_backgroundColor[1], m_backgroundColor[2], m_backgroundColor[3]);
-	glClear(GL_COLOR_BUFFER_BIT);
-	//RenderScreenShader(m_zoomPoint, m_zoomFactor, m_zoomWindow);
-	if (m_viewPointClouds) {
-		RenderPointClouds(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_pPointCloudShader);
-	}
-	if (m_viewGrid) {
-		RenderGrid(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_gridShader);
-		if (m_viewGridVector) {
-			RenderGrid(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_gridShaderVector);
-		}
-	}
-	m_zoomWindow->UnbindFBO();
+	
 
 }
 

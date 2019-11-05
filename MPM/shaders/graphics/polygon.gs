@@ -15,9 +15,6 @@ uniform dvec2 iCenter; // e.g. vec(900, 450)
 
 uniform bool lastVertexMouse = false;
 
-//uniform dvec2 zoomPoint;
-//uniform double zoomFactor;
-
 /*** HEADER ***/
 
 

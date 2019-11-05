@@ -105,7 +105,10 @@ namespace mpm {
 		void RenderExternalForceController();
 		void RenderDeformationGradientController();
 		void RenderMaterialParameterController();
-		void RenderGeometryEditor();
+		
+		void RenderBasicShapesEditor();
+		void RenderPolygonEditor();
+		
 		void RenderMaterialParametersEditor();
 		void RenderGridOptions();
 		void RenderGridNodeViewer();
@@ -119,15 +122,26 @@ namespace mpm {
 
 		// state variables for rendering different windows
 		bool m_renderTimeIntegrator = false;
+		bool m_renderZoomWindow = false;
+
+		// geometry
+		bool m_renderBasicShapesEditor = false;
+		bool m_renderPolygonEditor = false;
+
+		// grid
+		bool m_renderGridOptions = false;
+		bool m_renderGridNodeViewer = false;
+
+		// material point
+		bool m_renderMaterialPointViewer = false;
+		bool m_renderMaterialParametersEditor = false;
+
+		// control
 		bool m_renderExternalForceController = false;
 		bool m_renderDeformationGradientController = false;
 		bool m_renderMaterialParameterController = false;
-		bool m_renderMaterialParametersEditor = false;
-		bool m_renderGeometryEditor = false;
-		bool m_renderGridOptions = false;
-		bool m_renderGridNodeViewer = false;
-		bool m_renderMaterialPointViewer = false;
-		bool m_renderZoomWindow = false;
+
+		// experimental
 		bool m_renderCPUMode = false;
 
 		/******************** ZOOM WINDOW ********************/
@@ -142,7 +156,6 @@ namespace mpm {
 		vec2 m_zoomPoint = vec2(40.0, 50.0); // ZOOM POINT IN GRID SPACE
 		vec2 m_zoomDim = vec2(GRID_SIZE_X, GRID_SIZE_Y);
 
-		void PrintGridData();
 
 
 		/********************SHADERS ********************/
@@ -174,7 +187,7 @@ namespace mpm {
 		std::shared_ptr<StandardShader> m_borderShader = nullptr;
 		std::shared_ptr<StandardShader> m_polygonShader = nullptr;
 		std::shared_ptr<StandardShader> m_pwLineShader = nullptr;
-
+		std::shared_ptr<StandardShader> m_polygonEditorShader = nullptr;
 
 
 		std::shared_ptr<OpenGLScreen> m_openGLScreen = nullptr;
@@ -367,6 +380,8 @@ namespace mpm {
 		void GenPointCloudPolygon();
 		int m_polygonCount = 0;
 		bool m_renderPolygon = false;
+		void InitPolygonEditorScreen();
+		std::shared_ptr<ImGuiScreen> m_polygonEditorScreen = nullptr;
 
 		std::shared_ptr<sdf::PWLine> m_pwLine = nullptr;
 		bool m_addPWLineVertexState = false;

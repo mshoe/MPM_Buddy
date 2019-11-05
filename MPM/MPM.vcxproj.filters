@@ -55,6 +55,21 @@
     <Filter Include="Resource Files\Shaders\compute\interactive">
       <UniqueIdentifier>{3efa31c6-618f-4565-9bae-d7cd0ee49c15}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\MPM\Geometry">
+      <UniqueIdentifier>{e6d6d692-3810-49ff-9b1c-646cc90a8fb6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\MPM\Algorithm">
+      <UniqueIdentifier>{f00bb891-9f96-4779-b0b1-1c9e6743a2d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\MPM\Control">
+      <UniqueIdentifier>{9eb89884-6fb8-467a-ac9d-e7faeb679bb3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\MPM\Graphics">
+      <UniqueIdentifier>{0adad599-5190-4f61-8536-6c15581412f5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\MPM\Engine">
+      <UniqueIdentifier>{26ef3dff-89cc-4b5c-afca-7c5bc24cf0de}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -71,12 +86,6 @@
     </ClCompile>
     <ClCompile Include="glm_MATLAB.cpp">
       <Filter>Header Files\Utility\src</Filter>
-    </ClCompile>
-    <ClCompile Include="MpmEngine.cpp">
-      <Filter>Source Files\MPM</Filter>
-    </ClCompile>
-    <ClCompile Include="MpmImGui.cpp">
-      <Filter>Source Files\MPM</Filter>
     </ClCompile>
     <ClCompile Include="OpenGLScreen.cpp">
       <Filter>Header Files\Utility\src</Filter>
@@ -102,23 +111,35 @@
     <ClCompile Include="external\imgui\imgui.cpp">
       <Filter>Resource Files\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="MpmInteractions.cpp">
-      <Filter>Source Files\MPM</Filter>
-    </ClCompile>
-    <ClCompile Include="MpmRender.cpp">
-      <Filter>Source Files\MPM</Filter>
+    <ClCompile Include="MpmAlgorithm_CPP.cpp">
+      <Filter>Source Files\MPM\Algorithm</Filter>
     </ClCompile>
     <ClCompile Include="MpmAlgorithm_GLSL.cpp">
-      <Filter>Source Files\MPM</Filter>
-    </ClCompile>
-    <ClCompile Include="MpmAlgorithm_CPP.cpp">
-      <Filter>Source Files\MPM</Filter>
+      <Filter>Source Files\MPM\Algorithm</Filter>
     </ClCompile>
     <ClCompile Include="MpmAlgorithmCR_GLSL.cpp">
-      <Filter>Source Files\MPM</Filter>
+      <Filter>Source Files\MPM\Algorithm</Filter>
     </ClCompile>
     <ClCompile Include="MpmGeometry.cpp">
-      <Filter>Source Files\MPM</Filter>
+      <Filter>Source Files\MPM\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmInteractions.cpp">
+      <Filter>Source Files\MPM\Control</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmRender.cpp">
+      <Filter>Source Files\MPM\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmEngine.cpp">
+      <Filter>Source Files\MPM\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmImGui.cpp">
+      <Filter>Source Files\MPM\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmGeometryImGui.cpp">
+      <Filter>Source Files\MPM\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmEngineInitialization.cpp">
+      <Filter>Source Files\MPM\Engine</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

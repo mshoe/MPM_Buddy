@@ -33,21 +33,30 @@ void mpm::MpmEngine::RenderGUI()
 				if (ImGui::MenuItem("Paste", "CTRL+V")) {}
 				ImGui::EndMenu();
 			}
-			if (ImGui::BeginMenu("Windows")) {
+			if (ImGui::BeginMenu("Engine")) {
 				if (ImGui::MenuItem("Time Integrator", "", m_renderTimeIntegrator)) {
 					m_renderTimeIntegrator = !m_renderTimeIntegrator;
 				}
-				if (ImGui::MenuItem("Geometry Editor", "", m_renderGeometryEditor)) {
-					m_renderGeometryEditor = !m_renderGeometryEditor;
+				if (ImGui::MenuItem("Zoom Window", "", m_renderZoomWindow)) {
+					m_renderZoomWindow = !m_renderZoomWindow;
 				}
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Geometry")) {
+				if (ImGui::MenuItem("Basic Shapes", "", m_renderBasicShapesEditor)) {
+					m_renderBasicShapesEditor = !m_renderBasicShapesEditor;
+				}
+				if (ImGui::MenuItem("Polygon Editor", "", m_renderPolygonEditor)) {
+					m_renderPolygonEditor = !m_renderPolygonEditor;
+				}
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Material")) {
 				if (ImGui::MenuItem("Material Parameters Editor", "", m_renderMaterialParametersEditor)) {
 					m_renderMaterialParametersEditor = !m_renderMaterialParametersEditor;
 				}
 				if (ImGui::MenuItem("Material Point Viewer", "", m_renderMaterialPointViewer)) {
 					m_renderMaterialPointViewer = !m_renderMaterialPointViewer;
-				}
-				if (ImGui::MenuItem("Zoom Window", "", m_renderZoomWindow)) {
-					m_renderZoomWindow = !m_renderZoomWindow;
 				}
 				ImGui::EndMenu();
 			}
@@ -87,7 +96,8 @@ void mpm::MpmEngine::RenderGUI()
 		if (m_renderExternalForceController) RenderExternalForceController();
 		if (m_renderDeformationGradientController) RenderDeformationGradientController();
 		if (m_renderMaterialParameterController) RenderMaterialParameterController();
-		if (m_renderGeometryEditor) RenderGeometryEditor();
+		if (m_renderPolygonEditor) RenderPolygonEditor();
+		if (m_renderBasicShapesEditor) RenderBasicShapesEditor();
 		if (m_renderMaterialParametersEditor) RenderMaterialParametersEditor();
 		if (m_renderGridOptions) RenderGridOptions();
 		if (m_renderGridNodeViewer) RenderGridNodeViewer();
@@ -225,6 +235,9 @@ void mpm::MpmEngine::RenderTimeIntegrator()
 			UpdatePointCloudData(m_pointCloudViewSelectStr);
 			UpdateNodeData();
 		}
+
+		std::string globalMouseStr = std::to_string(m_mouse.x) + ", " + std::to_string(m_mouse.y);
+		ImGui::Text(globalMouseStr.c_str());
 		//ImGui::DisplayNamedBoolColor("CR Convergence", converged, )
 	}
 	ImGui::End();
@@ -385,89 +398,6 @@ void mpm::MpmEngine::RenderMaterialParameterController() {
 	ImGui::End();
 }
 
-void mpm::MpmEngine::RenderGeometryEditor()
-{
-	if (ImGui::Begin("Geometry Editor", &m_renderGeometryEditor)) {
-
-
-
-		ImGui::Checkbox("Fixed point cloud", &m_fixedPointCloud);
-		ImGui::Checkbox("Inverted SDF (DANGER)", &m_invertedSdf);
-
-		ImGui::InputReal("Point Spacing", &m_particleSpacing, 0.01, 0.1, "%.2f");
-
-		ImGui::InputReal("Circle Radius", &m_circle_r, 0.1, 1.0, "%.1f");
-		ImGui::InputReal("Circle Inner Radius", &m_circle_inner_radius, 0.1, 1.0, "%.1f");
-		ImGui::InputReal("Circle Rounding", &m_circle_rounding, 0.1, 1.0, "%.1f");
-		if (ImGui::Button("Create Solid Circle") && m_paused) {
-			m_createCircleState = true;
-		}
-
-
-		ImGui::InputReal("Rectangle Base Length", &m_rect_b, 0.1, 1.0, "%.1f");
-		ImGui::InputReal("Rectangle Height Length", &m_rect_h, 0.1, 1.0, "%.1f");
-		ImGui::InputReal("Rectangle Inner Radius", &m_rect_inner_radius, 0.1, 1.0, "%.1f");
-		ImGui::InputReal("Rectangle Rounding", &m_rect_rounding, 0.1, 1.0, "%.1f");
-		if (ImGui::Button("Create Solid Rectangle") && m_paused) {
-			m_createRectState = true;
-		}
-
-		ImGui::InputReal("Isosceles Triangle Base Length", &m_iso_tri_b, 0.1, 1.0, "%.1f");
-		ImGui::InputReal("Isosceles Height Length", &m_iso_tri_h, 0.1, 1.0, "%.1f");
-		ImGui::InputReal("Isosceles Triangle Inner Radius", &m_iso_tri_inner_radius, 0.1, 1.0, "%.1f");
-		ImGui::InputReal("Isosceles Triangle Rounding", &m_iso_tri_rounding, 0.1, 1.0, "%.1f");
-		if (ImGui::Button("Create Solid Triangle") && m_paused) {
-			m_createIsoTriState = true;
-		}
-
-		//ImGui::InputReal("Line m", &m_line_m);
-		//ImGui::InputReal("Line b", &m_line_b);
-		//ImGui::InputReal("Line2 m", &m_line2_m);
-		//ImGui::InputReal("Line2 b", &m_line2_b);
-		//if (ImGui::Button("Create below line y = mx + b")) {
-		//	GenPointCloudLineDivider();
-		//}
-
-		ImGui::Text("");
-		ImGui::Checkbox("Render polygon", &m_renderPolygon);
-		if (ImGui::Button("Add Polygon Vertex")) {
-			m_addPolygonVertexState = true;
-		}
-		if (ImGui::Button("Clear Polygon")) {
-			m_polygon->vertices.clear();
-		}
-		if (ImGui::Button("Fill polygon with MPs")) {
-			GenPointCloudPolygon();
-		}
-		if (ImGui::Button("Select grid nodes")) {
-
-		}
-		ImGui::DisplayNamedGlmRealColor("Number of vertices", real(m_polygon->vertices.size()), glm::highp_fvec4(1.0));
-		ImGui::Text("Polygon vertices:");
-		for (int i = 0; i < m_polygon->vertices.size(); i++) {
-			ImGui::DisplayGlmVec(m_polygon->vertices[i]);
-		}
-
-		ImGui::Text("");
-		ImGui::Checkbox("Render piecewise line", &m_renderPWLine);
-		if (ImGui::Button("Add line Vertex")) {
-			m_addPWLineVertexState = true;
-		}
-		if (ImGui::Button("Clear Line")) {
-			m_pwLine->vertices.clear();
-		}
-		if (ImGui::Button("Create PW Line from SDF")) {
-			GenPointCloudPWLine();
-		}
-		ImGui::InputReal("pwLineRounding", &m_pwLineRounding, 0.1, 1.0, "%.6f");
-		ImGui::DisplayNamedGlmRealColor("Number of vertices", real(m_pwLine->vertices.size()), glm::highp_fvec4(1.0));
-		ImGui::Text("PW Line vertices:");
-		for (int i = 0; i < m_pwLine->vertices.size(); i++) {
-			ImGui::DisplayGlmVec(m_pwLine->vertices[i]);
-		}
-	}
-	ImGui::End();
-}
 
 void mpm::MpmEngine::RenderMaterialParametersEditor()
 {
@@ -705,7 +635,7 @@ void mpm::MpmEngine::RenderMaterialPointViewer()
 		ImGui::InputReal("Min speed clamp (for coloring)", &m_minSpeedClamp, 1.0, 1000.0, "%.1f");
 		ImGui::Checkbox("Visualize Speed", &m_visualizeSpeed);
 
-		ImGui::Checkbox("Visuzelize seslected points", &m_visualizeSelected);
+		ImGui::Checkbox("Visualize selected points", &m_visualizeSelected);
 		static float selectColor[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
 		selectColor[0] = m_pointSelectColor.x;
 		selectColor[1] = m_pointSelectColor.y;
@@ -744,6 +674,23 @@ void mpm::MpmEngine::RenderZoomWindow()
 		ImGui::InputReal("Zoom Factor", &m_zoomFactor, 0.5, 2.0, "%.1f");
 		ImGui::Checkbox("Show Zoom Border", &m_showZoomBorder);
 		ImGui::Checkbox("Move Zoom Window", &m_movingZoomWindow);
+
+		m_zoomWindow->BindFBO();
+		glViewport(0, 0, (GLsizei)m_zoomWindow->screen_dimensions.x, (GLsizei)m_zoomWindow->screen_dimensions.y);
+		glClearColor(m_backgroundColor[0], m_backgroundColor[1], m_backgroundColor[2], m_backgroundColor[3]);
+		glClear(GL_COLOR_BUFFER_BIT);
+		//RenderScreenShader(m_zoomPoint, m_zoomFactor, m_zoomWindow);
+		if (m_viewPointClouds) {
+			RenderPointClouds(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_pPointCloudShader);
+		}
+		if (m_viewGrid) {
+			RenderGrid(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_gridShader);
+			if (m_viewGridVector) {
+				RenderGrid(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_gridShaderVector);
+			}
+		}
+		m_zoomWindow->UnbindFBO();
+
 		ImGui::Image(
 			(void*)(intptr_t)m_zoomWindow->texture,
 			ImVec2((float)m_zoomWindow->screen_dimensions.x, (float)m_zoomWindow->screen_dimensions.y),
