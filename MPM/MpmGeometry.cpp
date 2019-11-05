@@ -256,7 +256,9 @@ void mpm::MpmEngine::HandleGeometryStates()
 
 		vec2 v = vec2(vertexX, vertexY);
 
+		//if (m_mouseMoved) {
 		m_polygon->AddVertex(v);
+		//}
 	}
 
 	if (m_paused && m_addPWLineVertexState && m_leftButtonDown) {

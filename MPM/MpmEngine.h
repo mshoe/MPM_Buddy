@@ -208,6 +208,7 @@ namespace mpm {
 		vec2 m_mouseMpmRenderScreenNormalized = vec2(0.0);
 		vec2 m_mouseMpmRenderScreenGridSpace = vec2(0.0);
 		vec4 m_mouseMpmRenderScreenGridSpaceFull = vec4(0.0);
+		bool m_mouseMoved = false;
 		bool m_leftButtonDown = false;
 		bool m_midButtonDown = false;
 		bool m_rightButtonDown = false;

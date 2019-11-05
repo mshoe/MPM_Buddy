@@ -1,7 +1,8 @@
 #version 450 core
 
 layout (points) in;
-layout (line_strip, max_vertices = 100) out;
+layout (line_strip, max_vertices = 256) out;
+// 36320 is max
 
 layout (std430, binding = 3) buffer polygonVertices {
 	dvec2 vertices[];

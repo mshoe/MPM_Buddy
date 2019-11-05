@@ -43,5 +43,4 @@ private:
 	GLuint FBO;
 	GLuint borderVAO, borderVBO, borderEBO;
 
-	
 };

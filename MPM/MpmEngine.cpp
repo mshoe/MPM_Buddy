@@ -128,6 +128,13 @@ void mpm::MpmEngine::ProcessMouseInput(GLFWwindow* window, real lag)
 	right_click = (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) ? 1.0 : 0.0;
 	m_midButtonDown = (bool)glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE);
 
+	if (m_mouseGlobalScreen.x != xpos || m_mouseGlobalScreen.y != (real)SRC_HEIGHT - ypos) {
+		m_mouseMoved = true;
+	}
+	else {
+		m_mouseMoved = false;
+	}
+
 	m_mouseGlobalScreen.x = xpos;
 	m_mouseGlobalScreen.y = (real)SRC_HEIGHT - ypos;
 

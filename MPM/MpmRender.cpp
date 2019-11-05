@@ -49,10 +49,13 @@ void mpm::MpmEngine::RenderMpmRenderWindow()
 		);
 
 		ImGui::Text("global mouse pos: "); ImGui::SameLine(); ImGui::Text(mouseGlobalStr.c_str());
-		ImGui::Text("global window pos: "); ImGui::SameLine(); ImGui::Text(windowPosStr.c_str());
+		//ImGui::Text("global window pos: "); ImGui::SameLine(); ImGui::Text(windowPosStr.c_str());
 		ImGui::Text("rsbl pos: "); ImGui::SameLine(); ImGui::Text(rsblStr.c_str());
 		ImGui::Text("mouse in render screen: "); ImGui::SameLine(); ImGui::Text(mouseInRenderScreenStr.c_str());
 
+		static glm::highp_fvec4 min_color = glm::highp_fvec4(1.0, 0.0, 0.0, 1.0);
+		static glm::highp_fvec4 max_color = glm::highp_fvec4(0.0, 1.0, 0.0, 1.0);
+		ImGui::DisplayNamedBoolColor("mouse moved", m_mouseMoved, max_color, min_color);
 	}
 	ImGui::End();
 }

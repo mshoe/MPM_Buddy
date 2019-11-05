@@ -4,8 +4,11 @@ This program was made using C++ and OpenGL compute shaders.
 It also uses OpenGL for rendering and ImGui for GUI.
 I am using this program for my own research in physics-based animation.
 
-__Video Gallery:__
-https://www.youtube.com/channel/UC4qfNTQgecwtluc0M5HRnTw
+__Video Gallery:__<br/>
+https://www.youtube.com/channel/UC4qfNTQgecwtluc0M5HRnTw<br/>
+
+__Nice GUI:__<br/>
+![pic](gifs/random/niceGUI.png)<br/>
 
 __Gif Gallery:__<br/>
 Rendering speed colored points vs marching squares for green fluid:<br/>
