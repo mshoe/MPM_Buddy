@@ -6,7 +6,8 @@
 
 void mpm::MpmEngine::RenderGUI()
 {
-	static bool renderImguiDemo = false;
+	static bool renderImGuiDemo = false;
+	static bool renderImGuiStyleDemo = false;
 
 	if (m_renderGUI) {
 
@@ -14,8 +15,11 @@ void mpm::MpmEngine::RenderGUI()
 		{
 			if (ImGui::BeginMenu("File"))
 			{
-				if (ImGui::MenuItem("ImGui Demo", "", renderImguiDemo)) {
-					renderImguiDemo = !renderImguiDemo;
+				if (ImGui::MenuItem("ImGui Demo", "", renderImGuiDemo)) {
+					renderImGuiDemo = !renderImGuiDemo;
+				}
+				if (ImGui::MenuItem("ImGui Style Demo", "", renderImGuiStyleDemo)) {
+					renderImGuiStyleDemo = !renderImGuiStyleDemo;
 				}
 				if (ImGui::MenuItem("Re-initialize shader pipeline")) {
 					CleanupComputeShaderPipeline();
@@ -92,6 +96,7 @@ void mpm::MpmEngine::RenderGUI()
 		}
 
 		//RenderWindowManager();
+		if (m_renderMpmRenderWindow) RenderMpmRenderWindow();
 		if (m_renderTimeIntegrator) RenderTimeIntegrator();
 		if (m_renderExternalForceController) RenderExternalForceController();
 		if (m_renderDeformationGradientController) RenderDeformationGradientController();
@@ -105,7 +110,8 @@ void mpm::MpmEngine::RenderGUI()
 		if (m_renderZoomWindow) RenderZoomWindow();
 		if (m_renderCPUMode) RenderCPUMode();
 		
-		if (renderImguiDemo) { ImGui::ShowDemoWindow(); }
+		if (renderImGuiDemo) { ImGui::ShowDemoWindow(); }
+		if (renderImGuiStyleDemo) { ImGui::ShowStyleEditor(); }
 	}
 }
 
@@ -236,8 +242,6 @@ void mpm::MpmEngine::RenderTimeIntegrator()
 			UpdateNodeData();
 		}
 
-		std::string globalMouseStr = std::to_string(m_mouse.x) + ", " + std::to_string(m_mouse.y);
-		ImGui::Text(globalMouseStr.c_str());
 		//ImGui::DisplayNamedBoolColor("CR Convergence", converged, )
 	}
 	ImGui::End();
@@ -675,21 +679,6 @@ void mpm::MpmEngine::RenderZoomWindow()
 		ImGui::Checkbox("Show Zoom Border", &m_showZoomBorder);
 		ImGui::Checkbox("Move Zoom Window", &m_movingZoomWindow);
 
-		m_zoomWindow->BindFBO();
-		glViewport(0, 0, (GLsizei)m_zoomWindow->screen_dimensions.x, (GLsizei)m_zoomWindow->screen_dimensions.y);
-		glClearColor(m_backgroundColor[0], m_backgroundColor[1], m_backgroundColor[2], m_backgroundColor[3]);
-		glClear(GL_COLOR_BUFFER_BIT);
-		//RenderScreenShader(m_zoomPoint, m_zoomFactor, m_zoomWindow);
-		if (m_viewPointClouds) {
-			RenderPointClouds(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_pPointCloudShader);
-		}
-		if (m_viewGrid) {
-			RenderGrid(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_gridShader);
-			if (m_viewGridVector) {
-				RenderGrid(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_gridShaderVector);
-			}
-		}
-		m_zoomWindow->UnbindFBO();
 
 		ImGui::Image(
 			(void*)(intptr_t)m_zoomWindow->texture,

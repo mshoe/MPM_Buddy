@@ -72,7 +72,7 @@ void mpm::MpmEngine::MpmTimeStepExplicitGridUpdate_GLSL(real dt)
 	m_gUpdate->Use();
 	m_gUpdate->SetReal("dt", dt);
 	m_gUpdate->SetVec("globalForce", m_globalForce);
-	m_gUpdate->SetVec("iMpmMouse", m_mpm_mouse);
+	m_gUpdate->SetVec("iMpmMouse", m_mouseMpmRenderScreenGridSpaceFull);
 	m_gUpdate->SetReal("drag", m_drag);
 	m_gUpdate->SetReal("mousePower", m_mousePower);
 	glDispatchCompute(m_chunks_x, m_chunks_y, 1);

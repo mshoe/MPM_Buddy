@@ -203,7 +203,7 @@ void mpm::MpmEngine::MpmTimeStepExplicitGridUpdate_CPP(real dt)
 			vec2 xg = vec2(real(i), real(j));
 			vec2 nodeMomentum = m_grid.nodes[index].momentum;
 			vec2 nodeForce = m_grid.nodes[index].force;
-			vec2 mouseForce = m_mousePower * real(m_mouse.w) * glm::normalize(vec2(m_mpm_mouse.x * real(GRID_SIZE_X) - xg.x, m_mpm_mouse.y * real(GRID_SIZE_Y) - xg.y));
+			vec2 mouseForce = m_mousePower * real(m_mouseMpmRenderScreenGridSpaceFull.w) * glm::normalize(vec2(m_mouseMpmRenderScreenGridSpace.x - xg.x, m_mouseMpmRenderScreenGridSpace.y - xg.y));
 			// ignoring (experimental) nodal acceleration
 			
 			vec2 gridV = nodeMomentum / nodeMass;

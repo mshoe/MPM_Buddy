@@ -117,11 +117,6 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 		std::vector<std::string>{graphicsPath + "marchingSquares.fs"},
 		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
 
-	m_borderShader = std::make_shared<StandardShader>(
-		std::vector<std::string>{graphicsPath + "polygon.vs"},
-		std::vector<std::string>{graphicsPath + "border.gs"},
-		std::vector<std::string>{graphicsPath + "polygon.fs"},
-		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
 	m_polygonShader = std::make_shared<StandardShader>(
 		std::vector<std::string>{graphicsPath + "polygon.vs"},
 		std::vector<std::string>{graphicsPath + "polygon.gs"},
@@ -146,6 +141,7 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 	m_openGLScreen->sim_dimensions = vec2(900.0, 900.0);
 
 	InitZoomWindow();
+	InitMpmRenderWindow();
 
 	// Initialize the grid SSBO on the GPU
 	m_grid = Grid(GRID_SIZE_X, GRID_SIZE_Y);
@@ -197,6 +193,14 @@ void mpm::MpmEngine::InitZoomWindow() {
 	m_zoomWindow->sim_dimensions = vec2(450.0, 450.0);
 
 
+}
+
+void mpm::MpmEngine::InitMpmRenderWindow()
+{
+	m_mpmRenderWindow = std::make_shared<ImGuiScreen>(vec2(800.0, 800.0));
+	m_mpmRenderWindow->center = vec2(400.0, 400.0);
+	//m_zoomWindow->screen_dimensions = vec2(450.0, 450.0);
+	m_mpmRenderWindow->sim_dimensions = vec2(800.0, 800.0);
 }
 
 void mpm::MpmEngine::InitPolygonEditorScreen()

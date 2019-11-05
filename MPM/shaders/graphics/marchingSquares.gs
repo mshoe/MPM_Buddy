@@ -9,9 +9,6 @@ out vec4 gs_nodeColor;
 layout (points) in;
 layout (triangle_strip, max_vertices = 6) out;
 
-uniform dvec2 iSourceResolution; // should be vec2(1800, 900)
-uniform dvec2 iResolution; // e.g. vec2(900, 900)
-uniform dvec2 iCenter; // e.g. vec(900, 450)
 uniform double zoomFactor;
 uniform dvec2 zoomPoint;
 uniform double minMass = 0.0;
@@ -373,12 +370,6 @@ void main() {
     double mass10 = nodes[nodei][nodej+1].m;
     double mass11 = nodes[nodei+1][nodej+1].m;
 
-    // original borders are x: (-1.0, 1.0), y: (-1.0, 1.0)
-	double left_border = (iCenter.x - iSourceResolution.x/2.0 - iResolution.x/2.0) / iSourceResolution.x * 2.0;
-	double right_border = (iCenter.x - iSourceResolution.x/2.0 + iResolution.x/2.0) / iSourceResolution.x * 2.0;
-	double bottom_border = (iCenter.y - iSourceResolution.y/2.0 - iResolution.y/2.0) / iSourceResolution.y * 2.0;
-	double top_border = (iCenter.y - iSourceResolution.y/2.0 + iResolution.y/2.0) / iSourceResolution.y * 2.0;
-
     // map square of grid nodes to (0.0, 1.0)
     dvec2 v00 = dvec2(double(nodei), double(nodej)) / grid_vec;
     dvec2 v01 = dvec2(double(nodei+1), double(nodej)) / grid_vec;
@@ -386,14 +377,14 @@ void main() {
     dvec2 v11 = dvec2(double(nodei+1), double(nodej+1)) / grid_vec;
 
     // then map them to (-1.0, 1.0) based on the borders
-    v00.x = mix(left_border, right_border, v00.x);
-    v00.y = mix(bottom_border, top_border, v00.y);
-    v01.x = mix(left_border, right_border, v01.x);
-    v01.y = mix(bottom_border, top_border, v01.y);
-    v10.x = mix(left_border, right_border, v10.x);
-    v10.y = mix(bottom_border, top_border, v10.y);
-    v11.x = mix(left_border, right_border, v11.x);
-    v11.y = mix(bottom_border, top_border, v11.y);
+    v00.x = mix(-1.0, 1.0, v00.x);
+    v00.y = mix(-1.0, 1.0, v00.y);
+    v01.x = mix(-1.0, 1.0, v01.x);
+    v01.y = mix(-1.0, 1.0, v01.y);
+    v10.x = mix(-1.0, 1.0, v10.x);
+    v10.y = mix(-1.0, 1.0, v10.y);
+    v11.x = mix(-1.0, 1.0, v11.x);
+    v11.y = mix(-1.0, 1.0, v11.y);
     
     bool iso00 = mass00 >= isoMass;
     bool iso01 = mass01 >= isoMass;

@@ -128,27 +128,16 @@ void mpm::MpmEngine::ProcessMouseInput(GLFWwindow* window, real lag)
 	right_click = (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) ? 1.0 : 0.0;
 	m_midButtonDown = (bool)glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE);
 
+	m_mouseGlobalScreen.x = xpos;
+	m_mouseGlobalScreen.y = (real)SRC_HEIGHT - ypos;
+
 	//std::cout << xpos << ", " << ypos << std::endl;
 
 	// goal: Map mouse click to normalized grid space, which is (0.0, 1.0) when inside the MPM grid.
 	// Grid space can be found from the OpenGLScreen's center and dimensions
-
-	//real width = m_openGLScreen->dimensions.x;
-	real mpm_xpos = (xpos - m_openGLScreen->center.x + m_openGLScreen->sim_dimensions.x / 2.0) / m_openGLScreen->sim_dimensions.x;
-	real mpm_ypos = (ypos - m_openGLScreen->center.y + m_openGLScreen->sim_dimensions.y / 2.0) / m_openGLScreen->sim_dimensions.y;
-
-	// normalize mouse coordinates
-	xpos = xpos / (real)SRC_WIDTH;
-	ypos = ypos / (real)SRC_HEIGHT;
-
 	m_leftButtonDown = (bool)left_click;
 	m_rightButtonDown = (bool)right_click;
 
-	//std::cout << mpm_xpos << ", " << mpm_ypos << std::endl;
-
-	// y value is given inverted
-	m_mpm_mouse = vec4(mpm_xpos, 1.0 - mpm_ypos, left_click, right_click);
-	m_mouse = vec4(xpos, 1.0 - ypos, left_click, right_click);
 }
 
 void mpm::MpmEngine::HandleStates()
@@ -158,19 +147,19 @@ void mpm::MpmEngine::HandleStates()
 	if (m_zoomState && m_leftButtonDown) {
 		m_zoomState = false;
 		m_zoomFactor += 0.5;
-		m_zoomPoint = vec2(m_mpm_mouse.x * (real)GRID_SIZE_X, m_mpm_mouse.y * (real)GRID_SIZE_Y);
+		m_zoomPoint = m_mouseMpmRenderScreenGridSpace;
 	}
 
 	if (m_zoomState && m_midButtonDown) {
 		m_zoomState = false;
-		m_zoomPoint = vec2(m_mpm_mouse.x * (real)GRID_SIZE_X, m_mpm_mouse.y * (real)GRID_SIZE_Y);
+		m_zoomPoint = m_mouseMpmRenderScreenGridSpace;
 	}
 
 	if (m_zoomState && m_rightButtonDown) {
 		m_zoomState = false;
 		m_zoomFactor -= 0.5;
 		m_zoomFactor = glm::max(1.0, m_zoomFactor);
-		m_zoomPoint = vec2(m_mpm_mouse.x * (real)GRID_SIZE_X, m_mpm_mouse.y * (real)GRID_SIZE_Y);
+		m_zoomPoint = m_mouseMpmRenderScreenGridSpace;
 	}
 
 	HandleGeometryStates();

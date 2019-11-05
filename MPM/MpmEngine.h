@@ -113,7 +113,6 @@ namespace mpm {
 		void RenderGridOptions();
 		void RenderGridNodeViewer();
 		void RenderMaterialPointViewer();
-		void RenderZoomWindow();
 		void RenderCPUMode();
 
 		// re-used helper functions for imgui
@@ -123,6 +122,8 @@ namespace mpm {
 		// state variables for rendering different windows
 		bool m_renderTimeIntegrator = false;
 		bool m_renderZoomWindow = false;
+
+		bool m_renderMpmRenderWindow = true;
 
 		// geometry
 		bool m_renderBasicShapesEditor = false;
@@ -146,8 +147,9 @@ namespace mpm {
 
 		/******************** ZOOM WINDOW ********************/
 		void InitZoomWindow();
+		void RenderZoomWindow();
 		std::shared_ptr<ImGuiScreen> m_zoomWindow = nullptr;
-		GLuint m_zoom_VAO, m_zoom_VBO, m_zoom_EBO;
+		//GLuint m_zoom_VAO, m_zoom_VBO, m_zoom_EBO;
 		vec2 m_zoomWindowDims; // (width, height)
 		real m_zoomFactor = 1.0;
 		bool m_zoomState = false;
@@ -155,6 +157,14 @@ namespace mpm {
 		bool m_movingZoomWindow = true;
 		vec2 m_zoomPoint = vec2(40.0, 50.0); // ZOOM POINT IN GRID SPACE
 		vec2 m_zoomDim = vec2(GRID_SIZE_X, GRID_SIZE_Y);
+
+		/******************** MPM RENDER WINDOW AND RENDERING ********************/
+		void InitMpmRenderWindow();
+		void RenderMpmRenderWindow();
+		void MpmRender();
+		void ZoomRender();
+		std::shared_ptr<ImGuiScreen> m_mpmRenderWindow = nullptr;
+
 
 
 
@@ -184,7 +194,6 @@ namespace mpm {
 		std::shared_ptr<StandardShader> m_gridShaderVector = nullptr;
 		std::shared_ptr<StandardShader> m_gridShaderMarchingSquares = nullptr;
 
-		std::shared_ptr<StandardShader> m_borderShader = nullptr;
 		std::shared_ptr<StandardShader> m_polygonShader = nullptr;
 		std::shared_ptr<StandardShader> m_pwLineShader = nullptr;
 		std::shared_ptr<StandardShader> m_polygonEditorShader = nullptr;
@@ -194,8 +203,11 @@ namespace mpm {
 
 
 		/******************** MOUSE STATES ********************/
-		vec4 m_mpm_mouse = vec4(0.0);
-		vec4 m_mouse = vec4(0.0);
+		vec2 m_mouseGlobalScreen = vec2(0.0);
+		vec2 m_mouseMpmRenderScreen = vec2(0.0);
+		vec2 m_mouseMpmRenderScreenNormalized = vec2(0.0);
+		vec2 m_mouseMpmRenderScreenGridSpace = vec2(0.0);
+		vec4 m_mouseMpmRenderScreenGridSpaceFull = vec4(0.0);
 		bool m_leftButtonDown = false;
 		bool m_midButtonDown = false;
 		bool m_rightButtonDown = false;

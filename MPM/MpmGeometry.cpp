@@ -155,7 +155,7 @@ void mpm::MpmEngine::HandleGeometryStates()
 	{
 		m_createCircleState = false;
 
-		std::cout << "Mouse position is at (" << m_mpm_mouse.x << ", " << m_mpm_mouse.y << ")" << std::endl;
+		std::cout << "Mouse position is at (" << m_mouseMpmRenderScreenGridSpace.x << ", " << m_mouseMpmRenderScreenGridSpace.y << ")" << std::endl;
 
 		// 1. Create point clouds
 		std::cout << "Generating point cloud...\n";
@@ -165,7 +165,7 @@ void mpm::MpmEngine::HandleGeometryStates()
 
 		m_circleCount++;
 		//sdf::sdFunc dCircle(sdf::DemoCircle);
-		sdf::Circle shape(vec2(m_mpm_mouse.x * GRID_SIZE_X, m_mpm_mouse.y * GRID_SIZE_Y), m_circle_r);
+		sdf::Circle shape(m_mouseMpmRenderScreenGridSpace, m_circle_r);
 		std::string circleID = "circle" + std::to_string(m_circleCount);
 
 		glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
@@ -187,7 +187,7 @@ void mpm::MpmEngine::HandleGeometryStates()
 	{
 		m_createRectState = false;
 
-		std::cout << "Mouse position is at (" << m_mpm_mouse.x << ", " << m_mpm_mouse.y << ")" << std::endl;
+		std::cout << "Mouse position is at (" << m_mouseMpmRenderScreenGridSpace.x << ", " << m_mouseMpmRenderScreenGridSpace.y << ")" << std::endl;
 
 		// 1. Create point clouds
 		std::cout << "Generating point cloud...\n";
@@ -197,7 +197,7 @@ void mpm::MpmEngine::HandleGeometryStates()
 
 		m_rectCount++;
 		//sdf::sdFunc dCircle(sdf::DemoCircle);
-		sdf::Rectangle shape(vec2(m_mpm_mouse.x * GRID_SIZE_X, m_mpm_mouse.y * GRID_SIZE_Y), m_rect_b, m_rect_h);
+		sdf::Rectangle shape(m_mouseMpmRenderScreenGridSpace, m_rect_b, m_rect_h);
 		std::string rectID = "rect" + std::to_string(m_rectCount);
 
 		glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
@@ -217,7 +217,7 @@ void mpm::MpmEngine::HandleGeometryStates()
 	{
 		m_createIsoTriState = false;
 
-		std::cout << "Mouse position is at (" << m_mpm_mouse.x << ", " << m_mpm_mouse.y << ")" << std::endl;
+		std::cout << "Mouse position is at (" << m_mouseMpmRenderScreenGridSpace.x << ", " << m_mouseMpmRenderScreenGridSpace.y << ")" << std::endl;
 
 		// 1. Create point clouds
 		std::cout << "Generating point cloud...\n";
@@ -227,7 +227,7 @@ void mpm::MpmEngine::HandleGeometryStates()
 
 		m_isoTriCount++;
 		//sdf::sdFunc dCircle(sdf::DemoCircle);
-		sdf::IsoscelesTriangle shape(vec2(m_mpm_mouse.x * GRID_SIZE_X, m_mpm_mouse.y * GRID_SIZE_Y), m_iso_tri_b, m_iso_tri_h);
+		sdf::IsoscelesTriangle shape(m_mouseMpmRenderScreenGridSpace, m_iso_tri_b, m_iso_tri_h);
 		std::string isoTriID = "isoTri" + std::to_string(m_isoTriCount);
 
 		glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
@@ -244,21 +244,15 @@ void mpm::MpmEngine::HandleGeometryStates()
 	if (m_paused && m_selectNodeState && m_leftButtonDown) {
 		m_selectNodeState = false;
 
-		real mouseX = glm::clamp(m_mpm_mouse.x, 0.0, 1.0);
-		real mouseY = glm::clamp(m_mpm_mouse.y, 0.0, 1.0);
-
-		m_node[0] = glm::clamp((int)(mouseX * GRID_SIZE_X), 0, GRID_SIZE_X - 1);
-		m_node[1] = glm::clamp((int)(mouseY * GRID_SIZE_Y), 0, GRID_SIZE_Y - 1);
+		m_node[0] = glm::clamp((int)(m_mouseMpmRenderScreenGridSpace.x), 0, GRID_SIZE_X - 1);
+		m_node[1] = glm::clamp((int)(m_mouseMpmRenderScreenGridSpace.y), 0, GRID_SIZE_Y - 1);
 	}
 
 	if (m_paused && m_addPolygonVertexState && m_leftButtonDown) {
 		m_addPolygonVertexState = false;
 
-		real mouseX = m_mpm_mouse.x;
-		real mouseY = m_mpm_mouse.y;
-
-		real vertexX = mouseX * (real)GRID_SIZE_X;
-		real vertexY = mouseY * (real)GRID_SIZE_Y;
+		real vertexX = m_mouseMpmRenderScreenGridSpace.x;
+		real vertexY = m_mouseMpmRenderScreenGridSpace.y;
 
 		vec2 v = vec2(vertexX, vertexY);
 
@@ -268,11 +262,8 @@ void mpm::MpmEngine::HandleGeometryStates()
 	if (m_paused && m_addPWLineVertexState && m_leftButtonDown) {
 		m_addPWLineVertexState = false;
 
-		real mouseX = m_mpm_mouse.x;
-		real mouseY = m_mpm_mouse.y;
-
-		real vertexX = mouseX * (real)GRID_SIZE_X;
-		real vertexY = mouseY * (real)GRID_SIZE_Y;
+		real vertexX = m_mouseMpmRenderScreenGridSpace.x;
+		real vertexY = m_mouseMpmRenderScreenGridSpace.y;
 
 		vec2 v = vec2(vertexX, vertexY);
 

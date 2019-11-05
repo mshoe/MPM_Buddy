@@ -4,9 +4,9 @@ out vec4 vs_nodeColor;
 out int gridNodeI;
 out int gridNodeJ;
 
-uniform dvec2 iSourceResolution; // should be vec2(1800, 900)
-uniform dvec2 iResolution; // e.g. vec2(900, 900)
-uniform dvec2 iCenter; // e.g. vec(900, 450)
+// uniform dvec2 iSourceResolution; // should be vec2(1800, 900)
+// uniform dvec2 iResolution; // e.g. vec2(900, 900)
+// uniform dvec2 iCenter; // e.g. vec(900, 450)
 uniform double zoomFactor;
 uniform dvec2 zoomPoint;
 
@@ -103,16 +103,17 @@ void main() {
     norm_node_pos += norm_zoomPoint;
 
 
-	// original borders are x: (-1.0, 1.0), y: (-1.0, 1.0)
-	double left_border = (iCenter.x - iSourceResolution.x/2.0 - iResolution.x/2.0) / iSourceResolution.x * 2.0;
-	double right_border = (iCenter.x - iSourceResolution.x/2.0 + iResolution.x/2.0) / iSourceResolution.x * 2.0;
-	double bottom_border = (iCenter.y - iSourceResolution.y/2.0 - iResolution.y/2.0) / iSourceResolution.y * 2.0;
-	double top_border = (iCenter.y - iSourceResolution.y/2.0 + iResolution.y/2.0) / iSourceResolution.y * 2.0;
+	// // original borders are x: (-1.0, 1.0), y: (-1.0, 1.0)
+	// double left_border = (iCenter.x - iSourceResolution.x/2.0 - iResolution.x/2.0) / iSourceResolution.x * 2.0;
+	// double right_border = (iCenter.x - iSourceResolution.x/2.0 + iResolution.x/2.0) / iSourceResolution.x * 2.0;
+	// double bottom_border = (iCenter.y - iSourceResolution.y/2.0 - iResolution.y/2.0) / iSourceResolution.y * 2.0;
+	// double top_border = (iCenter.y - iSourceResolution.y/2.0 + iResolution.y/2.0) / iSourceResolution.y * 2.0;
 
-	// map norm_pos to the new borders;
+	// // map norm_pos to the new borders;
 
-	norm_node_pos.x = mix(left_border, right_border, norm_node_pos.x);
-	norm_node_pos.y = mix(bottom_border, top_border, norm_node_pos.y);
+    // map to opengl window space (-1.0, 1.0)
+	norm_node_pos.x = mix(-1.0, 1.0, norm_node_pos.x);
+	norm_node_pos.y = mix(-1.0, 1.0, norm_node_pos.y);
 	
 
 	// gl_Position needs to take float, not double

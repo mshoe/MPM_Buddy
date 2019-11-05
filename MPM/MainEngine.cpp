@@ -185,12 +185,15 @@ void MainEngine::Render()
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
+	
+
+	//ImGui::ShowDemoWindow();
+	m_mpmEngine->RenderGUI();
+
 	ImGui::Begin("Runtime Info");   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 	ImGui::End();
 
-	//ImGui::ShowDemoWindow();
-	m_mpmEngine->RenderGUI();
 	// Rendering
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

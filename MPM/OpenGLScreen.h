@@ -41,6 +41,7 @@ private:
 
 	// framebuffer
 	GLuint FBO;
+	GLuint borderVAO, borderVBO, borderEBO;
 
 	
 };

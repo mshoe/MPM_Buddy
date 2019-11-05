@@ -15,7 +15,9 @@ void main() {
 	dvec2 nodeForce = nodes[node.x][node.y].force;
 	dvec2 nodalAcceleration = nodes[node.x][node.y].nodalAcceleration;
 
-	dvec2 mouseForce = mousePower * iMpmMouse.w * normalize(dvec2(iMpmMouse.x * GRID_SIZE_X - node.x, iMpmMouse.y * GRID_SIZE_Y - node.y));
+	dvec2 mouseDir = dvec2(iMpmMouse.x - double(node.x), iMpmMouse.y - double(node.y));
+	bool mouseValid = length(mouseDir) != 0.0;
+	dvec2 mouseForce = mouseValid ? mousePower * iMpmMouse.w * normalize(mouseDir) : dvec2(0.0);
 	nodes[node.x][node.y].v = (nodeMass == 0.0) ? dvec2(0.0) : nodeMomentum/nodeMass -dt*drag*nodeMomentum/nodeMass + dt*(nodeForce/nodeMass + globalForce + mouseForce + nodalAcceleration);
 
 
