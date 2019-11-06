@@ -1,8 +1,8 @@
 #include "MpmEngine.h"
 
-void mpm::MpmEngine::RenderBasicShapesEditor()
+void mpm::MpmEngine::ImGuiBasicShapesEditor()
 {
-	if (ImGui::Begin("Basic Shapes Editor", &m_renderBasicShapesEditor)) {
+	if (ImGui::Begin("Basic Shapes Editor", &m_imguiBasicShapesEditor)) {
 
 
 
@@ -50,9 +50,9 @@ void mpm::MpmEngine::RenderBasicShapesEditor()
 	ImGui::End();
 }
 
-void mpm::MpmEngine::RenderPolygonEditor()
+void mpm::MpmEngine::ImGuiPolygonEditor()
 {
-	if (ImGui::Begin("Polygon Editor", &m_renderPolygonEditor)) {
+	if (ImGui::Begin("Polygon Editor", &m_imguiPolygonEditor)) {
 
 		ImVec2 mousePos = ImGui::GetCursorScreenPos();
 		std::string mousePosStr = std::to_string(mousePos.x) + ", " + std::to_string(mousePos.y);

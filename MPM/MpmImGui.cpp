@@ -6,20 +6,20 @@
 
 void mpm::MpmEngine::RenderGUI()
 {
-	static bool renderImGuiDemo = false;
-	static bool renderImGuiStyleDemo = false;
+	static bool imguiImGuiDemo = false;
+	static bool imguiImGuiStyleDemo = false;
 
-	if (m_renderGUI) {
+	if (m_imguiGUI) {
 
 		if (ImGui::BeginMainMenuBar())
 		{
 			if (ImGui::BeginMenu("File"))
 			{
-				if (ImGui::MenuItem("ImGui Demo", "", renderImGuiDemo)) {
-					renderImGuiDemo = !renderImGuiDemo;
+				if (ImGui::MenuItem("ImGui Demo", "", imguiImGuiDemo)) {
+					imguiImGuiDemo = !imguiImGuiDemo;
 				}
-				if (ImGui::MenuItem("ImGui Style Demo", "", renderImGuiStyleDemo)) {
-					renderImGuiStyleDemo = !renderImGuiStyleDemo;
+				if (ImGui::MenuItem("ImGui Style Demo", "", imguiImGuiStyleDemo)) {
+					imguiImGuiStyleDemo = !imguiImGuiStyleDemo;
 				}
 				if (ImGui::MenuItem("Re-initialize shader pipeline")) {
 					CleanupComputeShaderPipeline();
@@ -38,80 +38,79 @@ void mpm::MpmEngine::RenderGUI()
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Engine")) {
-				if (ImGui::MenuItem("Time Integrator", "", m_renderTimeIntegrator)) {
-					m_renderTimeIntegrator = !m_renderTimeIntegrator;
+				if (ImGui::MenuItem("Time Integrator", "", m_imguiTimeIntegrator)) {
+					m_imguiTimeIntegrator = !m_imguiTimeIntegrator;
 				}
-				if (ImGui::MenuItem("Zoom Window", "", m_renderZoomWindow)) {
-					m_renderZoomWindow = !m_renderZoomWindow;
+				if (ImGui::MenuItem("Zoom Window", "", m_imguiZoomWindow)) {
+					m_imguiZoomWindow = !m_imguiZoomWindow;
 				}
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Geometry")) {
-				if (ImGui::MenuItem("Basic Shapes", "", m_renderBasicShapesEditor)) {
-					m_renderBasicShapesEditor = !m_renderBasicShapesEditor;
+				if (ImGui::MenuItem("Basic Shapes", "", m_imguiBasicShapesEditor)) {
+					m_imguiBasicShapesEditor = !m_imguiBasicShapesEditor;
 				}
-				if (ImGui::MenuItem("Polygon Editor", "", m_renderPolygonEditor)) {
-					m_renderPolygonEditor = !m_renderPolygonEditor;
+				if (ImGui::MenuItem("Polygon Editor", "", m_imguiPolygonEditor)) {
+					m_imguiPolygonEditor = !m_imguiPolygonEditor;
 				}
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Material")) {
-				if (ImGui::MenuItem("Material Parameters Editor", "", m_renderMaterialParametersEditor)) {
-					m_renderMaterialParametersEditor = !m_renderMaterialParametersEditor;
+				if (ImGui::MenuItem("Material Parameters Editor", "", m_imguiMaterialParametersEditor)) {
+					m_imguiMaterialParametersEditor = !m_imguiMaterialParametersEditor;
 				}
-				if (ImGui::MenuItem("Material Point Viewer", "", m_renderMaterialPointViewer)) {
-					m_renderMaterialPointViewer = !m_renderMaterialPointViewer;
+				if (ImGui::MenuItem("Material Point Viewer", "", m_imguiMaterialPointViewer)) {
+					m_imguiMaterialPointViewer = !m_imguiMaterialPointViewer;
 				}
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Grid")) {
-				if (ImGui::MenuItem("Grid Options", "", m_renderGridOptions)) {
-					m_renderGridOptions = !m_renderGridOptions;
+				if (ImGui::MenuItem("Grid Options", "", m_imguiGridOptions)) {
+					m_imguiGridOptions = !m_imguiGridOptions;
 				}
-				if (ImGui::MenuItem("Grid Node Viewer", "", m_renderGridNodeViewer)) {
-					m_renderGridNodeViewer = !m_renderGridNodeViewer;
+				if (ImGui::MenuItem("Grid Node Viewer", "", m_imguiGridNodeViewer)) {
+					m_imguiGridNodeViewer = !m_imguiGridNodeViewer;
 				}
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Control")) {
-				if (ImGui::MenuItem("External Force Controller", "", m_renderExternalForceController)) {
-					m_renderExternalForceController = !m_renderExternalForceController;
+				if (ImGui::MenuItem("External Force Controller", "", m_imguiExternalForceController)) {
+					m_imguiExternalForceController = !m_imguiExternalForceController;
 				}
 				ImGui::Separator();
-				if (ImGui::MenuItem("Deformation Gradient Controller", "", m_renderDeformationGradientController)) {
-					m_renderDeformationGradientController = !m_renderDeformationGradientController;
+				if (ImGui::MenuItem("Deformation Gradient Controller", "", m_imguiDeformationGradientController)) {
+					m_imguiDeformationGradientController = !m_imguiDeformationGradientController;
 				}
-				if (ImGui::MenuItem("Material Parameter Controller", "", m_renderMaterialParameterController)) {
-					m_renderMaterialParameterController = !m_renderMaterialParameterController;
+				if (ImGui::MenuItem("Material Parameter Controller", "", m_imguiMaterialParameterController)) {
+					m_imguiMaterialParameterController = !m_imguiMaterialParameterController;
 				}
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Experimental")) {
-				if (ImGui::MenuItem("CPU Mode", "", m_renderCPUMode)) {
-					m_renderCPUMode = !m_renderCPUMode;
+				if (ImGui::MenuItem("CPU Mode", "", m_imguiCPUMode)) {
+					m_imguiCPUMode = !m_imguiCPUMode;
 				}
 				ImGui::EndMenu();
 			}
 			ImGui::EndMainMenuBar();
 		}
 
-		//RenderWindowManager();
-		if (m_renderMpmRenderWindow) RenderMpmRenderWindow();
-		if (m_renderTimeIntegrator) RenderTimeIntegrator();
-		if (m_renderExternalForceController) RenderExternalForceController();
-		if (m_renderDeformationGradientController) RenderDeformationGradientController();
-		if (m_renderMaterialParameterController) RenderMaterialParameterController();
-		if (m_renderPolygonEditor) RenderPolygonEditor();
-		if (m_renderBasicShapesEditor) RenderBasicShapesEditor();
-		if (m_renderMaterialParametersEditor) RenderMaterialParametersEditor();
-		if (m_renderGridOptions) RenderGridOptions();
-		if (m_renderGridNodeViewer) RenderGridNodeViewer();
-		if (m_renderMaterialPointViewer) RenderMaterialPointViewer();
-		if (m_renderZoomWindow) RenderZoomWindow();
-		if (m_renderCPUMode) RenderCPUMode();
+		if (m_imguiMpmRenderWindow) ImGuiMpmRenderWindow();
+		if (m_imguiTimeIntegrator) ImGuiTimeIntegrator();
+		if (m_imguiExternalForceController) ImGuiExternalForceController();
+		if (m_imguiDeformationGradientController) ImGuiDeformationGradientController();
+		if (m_imguiMaterialParameterController) ImGuiMaterialParameterController();
+		if (m_imguiPolygonEditor) ImGuiPolygonEditor();
+		if (m_imguiBasicShapesEditor) ImGuiBasicShapesEditor();
+		if (m_imguiMaterialParametersEditor) ImGuiMaterialParametersEditor();
+		if (m_imguiGridOptions) ImGuiGridOptions();
+		if (m_imguiGridNodeViewer) ImGuiGridNodeViewer();
+		if (m_imguiMaterialPointViewer) ImGuiMaterialPointViewer();
+		if (m_imguiZoomWindow) ImGuiZoomWindow();
+		if (m_imguiCPUMode) ImGuiCPUMode();
 		
-		if (renderImGuiDemo) { ImGui::ShowDemoWindow(); }
-		if (renderImGuiStyleDemo) { ImGui::ShowStyleEditor(); }
+		if (imguiImGuiDemo) { ImGui::ShowDemoWindow(); }
+		if (imguiImGuiStyleDemo) { ImGui::ShowStyleEditor(); }
 	}
 }
 
@@ -133,9 +132,9 @@ void mpm::MpmEngine::RenderGUI()
 //	ImGui::End();
 //}
 
-void mpm::MpmEngine::RenderTimeIntegrator()
+void mpm::MpmEngine::ImGuiTimeIntegrator()
 {
-	if (ImGui::Begin("Time Integrator", &m_renderTimeIntegrator)) {
+	if (ImGui::Begin("Time Integrator", &m_imguiTimeIntegrator)) {
 
 		ImGui::Text(std::to_string(m_time).c_str());
 		ImGui::Text(std::to_string(m_timeStep).c_str());
@@ -247,9 +246,9 @@ void mpm::MpmEngine::RenderTimeIntegrator()
 	ImGui::End();
 }
 
-void mpm::MpmEngine::RenderExternalForceController()
+void mpm::MpmEngine::ImGuiExternalForceController()
 {
-	if (ImGui::Begin("MPM External Force Controller", &m_renderExternalForceController)) {
+	if (ImGui::Begin("MPM External Force Controller", &m_imguiExternalForceController)) {
 
 
 		ImGui::InputReal("drag", &m_drag, 0.0001, 0.01, "%.4f");
@@ -264,8 +263,8 @@ void mpm::MpmEngine::RenderExternalForceController()
 	ImGui::End();
 }
 
-void mpm::MpmEngine::RenderDeformationGradientController() {
-	if (ImGui::Begin("MPM Deformation Gradient Controller", &m_renderDeformationGradientController)) {
+void mpm::MpmEngine::ImGuiDeformationGradientController() {
+	if (ImGui::Begin("MPM Deformation Gradient Controller", &m_imguiDeformationGradientController)) {
 
 		static std::string pointCloudSelectStr = "";
 		ImGuiSelectPointCloud(pointCloudSelectStr);
@@ -351,9 +350,9 @@ void mpm::MpmEngine::RenderDeformationGradientController() {
 	ImGui::End();
 }
 
-void mpm::MpmEngine::RenderMaterialParameterController() {
+void mpm::MpmEngine::ImGuiMaterialParameterController() {
 
-	if (ImGui::Begin("MPM Material Parameter Controller")) {
+	if (ImGui::Begin("MPM Material Parameter Controller", &m_imguiMaterialParameterController)) {
 
 		static MaterialParameters materialParametersControl;
 		static std::string currPointCloud = "";
@@ -403,9 +402,9 @@ void mpm::MpmEngine::RenderMaterialParameterController() {
 }
 
 
-void mpm::MpmEngine::RenderMaterialParametersEditor()
+void mpm::MpmEngine::ImGuiMaterialParametersEditor()
 {
-	if (ImGui::Begin("Material Parameters Editor", &m_renderMaterialParametersEditor)) {
+	if (ImGui::Begin("Material Parameters Editor", &m_imguiMaterialParametersEditor)) {
 		//ImGui::Color
 		ImGui::ColorEdit4("Color", m_color);
 		ImGui::InputReal("Initial Velocity X", &m_initVelocity.x, 0.1, 1.0, "%.1f");
@@ -444,9 +443,9 @@ void mpm::MpmEngine::RenderMaterialParametersEditor()
 	ImGui::End();
 }
 
-void mpm::MpmEngine::RenderGridOptions()
+void mpm::MpmEngine::ImGuiGridOptions()
 {
-	if (ImGui::Begin("Grid Options", &m_renderGridOptions)) {
+	if (ImGui::Begin("Grid Options", &m_imguiGridOptions)) {
 
 		std::string chunkWidthStr = "Chunk width: " + std::to_string(CHUNK_WIDTH);
 		ImGui::Text(chunkWidthStr.c_str());
@@ -573,9 +572,9 @@ void mpm::MpmEngine::RenderGridOptions()
 	ImGui::End();
 }
 
-void mpm::MpmEngine::RenderGridNodeViewer()
+void mpm::MpmEngine::ImGuiGridNodeViewer()
 {
-	if (ImGui::Begin("Grid Node Viewer", &m_renderGridNodeViewer)) {
+	if (ImGui::Begin("Grid Node Viewer", &m_imguiGridNodeViewer)) {
 		if (ImGui::Button("Select Node")) {
 			m_selectNodeState = true;
 		}
@@ -588,9 +587,9 @@ void mpm::MpmEngine::RenderGridNodeViewer()
 	ImGui::End();
 }
 
-void mpm::MpmEngine::RenderMaterialPointViewer()
+void mpm::MpmEngine::ImGuiMaterialPointViewer()
 {
-	if (ImGui::Begin("Material Point Viewer", &m_renderMaterialPointViewer)) {
+	if (ImGui::Begin("Material Point Viewer", &m_imguiMaterialPointViewer)) {
 
 		ImGui::Checkbox("View point clouds", &m_viewPointClouds);
 
@@ -669,9 +668,9 @@ void mpm::MpmEngine::RenderMaterialPointViewer()
 	ImGui::End();
 }
 
-void mpm::MpmEngine::RenderZoomWindow()
+void mpm::MpmEngine::ImGuiZoomWindow()
 {
-	if (ImGui::Begin("Zoom Window", &m_renderZoomWindow)) {
+	if (ImGui::Begin("Zoom Window", &m_imguiZoomWindow)) {
 		ImGui::ColorEdit4("Background color", m_backgroundColor);
 		ImGui::InputReal("Zoom Point x: ", &m_zoomPoint.x, 1.0, 10.0, "%.1f");
 		ImGui::InputReal("Zoom Point y: ", &m_zoomPoint.y, 1.0, 10.0, "%.1f");
@@ -692,9 +691,9 @@ void mpm::MpmEngine::RenderZoomWindow()
 	ImGui::End();
 }
 
-void mpm::MpmEngine::RenderCPUMode()
+void mpm::MpmEngine::ImGuiCPUMode()
 {
-	if (ImGui::Begin("CPU Mode", &m_renderCPUMode)) {
+	if (ImGui::Begin("CPU Mode", &m_imguiCPUMode)) {
 		static bool cpu_mode = false;
 		ImGui::Checkbox("CPU Mode", &cpu_mode);
 		if (cpu_mode) {

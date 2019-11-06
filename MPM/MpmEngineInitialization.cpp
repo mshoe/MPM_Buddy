@@ -16,6 +16,9 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 	std::string computePath = "shaders\\compute\\";
 	std::string mpmHeadersPath = "shaders\\compute\\mpmHeaders\\";
 	std::string graphicsPath = "shaders\\graphics\\";
+	std::string graphicsGeometryPath = graphicsPath + "geometryEditor\\";
+	std::string graphicsGridPath = graphicsPath + "grid\\";
+	std::string graphicsMPPath = graphicsPath + "materialPoints\\";
 	std::string interactivePath = "shaders\\compute\\interactive\\";
 	std::string implicitPath = "shaders\\compute\\implicit\\";
 
@@ -86,9 +89,9 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 	// RENDERING SHADERS
 
 	m_pPointCloudShader = std::make_shared<StandardShader>(
-		std::vector<std::string>{graphicsPath + "pointCloud.vs"},
-		std::vector<std::string>{graphicsPath + "pointCloudPassThrough.gs"},
-		std::vector<std::string>{graphicsPath + "pointCloud.fs"},
+		std::vector<std::string>{graphicsMPPath + "pointCloud.vs"},
+		std::vector<std::string>{graphicsMPPath + "pointCloudPassThrough.gs"},
+		std::vector<std::string>{graphicsMPPath + "pointCloud.fs"},
 		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
 	m_mouseShader = std::make_shared<StandardShader>(
 		std::vector<std::string>{graphicsPath + "mouseShader.vs"},
@@ -102,37 +105,42 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 		std::vector<std::string>{graphicsPath + "zoomWindow.fs"},
 		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
 	m_gridShader = std::make_shared<StandardShader>(
-		std::vector<std::string>{graphicsPath + "gridShader.vs"},
-		std::vector<std::string>{graphicsPath + "gridShaderPassThrough.gs"},
-		std::vector<std::string>{graphicsPath + "gridShader.fs"},
+		std::vector<std::string>{graphicsGridPath + "gridShader.vs"},
+		std::vector<std::string>{graphicsGridPath + "gridShaderPassThrough.gs"},
+		std::vector<std::string>{graphicsGridPath + "gridShader.fs"},
 		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
 	m_gridShaderVector = std::make_shared<StandardShader>(
-		std::vector<std::string>{graphicsPath + "gridShader.vs"},
-		std::vector<std::string>{graphicsPath + "gridShaderVector.gs"},
-		std::vector<std::string>{graphicsPath + "gridShader.fs"},
+		std::vector<std::string>{graphicsGridPath + "gridShader.vs"},
+		std::vector<std::string>{graphicsGridPath + "gridShaderVector.gs"},
+		std::vector<std::string>{graphicsGridPath + "gridShader.fs"},
 		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
 	m_gridShaderMarchingSquares = std::make_shared<StandardShader>(
-		std::vector<std::string>{graphicsPath + "marchingSquares.vs"},
-		std::vector<std::string>{graphicsPath + "marchingSquares.gs"},
-		std::vector<std::string>{graphicsPath + "marchingSquares.fs"},
+		std::vector<std::string>{graphicsGridPath + "marchingSquares.vs"},
+		std::vector<std::string>{graphicsGridPath + "marchingSquares.gs"},
+		std::vector<std::string>{graphicsGridPath + "marchingSquares.fs"},
 		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
 
+	m_circleShader = std::make_shared<StandardShader>(
+		std::vector<std::string>{graphicsGeometryPath + "polygon.vs"},
+		std::vector<std::string>{graphicsGeometryPath + "circle.gs"},
+		std::vector<std::string>{graphicsGeometryPath + "polygon.fs"},
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
 	m_polygonShader = std::make_shared<StandardShader>(
-		std::vector<std::string>{graphicsPath + "polygon.vs"},
-		std::vector<std::string>{graphicsPath + "polygon.gs"},
-		std::vector<std::string>{graphicsPath + "polygon.fs"},
+		std::vector<std::string>{graphicsGeometryPath + "polygon.vs"},
+		std::vector<std::string>{graphicsGeometryPath + "polygon.gs"},
+		std::vector<std::string>{graphicsGeometryPath + "polygon.fs"},
 		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
 	m_pwLineShader = std::make_shared<StandardShader>(
-		std::vector<std::string>{graphicsPath + "polygon.vs"},
-		std::vector<std::string>{graphicsPath + "pwLine.gs"},
-		std::vector<std::string>{graphicsPath + "polygon.fs"},
+		std::vector<std::string>{graphicsGeometryPath + "polygon.vs"},
+		std::vector<std::string>{graphicsGeometryPath + "pwLine.gs"},
+		std::vector<std::string>{graphicsGeometryPath + "polygon.fs"},
 		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
 
 	m_polygonEditorShader = std::make_shared<StandardShader>(
-		std::vector<std::string>{graphicsPath + "polygon.vs"},
-		std::vector<std::string>{graphicsPath + "polygonEditor.gs"},
-		std::vector<std::string>{graphicsPath + "polygon.fs"},
-		std::vector<std::string>{});
+		std::vector<std::string>{graphicsGeometryPath + "polygon.vs"},
+		std::vector<std::string>{graphicsGeometryPath + "polygonEditor.gs"},
+		std::vector<std::string>{graphicsGeometryPath + "polygon.fs"},
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
 
 
 	m_openGLScreen = std::make_shared<OpenGLScreen>();

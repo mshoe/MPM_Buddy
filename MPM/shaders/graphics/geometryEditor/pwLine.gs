@@ -1,16 +1,18 @@
 #version 450 core
 
 layout (points) in;
-layout (line_strip, max_vertices = 256) out;
-// 36320 is max
+layout (line_strip, max_vertices = 100) out;
 
-layout (std430, binding = 3) buffer polygonVertices {
+layout (std430, binding = 4) buffer pwLineVertices {
 	dvec2 vertices[];
 };
 
 uniform dvec4 mouse;
-
 uniform bool lastVertexMouse = false;
+uniform dvec2 zoomPoint;
+uniform double zoomFactor;
+//uniform dvec2 zoomPoint;
+//uniform double zoomFactor;
 
 /*** HEADER ***/
 
@@ -21,13 +23,17 @@ void main() {
 
     dvec2 grid_vec = dvec2(GRID_SIZE_X, GRID_SIZE_Y);
 
+
     for (int i = 0; i < numVertices; i++) {
-        dvec2 pos = vertices[i] / grid_vec;
+        dvec2 pos = vertices[i];
+        pos -= zoomPoint;
+        pos *= zoomFactor;
+        pos += zoomPoint;
 
-        dvec2 norm_pos;
+        dvec2 norm_pos = pos / grid_vec;
 
-        norm_pos.x = mix(-1.0, 1.0, pos.x);
-	    norm_pos.y = mix(-1.0, 1.0, pos.y);
+        norm_pos.x = mix(-1.0, 1.0, norm_pos.x);
+	    norm_pos.y = mix(-1.0, 1.0, norm_pos.y);
 
         gl_Position = vec4(float(norm_pos.x), float(norm_pos.y), 0.0, 1.0);
         EmitVertex();
@@ -37,20 +43,14 @@ void main() {
 
 
     if (lastVertexMouse) {
-        dvec2 norm_mouse = mouse.xy / grid_vec;
+        dvec2 norm_mouse = mouse.xy;
+        norm_mouse -= zoomPoint;
+        norm_mouse *= zoomFactor;
+        norm_mouse += zoomPoint;
+        norm_mouse /= grid_vec;
         norm_mouse.x = mix(-1.0, 1.0, norm_mouse.x);
         norm_mouse.y = mix(-1.0, 1.0, norm_mouse.y);
         gl_Position = vec4(float(norm_mouse.x), float(norm_mouse.y), 0.0, 1.0);
-        EmitVertex();
-    } else {
-        dvec2 pos = vertices[0] / grid_vec;
-
-        dvec2 norm_pos;
-
-        norm_pos.x = mix(-1.0, 1.0, pos.x);
-	    norm_pos.y = mix(-1.0, 1.0, pos.y);
-
-        gl_Position = vec4(float(norm_pos.x), float(norm_pos.y), 0.0, 1.0);
         EmitVertex();
     }
 

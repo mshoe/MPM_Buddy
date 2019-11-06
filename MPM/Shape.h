@@ -147,14 +147,18 @@ namespace sdf {
 			if (vertices.size() < 3)
 				return 1.0;
 
-			real d = glm::dot(p - vertices[0], p - vertices[0]);
+			vec2 v0 = center + vertices[0];
+
+			real d = glm::dot(p - v0, p - v0);
 			real s = 1.0;
 			for (size_t i = 0, j = vertices.size()-1; i < vertices.size(); j = i, i++) {
-				vec2 e = vertices[j] - vertices[i];
-				vec2 w = p - vertices[i];
+				vec2 vi = center + vertices[i];
+				vec2 vj = center + vertices[j];
+				vec2 e = vj - vi;
+				vec2 w = p - vi;
 				vec2 b = w - e * glm::clamp(glm::dot(w, e) / glm::dot(e, e), 0.0, 1.0);
 				d = glm::min(d, glm::dot(b, b));
-				glm::bvec3 c = glm::bvec3(p.y >= vertices[i].y, p.y < vertices[j].y, e.x * w.y > e.y * w.x);
+				glm::bvec3 c = glm::bvec3(p.y >= vi.y, p.y < vj.y, e.x * w.y > e.y * w.x);
 				if (glm::all(c) || glm::all(glm::not_(c)))
 					s *= -1.0;
 			}
@@ -166,7 +170,7 @@ namespace sdf {
 		}
 
 		// TODO: Define the polygon w.r.t. the center so it can be easily moved around by moving the center
-		//vec2 center;
+		vec2 center = vec2(0.0);
 
 
 		// first and last vertex are assumed connected

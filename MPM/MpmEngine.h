@@ -91,6 +91,7 @@ namespace mpm {
 		void RenderPointClouds(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> pointShader);
 		void RenderGrid(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> gridShader);
 		void RenderMarchingSquares(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> gridShader);
+		void RenderCircle(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> circleShader);
 		void RenderPolygon(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> polygonShader);
 		void RenderPWLine(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> pwLineShader);
 		
@@ -101,53 +102,53 @@ namespace mpm {
 		void RenderGUI();
 	private:
 		//void RenderWindowManager();
-		void RenderTimeIntegrator();
-		void RenderExternalForceController();
-		void RenderDeformationGradientController();
-		void RenderMaterialParameterController();
+		void ImGuiTimeIntegrator();
+		void ImGuiExternalForceController();
+		void ImGuiDeformationGradientController();
+		void ImGuiMaterialParameterController();
 		
-		void RenderBasicShapesEditor();
-		void RenderPolygonEditor();
+		void ImGuiBasicShapesEditor();
+		void ImGuiPolygonEditor();
 		
-		void RenderMaterialParametersEditor();
-		void RenderGridOptions();
-		void RenderGridNodeViewer();
-		void RenderMaterialPointViewer();
-		void RenderCPUMode();
+		void ImGuiMaterialParametersEditor();
+		void ImGuiGridOptions();
+		void ImGuiGridNodeViewer();
+		void ImGuiMaterialPointViewer();
+		void ImGuiCPUMode();
 
 		// re-used helper functions for imgui
 		void ImGuiSelectPointCloud(std::string& pointCloudSelectStr);
 		void ImGuiDropDown(const std::string& combo_name, size_t &index, const std::vector<std::string>& string_vec);
 
 		// state variables for rendering different windows
-		bool m_renderTimeIntegrator = false;
-		bool m_renderZoomWindow = false;
+		bool m_imguiTimeIntegrator = false;
+		bool m_imguiZoomWindow = false;
 
-		bool m_renderMpmRenderWindow = true;
+		bool m_imguiMpmRenderWindow = true;
 
 		// geometry
-		bool m_renderBasicShapesEditor = false;
-		bool m_renderPolygonEditor = false;
+		bool m_imguiBasicShapesEditor = false;
+		bool m_imguiPolygonEditor = false;
 
 		// grid
-		bool m_renderGridOptions = false;
-		bool m_renderGridNodeViewer = false;
+		bool m_imguiGridOptions = false;
+		bool m_imguiGridNodeViewer = false;
 
 		// material point
-		bool m_renderMaterialPointViewer = false;
-		bool m_renderMaterialParametersEditor = false;
+		bool m_imguiMaterialPointViewer = false;
+		bool m_imguiMaterialParametersEditor = false;
 
 		// control
-		bool m_renderExternalForceController = false;
-		bool m_renderDeformationGradientController = false;
-		bool m_renderMaterialParameterController = false;
+		bool m_imguiExternalForceController = false;
+		bool m_imguiDeformationGradientController = false;
+		bool m_imguiMaterialParameterController = false;
 
 		// experimental
-		bool m_renderCPUMode = false;
+		bool m_imguiCPUMode = false;
 
 		/******************** ZOOM WINDOW ********************/
 		void InitZoomWindow();
-		void RenderZoomWindow();
+		void ImGuiZoomWindow();
 		std::shared_ptr<ImGuiScreen> m_zoomWindow = nullptr;
 		//GLuint m_zoom_VAO, m_zoom_VBO, m_zoom_EBO;
 		vec2 m_zoomWindowDims; // (width, height)
@@ -160,9 +161,10 @@ namespace mpm {
 
 		/******************** MPM RENDER WINDOW AND RENDERING ********************/
 		void InitMpmRenderWindow();
-		void RenderMpmRenderWindow();
+		void ImGuiMpmRenderWindow();
 		void MpmRender();
 		void ZoomRender();
+		void GeometryEditorScreenRender();
 		std::shared_ptr<ImGuiScreen> m_mpmRenderWindow = nullptr;
 
 
@@ -194,6 +196,7 @@ namespace mpm {
 		std::shared_ptr<StandardShader> m_gridShaderVector = nullptr;
 		std::shared_ptr<StandardShader> m_gridShaderMarchingSquares = nullptr;
 
+		std::shared_ptr<StandardShader> m_circleShader = nullptr;
 		std::shared_ptr<StandardShader> m_polygonShader = nullptr;
 		std::shared_ptr<StandardShader> m_pwLineShader = nullptr;
 		std::shared_ptr<StandardShader> m_polygonEditorShader = nullptr;
@@ -338,16 +341,6 @@ namespace mpm {
 		};
 		TRANSFER_SCHEME m_transferScheme = TRANSFER_SCHEME::APIC;
 
-
-		
-
-		//std::vector<PointCloud> m_pointClouds;
-		
-		//std::vector<char> m_pointCloudSelect;
-
-
-
-
 		/******************** MATERIAL PARAMETERS EDITOR ********************/
 		MaterialParameters m_mpParameters;
 		std::vector<MaterialParameters> m_energyModels = std::vector<MaterialParameters>(size_t(ENERGY_MODEL::Count), MaterialParameters());
@@ -356,11 +349,6 @@ namespace mpm {
 			"Fixed Corotational Elasticity",
 			"Snow (Stomakhin et. al 2013)"
 		};
-		/*MaterialParameters m_neoHookeanParameters;
-		MaterialParameters m_fixedCorotatedParameters;
-		MaterialParameters m_simpleSnowParameters;*/
-		//real m_lam = 38888.9;
-		//real m_mew = 58333.0;
 		ENERGY_MODEL m_comodel = ENERGY_MODEL::FIXED_COROTATIONAL_ELASTICITY;
 		void ChangeEnergyModel(ENERGY_MODEL);
 		float m_backgroundColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -393,6 +381,8 @@ namespace mpm {
 		void GenPointCloudPolygon();
 		int m_polygonCount = 0;
 		bool m_renderPolygon = false;
+
+		// Window just for editing polygons
 		void InitPolygonEditorScreen();
 		std::shared_ptr<ImGuiScreen> m_polygonEditorScreen = nullptr;
 
@@ -426,11 +416,7 @@ namespace mpm {
 		unsigned int m_lineDivCount = 0;
 
 		// imgui stuff
-		bool m_renderGUI = true;
-
-		// put node stuff here later
-		std::string m_nodeText = "x:\nv:\n";
-		std::string m_pointsViewStr = "";
+		bool m_imguiGUI = true;
 	};
 
 
