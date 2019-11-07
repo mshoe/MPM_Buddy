@@ -43,10 +43,10 @@ Rendering points with elastic potential energy:<br/>
 Different grid sizes:<br/>
 ![gif](gifs/smallerGrid.gif)<br/>
 
-Elastic deformation gradient modification (example 1) (colors are speed visualization):<br/>
+Elastic deformation gradient modification (example 1) (colors are stress visualization):<br/>
 ![gif](gifs/AmorphousObjectsAlive/lineBigger.gif)<br/>
 
-Elastic deformation gradient modification (example 1) (colors are speed visualization):<br/>
+Elastic deformation gradient modification (example 2) (colors are speed visualization):<br/>
 ![gif](gifs/Random/dgpDefGrad.gif)<br/>
 
 Mathematical trigger for landslide (colors are speed visualization):<br/>
