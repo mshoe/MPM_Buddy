@@ -3,6 +3,30 @@
 This program was made using C++ and OpenGL compute shaders.
 It also uses OpenGL for rendering and ImGui for GUI.
 I am using this program for my own research in physics-based animation.
+I hope other users can also use this for their MPM needs or to just play around. Right now they would need to build it themselves, but I plan to release this as a standalone open-source software once I am happy with what I've done with it.
+
+__Current Research (at UofT DGP):__
+
+MPM control algorithms.
+Natural triggers for landslides in MPM.
+
+__Planned Features (in order of priority):__
+-Implementations of my research (control and landslide triggers)<br/>
+-Implementation of MLS-MPM and CPIC<br/>
+-Advanced geometry editor to allow users to quickly create complex scenes to play with<br/>
+-Better material point selector (maybe a lasso tool)<br/>
+-Individual material point parameter control<br/>
+-rigid body, FEM, and mass-spring MPM coupling<br/>
+-level set collision objects<br/>
+-(jointed) rigid body characters to control with WASD and interact with the MPM world<br/>
+-3D mode<br/>
+
+
+__Development Plans:__
+-make shader system more modular<br/>
+-runtime MPM structure modifications<br/>
+-change from GLSL to SPIR-V?<br/>
+-think about using Vulkan<br/>
 
 __Video Gallery:__<br/>
 https://www.youtube.com/channel/UC4qfNTQgecwtluc0M5HRnTw<br/>
@@ -17,11 +41,16 @@ Rendering speed colored points vs marching squares for green fluid:<br/>
 Rendering points with elastic potential energy:<br/>
 ![gif](gifs/RenderingPointsWithEnergy.gif)<br/>
 
+Different grid sizes:<br/>
 ![gif](gifs/smallerGrid.gif)<br/>
 
-Elastic deformation gradient modification:<br/>
+Elastic deformation gradient modification (example 1) (colors are speed visualization):<br/>
 ![gif](gifs/AmorphousObjectsAlive/lineBigger.gif)<br/>
 
+Elastic deformation gradient modification (example 1) (colors are speed visualization):<br/>
+![gif](gifs/Random/dgpDefGrad.gif)<br/>
+
+Mathematical trigger for landslide (colors are speed visualization):<br/>
 ![gif](gifs/polygonSlopeSSR.gif)<br/>
 
 
@@ -59,11 +88,6 @@ T. Gast, C. Fu, C. Jiang, J. Teran, Implicit-shifted Symmetric QR Singular Value
 
 Ming Gao, Xinlei Wang, Kui Wu, Andre Pradhana, Eftychios Sifakis, Cem Yuksel, and Chenfanfu Jiang. 2018. GPU optimization of material point methods. ACM Trans. Graph. 37, 6, Article 254 (December 2018), 12 pages. DOI: https://doi.org/10.1145/3272127.3275044
 
-
-__Current Research:__
-
-MPM control algorithms.
-Natural triggers for landslides in MPM.
 
 __MPM in computer graphics:__
 

@@ -12,6 +12,7 @@ void mpm::MpmEngine::ImGuiMpmRenderWindow()
 		ImGui::SetWindowPos(ImVec2(SRC_WIDTH / 2.0, 0.0));
 		ImGui::SetWindowSize(ImVec2(SRC_WIDTH / 2.0, SRC_HEIGHT));
 		//ImGui::Window
+		//ImGui::Window
 		//ImGui::GetStyle().WindowRounding = 0.0f;
 		
 		ImVec2 mouseGlobalScreen = ImVec2((float)m_mouseGlobalScreen.x, (float)m_mouseGlobalScreen.y);

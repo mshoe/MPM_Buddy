@@ -509,6 +509,15 @@ void mpm::MpmEngine::MpmTimeStepSemiImplicitGridUpdate_CPP(real dt, real beta)
 		m_paused = true;
 		return;
 	}
+
+	/*Eigen::SimplicialLDLT<SparseMatrixd> solver(A);
+	solver.compute(A);
+	if (solver.info() != Eigen::Success) {
+		std::cout << "solver failed." << std::endl;
+		m_paused = true;
+		return;
+	}*/
+
 	Eigen::VectorXd V_semi_implict_euler = solver.solve(V_symplectic_euler);
 
 	VectorToGridVelocity(m_grid, V_semi_implict_euler, gridDegreesOfFreedom);
