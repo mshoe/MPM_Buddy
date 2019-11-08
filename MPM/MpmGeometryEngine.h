@@ -43,10 +43,11 @@ namespace mpm {
 		// for mpm engine
 		void ProcessMouseInput();
 		void ProcessKeyboardInput(GLFWwindow* window, real lag);
-		void HandleGeometryStates();
 		void SetMpmEngine(MpmEngine *mpmEngine) {
 			m_mpmEngine = mpmEngine;
 		}
+
+		void HandleGeometryStates();
 
 		// for control engine
 		void SelectPointsInPolygon(std::string pointCloudID);

@@ -1,13 +1,13 @@
-#include "MpmEngine.h"
+#include "MpmControlEngine.h"
 #include "imgui/imgui.h"
 
 #include "glm_MATLAB.h"
 #include "glm_imgui.h"
 
-void mpm::MpmEngine::SetDeformationGradients(std::string pointCloudID, mat2 Fe, mat2 Fp, bool setSelected)
+void mpm::MpmControlEngine::SetDeformationGradients(std::string pointCloudID, mat2 Fe, mat2 Fp, bool setSelected)
 {
-	if (m_pointCloudMap.count(pointCloudID)) {
-		std::shared_ptr<PointCloud> pointCloud = m_pointCloudMap[pointCloudID];
+	if (m_mpmEngine->m_pointCloudMap.count(pointCloudID)) {
+		std::shared_ptr<PointCloud> pointCloud = m_mpmEngine->m_pointCloudMap[pointCloudID];
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloud->ssbo);
 		m_pSetDeformationGradients->Use();
 		m_pSetDeformationGradients->SetMat("setFe", Fe);
@@ -20,10 +20,10 @@ void mpm::MpmEngine::SetDeformationGradients(std::string pointCloudID, mat2 Fe, 
 	}
 }
 
-void mpm::MpmEngine::MultiplyDeformationGradients(std::string pointCloudID, mat2 multFe, mat2 multFp, bool multSelected)
+void mpm::MpmControlEngine::MultiplyDeformationGradients(std::string pointCloudID, mat2 multFe, mat2 multFp, bool multSelected)
 {
-	if (m_pointCloudMap.count(pointCloudID)) {
-		std::shared_ptr<PointCloud> pointCloud = m_pointCloudMap[pointCloudID];
+	if (m_mpmEngine->m_pointCloudMap.count(pointCloudID)) {
+		std::shared_ptr<PointCloud> pointCloud = m_mpmEngine->m_pointCloudMap[pointCloudID];
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloud->ssbo);
 		m_pMultDeformationGradients->Use();
 		m_pMultDeformationGradients->SetMat("multFe", multFe);
@@ -36,10 +36,10 @@ void mpm::MpmEngine::MultiplyDeformationGradients(std::string pointCloudID, mat2
 	}
 }
 
-void mpm::MpmEngine::SetLameParamters(std::string pointCloudID, real lam, real mew, bool setSelected)
+void mpm::MpmControlEngine::SetLameParameters(std::string pointCloudID, real lam, real mew, bool setSelected)
 {
-	if (m_pointCloudMap.count(pointCloudID)) {
-		std::shared_ptr<PointCloud> pointCloud = m_pointCloudMap[pointCloudID];
+	if (m_mpmEngine->m_pointCloudMap.count(pointCloudID)) {
+		std::shared_ptr<PointCloud> pointCloud = m_mpmEngine->m_pointCloudMap[pointCloudID];
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloud->ssbo);
 		m_pSetLameParamters->Use();
 		m_pSetLameParamters->SetReal("setLam", lam);

@@ -40,9 +40,6 @@
     <Filter Include="Header Files\Utility\src">
       <UniqueIdentifier>{d47f7dab-339c-4dbe-a3bb-47d8d2ed646e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\apps\MPM">
-      <UniqueIdentifier>{4d452e6f-e999-4a81-9d88-99c88ac9890b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\MPM">
       <UniqueIdentifier>{6a3abc4d-cabb-4cc8-a4e9-e7236d2a548a}</UniqueIdentifier>
     </Filter>
@@ -69,6 +66,9 @@
     </Filter>
     <Filter Include="Source Files\MPM\Engine">
       <UniqueIdentifier>{26ef3dff-89cc-4b5c-afca-7c5bc24cf0de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\MPM">
+      <UniqueIdentifier>{4d452e6f-e999-4a81-9d88-99c88ac9890b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -159,6 +159,9 @@
     <ClCompile Include="MpmGeometrySelection.cpp">
       <Filter>Source Files\MPM\Geometry</Filter>
     </ClCompile>
+    <ClCompile Include="MpmControlInit.cpp">
+      <Filter>Source Files\MPM\Control</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainEngine.h">
@@ -189,7 +192,7 @@
       <Filter>Header Files\Utility\include</Filter>
     </ClInclude>
     <ClInclude Include="MpmEngine.h">
-      <Filter>Header Files\apps\MPM</Filter>
+      <Filter>Header Files\MPM</Filter>
     </ClInclude>
     <ClInclude Include="Grid.h">
       <Filter>Header Files\Math</Filter>
@@ -225,10 +228,13 @@
       <Filter>Resource Files\imgui</Filter>
     </ClInclude>
     <ClInclude Include="MpmGeometryEngine.h">
-      <Filter>Header Files\apps\MPM</Filter>
+      <Filter>Header Files\MPM</Filter>
     </ClInclude>
     <ClInclude Include="EngineHeader.h">
       <Filter>Header Files\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="MpmControlEngine.h">
+      <Filter>Header Files\MPM</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

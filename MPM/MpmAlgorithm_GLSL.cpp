@@ -71,10 +71,10 @@ void mpm::MpmEngine::MpmTimeStepExplicitGridUpdate_GLSL(real dt)
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 	m_gUpdate->Use();
 	m_gUpdate->SetReal("dt", dt);
-	m_gUpdate->SetVec("globalForce", m_globalForce);
+	m_gUpdate->SetVec("globalForce", m_mpmControlEngine->m_globalForce);
 	m_gUpdate->SetVec("iMpmMouse", m_mouseMpmRenderScreenGridSpaceFull);
-	m_gUpdate->SetReal("drag", m_drag);
-	m_gUpdate->SetReal("mousePower", m_mousePower);
+	m_gUpdate->SetReal("drag", m_mpmControlEngine->m_drag);
+	m_gUpdate->SetReal("mousePower", m_mpmControlEngine->m_mousePower);
 	glDispatchCompute(m_chunks_x, m_chunks_y, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }

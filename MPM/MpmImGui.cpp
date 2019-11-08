@@ -47,7 +47,7 @@ void mpm::MpmEngine::RenderGUI()
 				ImGui::EndMenu();
 			}
 			
-			m_mpmGeometryEngine->Menu();
+			
 
 			if (ImGui::BeginMenu("Material")) {
 				if (ImGui::MenuItem("Material Parameters Editor", "", m_imguiMaterialParametersEditor)) {
@@ -67,19 +67,11 @@ void mpm::MpmEngine::RenderGUI()
 				}
 				ImGui::EndMenu();
 			}
-			if (ImGui::BeginMenu("Control")) {
-				if (ImGui::MenuItem("External Force Controller", "", m_imguiExternalForceController)) {
-					m_imguiExternalForceController = !m_imguiExternalForceController;
-				}
-				ImGui::Separator();
-				if (ImGui::MenuItem("Deformation Gradient Controller", "", m_imguiDeformationGradientController)) {
-					m_imguiDeformationGradientController = !m_imguiDeformationGradientController;
-				}
-				if (ImGui::MenuItem("Material Parameter Controller", "", m_imguiMaterialParameterController)) {
-					m_imguiMaterialParameterController = !m_imguiMaterialParameterController;
-				}
-				ImGui::EndMenu();
-			}
+
+			m_mpmGeometryEngine->Menu();
+			m_mpmControlEngine->Menu();
+
+			
 			if (ImGui::BeginMenu("Experimental")) {
 				if (ImGui::MenuItem("CPU Mode", "", m_imguiCPUMode)) {
 					m_imguiCPUMode = !m_imguiCPUMode;
@@ -91,11 +83,10 @@ void mpm::MpmEngine::RenderGUI()
 
 		if (m_imguiMpmRenderWindow) ImGuiMpmRenderWindow();
 		if (m_imguiTimeIntegrator) ImGuiTimeIntegrator();
-		if (m_imguiExternalForceController) ImGuiExternalForceController();
-		if (m_imguiDeformationGradientController) ImGuiDeformationGradientController();
-		if (m_imguiMaterialParameterController) ImGuiMaterialParameterController();
+		
 		
 		m_mpmGeometryEngine->GUI();
+		m_mpmControlEngine->GUI();
 
 		if (m_imguiMaterialParametersEditor) ImGuiMaterialParametersEditor();
 		if (m_imguiGridOptions) ImGuiGridOptions();

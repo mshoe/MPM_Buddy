@@ -3,8 +3,10 @@
 bool mpm::MpmEngine::InitEngines()
 {
 	m_mpmGeometryEngine = std::make_shared<MpmGeometryEngine>();
+	m_mpmControlEngine = std::make_shared<MpmControlEngine>();
 
 	m_mpmGeometryEngine->SetMpmEngine(this);
+	m_mpmControlEngine->SetMpmEngine(this);
 	return true;
 }
 
@@ -45,16 +47,7 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp", mpmHeadersPath + "shapeFunctions.comp"});
 
 
-	// interactive / control shaders
-	m_pSetDeformationGradients = std::make_unique<ComputeShader>(
-		std::vector<std::string>{interactivePath + "pSetDeformationGradients.comp"},
-		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
-	m_pMultDeformationGradients = std::make_unique<ComputeShader>(
-		std::vector<std::string>{interactivePath + "pMultiplyDeformationGradients.comp"},
-		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
-	m_pSetLameParamters = std::make_unique<ComputeShader>(
-		std::vector<std::string>{interactivePath + "pSetLameParameters.comp"},
-		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
+	
 
 
 	// implict time integration shaders

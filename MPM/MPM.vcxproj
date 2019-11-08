@@ -138,6 +138,7 @@
     <ClCompile Include="external\src\glad\glad.c" />
     <ClCompile Include="MpmAlgorithm.cpp" />
     <ClCompile Include="MpmControlImGui.cpp" />
+    <ClCompile Include="MpmControlInit.cpp" />
     <ClCompile Include="MpmEngineInit.cpp" />
     <ClCompile Include="MpmGeometryEngine.cpp" />
     <ClCompile Include="MpmGeometryImGui.cpp" />
@@ -176,6 +177,7 @@
     <ClInclude Include="glm_MATLAB.h" />
     <ClInclude Include="Grid.h" />
     <ClInclude Include="MainEngine.h" />
+    <ClInclude Include="MpmControlEngine.h" />
     <ClInclude Include="MpmEngine.h" />
     <ClInclude Include="MpmGeometryEngine.h" />
     <ClInclude Include="OpenGLScreen.h" />

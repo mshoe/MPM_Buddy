@@ -22,7 +22,7 @@ uniform bool nodeGraphicsActive;
 uniform int selectedNodeI;
 uniform int selectedNodeJ;
 
-uniform bool collectiveNodeGraphics;
+uniform bool collectiveNodeGraphics = false;
 
 /*** HEADER ***/
 

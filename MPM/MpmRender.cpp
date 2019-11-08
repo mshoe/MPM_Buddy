@@ -284,7 +284,7 @@ void mpm::MpmEngine::RenderGrid(vec2 zoomPoint, real zoomFactor, std::shared_ptr
 	gridShader->SetuInt("selectedVector", unsigned int(m_gridVectorOption));
 	gridShader->SetReal("maxGridVectorLength", m_maxGridVectorLength);
 	gridShader->SetReal("maxGridVectorVisualLength", m_maxGridVectorVisualLength);
-	gridShader->SetBool("collectiveNodeGraphics", m_collectiveNodeSelectionGraphics);
+	//gridShader->SetBool("collectiveNodeGraphics", m_collectiveNodeSelectionGraphics);
 
 	glBindVertexArray(VisualizeVAO);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);

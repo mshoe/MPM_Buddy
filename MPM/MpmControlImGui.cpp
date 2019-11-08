@@ -1,7 +1,30 @@
-#include "MpmEngine.h"
+#include "MpmControlEngine.h"
 
+void mpm::MpmControlEngine::GUI()
+{
+	if (m_imguiExternalForceController) ImGuiExternalForceController();
+	if (m_imguiDeformationGradientController) ImGuiDeformationGradientController();
+	if (m_imguiMaterialParameterController) ImGuiMaterialParameterController();
+}
 
-void mpm::MpmEngine::ImGuiExternalForceController()
+void mpm::MpmControlEngine::Menu()
+{
+	if (ImGui::BeginMenu("Control")) {
+		if (ImGui::MenuItem("External Force Controller", "", m_imguiExternalForceController)) {
+			m_imguiExternalForceController = !m_imguiExternalForceController;
+		}
+		ImGui::Separator();
+		if (ImGui::MenuItem("Deformation Gradient Controller", "", m_imguiDeformationGradientController)) {
+			m_imguiDeformationGradientController = !m_imguiDeformationGradientController;
+		}
+		if (ImGui::MenuItem("Material Parameter Controller", "", m_imguiMaterialParameterController)) {
+			m_imguiMaterialParameterController = !m_imguiMaterialParameterController;
+		}
+		ImGui::EndMenu();
+	}
+}
+
+void mpm::MpmControlEngine::ImGuiExternalForceController()
 {
 	if (ImGui::Begin("MPM External Force Controller", &m_imguiExternalForceController)) {
 
@@ -18,11 +41,11 @@ void mpm::MpmEngine::ImGuiExternalForceController()
 	ImGui::End();
 }
 
-void mpm::MpmEngine::ImGuiDeformationGradientController() {
+void mpm::MpmControlEngine::ImGuiDeformationGradientController() {
 	if (ImGui::Begin("MPM Deformation Gradient Controller", &m_imguiDeformationGradientController)) {
 
 		static std::string pointCloudSelectStr = "";
-		ImGuiSelectPointCloud(pointCloudSelectStr);
+		m_mpmEngine->ImGuiSelectPointCloud(pointCloudSelectStr);
 
 
 		static std::vector<mat2> controlFeVec = { mat2(1.0) };
@@ -66,7 +89,7 @@ void mpm::MpmEngine::ImGuiDeformationGradientController() {
 			}
 			std::string setAllFeStr = "Set all point cloud deformation gradients to " + currFeStr;
 			if (ImGui::Button(setAllFeStr.c_str())) {
-				for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+				for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_mpmEngine->m_pointCloudMap) {
 					SetDeformationGradients(pointCloudPair.first, controlFeVec[i], mat2(1.0), setSelected);
 				}
 			}
@@ -76,7 +99,7 @@ void mpm::MpmEngine::ImGuiDeformationGradientController() {
 			}
 			std::string multAllFeStr = "Multiply all point cloud deformation gradients by " + currFeStr;
 			if (ImGui::Button(multAllFeStr.c_str())) {
-				for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+				for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_mpmEngine->m_pointCloudMap) {
 					MultiplyDeformationGradients(pointCloudPair.first, controlFeVec[i], mat2(1.0), multSelected);
 				}
 			}
@@ -85,7 +108,7 @@ void mpm::MpmEngine::ImGuiDeformationGradientController() {
 	ImGui::End();
 }
 
-void mpm::MpmEngine::ImGuiMaterialParameterController() {
+void mpm::MpmControlEngine::ImGuiMaterialParameterController() {
 
 	if (ImGui::Begin("MPM Material Parameter Controller", &m_imguiMaterialParameterController)) {
 
@@ -93,11 +116,11 @@ void mpm::MpmEngine::ImGuiMaterialParameterController() {
 		static std::string currPointCloud = "";
 		static std::string pointCloudSelectStr = "";
 		static bool setSelected;
-		ImGuiSelectPointCloud(pointCloudSelectStr);
+		m_mpmEngine->ImGuiSelectPointCloud(pointCloudSelectStr);
 
-		if (currPointCloud != pointCloudSelectStr && m_pointCloudMap.count(pointCloudSelectStr)) {
+		if (currPointCloud != pointCloudSelectStr && m_mpmEngine->m_pointCloudMap.count(pointCloudSelectStr)) {
 			currPointCloud = pointCloudSelectStr;
-			materialParametersControl = m_pointCloudMap[currPointCloud]->parameters;
+			materialParametersControl = m_mpmEngine->m_pointCloudMap[currPointCloud]->parameters;
 		}
 
 		ImGui::InputReal("Young's Modulus", &materialParametersControl.youngMod);
@@ -115,11 +138,11 @@ void mpm::MpmEngine::ImGuiMaterialParameterController() {
 
 		std::string setCurrPointCloudStr = "Set '" + currPointCloud + "' lame parameters";
 		if (ImGui::Button(setCurrPointCloudStr.c_str())) {
-			SetLameParamters(currPointCloud, materialParametersControl.lam, materialParametersControl.mew, setSelected);
+			SetLameParameters(currPointCloud, materialParametersControl.lam, materialParametersControl.mew, setSelected);
 		}
 		if (ImGui::Button("Set all point cloud lame parameters")) {
-			for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
-				SetLameParamters(pointCloudPair.first, materialParametersControl.lam, materialParametersControl.mew, setSelected);
+			for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_mpmEngine->m_pointCloudMap) {
+				SetLameParameters(pointCloudPair.first, materialParametersControl.lam, materialParametersControl.mew, setSelected);
 				//pointCloudPair.second->mew = m_mpParameters.youngMod / (2.f + 2.f * m_mpParameters.poisson);
 				//pointCloudPair.second->lam = m_mpParameters.youngMod * m_mpParameters.poisson / ((1.f + m_mpParameters.poisson) * (1.f - 2.f * m_mpParameters.poisson));
 			}
