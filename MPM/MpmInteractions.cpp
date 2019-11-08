@@ -55,6 +55,7 @@ void mpm::MpmEngine::SelectPointsInPolygon(std::string pointCloudID)
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, polygonSSBO);
 		
 		m_pLassoTool->Use();
+		m_pLassoTool->SetVec("polygonCenter", m_polygon->center);
 		int p_workgroups = int(glm::ceil(real(pointCloud->N) / real(G2P_WORKGROUP_SIZE)));
 		glDispatchCompute(p_workgroups, 1, 1);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);

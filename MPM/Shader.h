@@ -186,6 +186,11 @@ class StandardShader : public AdvancedShader {
 public:
 	StandardShader(const std::vector<std::string> &vertexPaths, const std::vector<std::string> &geometryPaths, const std::vector<std::string> &fragmentPaths, const std::vector<std::string> &headerPaths)
 	{
+		using namespace std::chrono;
+		std::cout << "Reading headers...\n";
+		high_resolution_clock clock;
+		time_point<high_resolution_clock> t1 = clock.now();
+
 		// First get the header file str into a std::string
 		std::string headerCode = "";
 		std::ifstream headerFile;
@@ -203,6 +208,8 @@ public:
 		catch (std::ifstream::failure e) {
 			std::cout << "ERROR::SHADER::HEADER_FILE_NOT_SUCCESFULLY_READ" << std::endl;
 		}
+		time_point<high_resolution_clock> t2 = clock.now();
+		std::cout << "Finished reading headers in " << duration_cast<seconds>(t2 - t1).count() << " seconds." << std::endl;
 
 		// 1. Vertex shader
 		std::vector<GLuint> vertexShaders;
@@ -215,6 +222,9 @@ public:
 		// 2. Fragment shaders
 		std::vector<GLuint> fragmentShaders;
 		CompileShaders(fragmentShaders, fragmentPaths, headerCode, GL_FRAGMENT_SHADER);
+
+		std::cout << "Linking program...\n";
+		t1 = clock.now();
 
 		// 3. Create program, link
 		// shader Program
@@ -230,6 +240,9 @@ public:
 		}
 		glLinkProgram(m_ID);
 		checkCompileErrors(m_ID, "PROGRAM");
+
+		t2 = clock.now();
+		std::cout << "Finished linking program in " << duration_cast<seconds>(t2 - t1).count() << " seconds." << std::endl;
 
 		// delete the shaders as they're linked into our program now and no longer necessary
 		for (GLuint vert : vertexShaders) {
@@ -250,6 +263,10 @@ public:
 		using namespace std::chrono;
 		// Constructs compute shader using compute paths? and a header file
 
+		std::cout << "Reading headers...\n";
+		high_resolution_clock clock;
+		time_point<high_resolution_clock> t1 = clock.now();
+
 		// First get the header file str into a std::string
 		std::string headerCode = "";
 		std::ifstream headerFile;
@@ -268,12 +285,14 @@ public:
 			std::cout << "ERROR::SHADER::HEADER_FILE_NOT_SUCCESFULLY_READ" << std::endl;
 		}
 
+		time_point<high_resolution_clock> t2 = clock.now();
+		std::cout << "Finished reading headers in " << duration_cast<seconds>(t2 - t1).count() << " seconds." << std::endl;
+
 		std::vector<GLuint> computes;
 		computes.resize(computePaths.size());
 		for (size_t i = 0; i < computePaths.size(); i++) {
 			std::cout << "Compiling:" << computePaths[i] << std::endl;
-			high_resolution_clock clock;
-			time_point<high_resolution_clock> t1 = clock.now();
+			t1 = clock.now();
 
 			std::string shaderCode;
 			std::ifstream shaderFile;
@@ -316,10 +335,12 @@ public:
 			glCompileShader(computes[i]);
 			checkCompileErrors(computes[i], "COMPUTE");
 
-			time_point<high_resolution_clock> t2 = clock.now();
-			duration_cast<seconds>(t2 - t1);
+			t2 = clock.now();
 			std::cout << "Finished compiling in " << duration_cast<seconds>(t2 - t1).count() << " seconds." << std::endl;
 		}
+
+		std::cout << "Linking program...\n";
+		t1 = clock.now();
 
 		// shader Program
 		m_ID = glCreateProgram();
@@ -328,6 +349,10 @@ public:
 		}
 		glLinkProgram(m_ID);
 		checkCompileErrors(m_ID, "PROGRAM");
+
+		t2 = clock.now();
+		std::cout << "Finished linking program in " << duration_cast<seconds>(t2 - t1).count() << " seconds." << std::endl;
+
 		for (GLuint comp : computes) {
 			glDeleteShader(comp);
 		}

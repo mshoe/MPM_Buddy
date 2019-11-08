@@ -16,6 +16,7 @@ void mpm::MpmEngine::ImGuiBasicShapesEditor()
 		ImGui::InputReal("Circle Inner Radius", &m_circle_inner_radius, 0.1, 1.0, "%.1f");
 		ImGui::InputReal("Circle Rounding", &m_circle_rounding, 0.1, 1.0, "%.1f");
 		if (ImGui::Button("Create Solid Circle") && m_paused) {
+			ClearCreateStates();
 			m_createCircleState = true;
 		}
 
@@ -25,6 +26,7 @@ void mpm::MpmEngine::ImGuiBasicShapesEditor()
 		ImGui::InputReal("Rectangle Inner Radius", &m_rect_inner_radius, 0.1, 1.0, "%.1f");
 		ImGui::InputReal("Rectangle Rounding", &m_rect_rounding, 0.1, 1.0, "%.1f");
 		if (ImGui::Button("Create Solid Rectangle") && m_paused) {
+			ClearCreateStates();
 			m_createRectState = true;
 		}
 
@@ -33,6 +35,7 @@ void mpm::MpmEngine::ImGuiBasicShapesEditor()
 		ImGui::InputReal("Isosceles Triangle Inner Radius", &m_iso_tri_inner_radius, 0.1, 1.0, "%.1f");
 		ImGui::InputReal("Isosceles Triangle Rounding", &m_iso_tri_rounding, 0.1, 1.0, "%.1f");
 		if (ImGui::Button("Create Solid Triangle") && m_paused) {
+			ClearCreateStates();
 			m_createIsoTriState = true;
 		}
 
@@ -52,6 +55,8 @@ void mpm::MpmEngine::ImGuiBasicShapesEditor()
 
 void mpm::MpmEngine::ImGuiPolygonEditor()
 {
+	static glm::highp_fvec4 min_color(1.0f, 0.0f, 0.0f, 1.0f);
+	static glm::highp_fvec4 max_color(0.0f, 1.0f, 0.0f, 1.0f);
 	if (ImGui::Begin("Polygon Editor", &m_imguiPolygonEditor)) {
 
 		ImVec2 mousePos = ImGui::GetCursorScreenPos();
@@ -61,6 +66,13 @@ void mpm::MpmEngine::ImGuiPolygonEditor()
 		ImGui::InputReal("Point Spacing", &m_particleSpacing, 0.01, 0.1, "%.2f");
 		ImGui::Text("");
 		ImGui::Checkbox("Render polygon", &m_renderPolygon);
+		if (ImGui::Button("Change Polygon Origin")) {
+			m_changePolygonOriginState = true;
+		}
+		if (ImGui::Button("Move Polygon")) {
+			m_movePolygonState = true;
+			m_renderPolygonAtMouseState = true;
+		}
 		if (ImGui::Button("Add Polygon Vertex")) {
 			m_addPolygonVertexState = true;
 		}
@@ -68,18 +80,28 @@ void mpm::MpmEngine::ImGuiPolygonEditor()
 			m_polygon->vertices.clear();
 		}
 		if (ImGui::Button("Fill polygon with MPs")) {
-			GenPointCloudPolygon();
+			GenPointCloudPolygon(m_polygon, m_polygon->center);
 		}
-		if (ImGui::Button("Select grid nodes")) {
-
+		if (ImGui::Button("Create Polygon")) {
+			ClearCreateStates();
+			m_createPolygonState = true;
+			m_renderPolygonAtMouseState = true;
 		}
+		ImGui::DisplayNamedGlmVecMixColor("Polygon center", m_polygon->center, min_color, max_color);
 		ImGui::DisplayNamedGlmRealColor("Number of vertices", real(m_polygon->vertices.size()), glm::highp_fvec4(1.0));
 		ImGui::Text("Polygon vertices:");
 		for (int i = 0; i < m_polygon->vertices.size(); i++) {
 			ImGui::DisplayGlmVec(m_polygon->vertices[i]);
 		}
+	}
+	ImGui::End();
+}
 
-		ImGui::Text("");
+void mpm::MpmEngine::ImGuiPWLineEditor()
+{
+	static glm::highp_fvec4 min_color(1.0f, 0.0f, 0.0f, 1.0f);
+	static glm::highp_fvec4 max_color(0.0f, 1.0f, 0.0f, 1.0f);
+	if (ImGui::Begin("Piecewise Line Editor", &m_imguiPolygonEditor)) {
 		ImGui::Checkbox("Render piecewise line", &m_renderPWLine);
 		if (ImGui::Button("Add line Vertex")) {
 			m_addPWLineVertexState = true;

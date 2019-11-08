@@ -8,19 +8,24 @@ layout (local_size_x = 1024) in;
 layout (std430, binding = 3) buffer polygonVertices {
 	dvec2 vertices[];
 };
+uniform dvec2 polygonCenter;
 
 double polygonSdf(dvec2 p) {
     if (vertices.length() < 3)
         return 1.0;
 
-    double d = dot(p - vertices[0], p - vertices[0]);
+    dvec2 v0 = polygonCenter + vertices[0];
+
+    double d = dot(p - v0, p - v0);
     double s = 1.0;
     for (int i = 0, j = vertices.length()-1; i < vertices.length(); j = i, i++) {
-        dvec2 e = vertices[j] - vertices[i];
-        dvec2 w = p - vertices[i];
+        dvec2 vi = polygonCenter + vertices[i];
+        dvec2 vj = polygonCenter + vertices[j];
+        dvec2 e = vj - vi;
+        dvec2 w = p - vi;
         dvec2 b = w - e * clamp(dot(w, e) / dot(e, e), 0.0, 1.0);
         d = min(d, dot(b, b));
-        bvec3 c = bvec3(p.y >= vertices[i].y, p.y < vertices[j].y, e.x * w.y > e.y * w.x);
+        bvec3 c = bvec3(p.y >= vi.y, p.y < vj.y, e.x * w.y > e.y * w.x);
         if (all(c) || all(not(c)))
             s *= -1.0;
     }

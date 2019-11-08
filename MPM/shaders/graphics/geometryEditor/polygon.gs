@@ -8,6 +8,8 @@ layout (std430, binding = 3) buffer polygonVertices {
 	dvec2 vertices[];
 };
 
+uniform dvec2 polygonCenter;
+
 uniform dvec4 mouse;
 uniform bool lastVertexMouse = false;
 uniform dvec2 zoomPoint;
@@ -23,7 +25,7 @@ void main() {
     dvec2 grid_vec = dvec2(GRID_SIZE_X, GRID_SIZE_Y);
 
     for (int i = 0; i < numVertices; i++) {
-        dvec2 pos = vertices[i];
+        dvec2 pos = polygonCenter + vertices[i];
         pos -= zoomPoint;
         pos *= zoomFactor;
         pos += zoomPoint;
@@ -51,7 +53,7 @@ void main() {
         gl_Position = vec4(float(norm_mouse.x), float(norm_mouse.y), 0.0, 1.0);
         EmitVertex();
     } else {
-        dvec2 pos = vertices[0];
+        dvec2 pos = polygonCenter + vertices[0];
         pos -= zoomPoint;
         pos *= zoomFactor;
         pos += zoomPoint;

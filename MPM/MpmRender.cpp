@@ -79,7 +79,7 @@ void mpm::MpmEngine::MpmRender()
 		}
 	}
 	if (m_viewMarchingSquares) {
-		RenderMarchingSquares(m_zoomPoint, 1.0, m_openGLScreen, m_gridShaderMarchingSquares);
+		RenderMarchingSquares(m_zoomPoint, 1.0, m_mpmRenderWindow, m_gridShaderMarchingSquares);
 	}
 	// Render Zoom Border
 	if (m_showZoomBorder) {
@@ -91,14 +91,18 @@ void mpm::MpmEngine::MpmRender()
 
 	// Render Shapes
 	if (m_createCircleState) {
-		RenderCircle(m_zoomPoint, 1.0, m_openGLScreen, m_circleShader);
+		RenderCircle(m_zoomPoint, 1.0, m_mpmRenderWindow, m_circleShader);
 	}
+	if (m_renderPolygonAtMouseState) {
+		RenderPolygon(m_mouseMpmRenderScreenGridSpace, false, m_zoomPoint, 1.0, m_mpmRenderWindow, m_polygonShader);
+	}
+
 	if (m_renderPolygon) {
-		RenderPolygon(m_zoomPoint, 1.0, m_openGLScreen, m_polygonShader);
+		RenderPolygon(m_polygon->center, m_addPolygonVertexState, m_zoomPoint, 1.0, m_mpmRenderWindow, m_polygonShader);
 	}
 
 	if (m_renderPWLine) {
-		RenderPWLine(m_zoomPoint, 1.0, m_openGLScreen, m_pwLineShader);
+		RenderPWLine(m_zoomPoint, 1.0, m_mpmRenderWindow, m_pwLineShader);
 	}
 	m_mpmRenderWindow->UnbindFBO();
 
@@ -126,8 +130,12 @@ void mpm::MpmEngine::ZoomRender()
 		RenderCircle(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_circleShader);
 	}
 
+	if (m_renderPolygonAtMouseState) {
+		RenderPolygon(m_mouseMpmRenderScreenGridSpace, false, m_zoomPoint, m_zoomFactor, m_zoomWindow, m_polygonShader);
+	}
+
 	if (m_renderPolygon) {
-		RenderPolygon(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_polygonShader);
+		RenderPolygon(m_polygon->center, m_addPolygonVertexState, m_zoomPoint, m_zoomFactor, m_zoomWindow, m_polygonShader);
 	}
 
 	if (m_renderPWLine) {
@@ -139,12 +147,12 @@ void mpm::MpmEngine::ZoomRender()
 void mpm::MpmEngine::GeometryEditorScreenRender()
 {
 	m_polygonEditorScreen->BindFBO();
-	glViewport(0, 0, (GLsizei)m_zoomWindow->screen_dimensions.x, (GLsizei)m_zoomWindow->screen_dimensions.y);
+	/*glViewport(0, 0, (GLsizei)m_zoomWindow->screen_dimensions.x, (GLsizei)m_zoomWindow->screen_dimensions.y);
 	glClearColor(m_backgroundColor[0], m_backgroundColor[1], m_backgroundColor[2], m_backgroundColor[3]);
 	glClear(GL_COLOR_BUFFER_BIT);
 	if (m_renderPolygon) {
 		RenderPolygon(m_zoomPoint, 1.0, m_polygonEditorScreen, m_polygonShader);
-	}
+	}*/
 	m_polygonEditorScreen->UnbindFBO();
 }
 
@@ -334,17 +342,18 @@ void mpm::MpmEngine::RenderCircle(vec2 zoomPoint, real zoomFactor, std::shared_p
 	glBindVertexArray(0);
 }
 
-void mpm::MpmEngine::RenderPolygon(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> polygonShader)
+void mpm::MpmEngine::RenderPolygon(vec2 polygonCenter, bool addPolygonVertexState, vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> polygonShader)
 {
 	if (m_polygon->vertices.size() == 0)
 		return;
 
 	polygonShader->Use();
 	polygonShader->SetVec("mouse", m_mouseMpmRenderScreenGridSpaceFull);
-	polygonShader->SetBool("lastVertexMouse", m_addPolygonVertexState);
+	polygonShader->SetBool("lastVertexMouse", addPolygonVertexState);
 
 	polygonShader->SetVec("zoomPoint", zoomPoint);
 	polygonShader->SetReal("zoomFactor", zoomFactor);
+	polygonShader->SetVec("polygonCenter", polygonCenter);
 	GLuint polygonSSBO;
 	glCreateBuffers(1, &polygonSSBO);
 

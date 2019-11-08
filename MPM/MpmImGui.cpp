@@ -53,6 +53,9 @@ void mpm::MpmEngine::RenderGUI()
 				if (ImGui::MenuItem("Polygon Editor", "", m_imguiPolygonEditor)) {
 					m_imguiPolygonEditor = !m_imguiPolygonEditor;
 				}
+				if (ImGui::MenuItem("Piecewise Line Editor", "", m_imguiPWLineEditor)) {
+					m_imguiPWLineEditor = !m_imguiPWLineEditor;
+				}
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Material")) {
@@ -101,6 +104,7 @@ void mpm::MpmEngine::RenderGUI()
 		if (m_imguiDeformationGradientController) ImGuiDeformationGradientController();
 		if (m_imguiMaterialParameterController) ImGuiMaterialParameterController();
 		if (m_imguiPolygonEditor) ImGuiPolygonEditor();
+		if (m_imguiPWLineEditor) ImGuiPWLineEditor();
 		if (m_imguiBasicShapesEditor) ImGuiBasicShapesEditor();
 		if (m_imguiMaterialParametersEditor) ImGuiMaterialParametersEditor();
 		if (m_imguiGridOptions) ImGuiGridOptions();

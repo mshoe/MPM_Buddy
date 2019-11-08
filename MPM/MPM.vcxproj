@@ -170,6 +170,7 @@
     <ClInclude Include="Grid.h" />
     <ClInclude Include="MainEngine.h" />
     <ClInclude Include="MpmEngine.h" />
+    <ClInclude Include="MpmGeometryEngine.h" />
     <ClInclude Include="OpenGLScreen.h" />
     <ClInclude Include="PointCloud.h" />
     <ClInclude Include="Shader.h" />

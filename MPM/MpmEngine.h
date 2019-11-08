@@ -92,7 +92,7 @@ namespace mpm {
 		void RenderGrid(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> gridShader);
 		void RenderMarchingSquares(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> gridShader);
 		void RenderCircle(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> circleShader);
-		void RenderPolygon(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> polygonShader);
+		void RenderPolygon(vec2 polygonCenter, bool addPolygonVertexState, vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> polygonShader);
 		void RenderPWLine(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> pwLineShader);
 		
 
@@ -109,6 +109,7 @@ namespace mpm {
 		
 		void ImGuiBasicShapesEditor();
 		void ImGuiPolygonEditor();
+		void ImGuiPWLineEditor();
 		
 		void ImGuiMaterialParametersEditor();
 		void ImGuiGridOptions();
@@ -129,6 +130,7 @@ namespace mpm {
 		// geometry
 		bool m_imguiBasicShapesEditor = false;
 		bool m_imguiPolygonEditor = false;
+		bool m_imguiPWLineEditor = false;
 
 		// grid
 		bool m_imguiGridOptions = false;
@@ -372,13 +374,25 @@ namespace mpm {
 			m_createCircleState = false;
 			m_createRectState = false;
 			m_createIsoTriState = false;
+
+			m_addPolygonVertexState = false;
+			m_changePolygonOriginState = false;
+			m_movePolygonState = false;
+			m_createPolygonState = false;
+			m_renderPolygonAtMouseState = false;
 		}
 
 		real m_particleSpacing = 0.25;
 
 		std::shared_ptr<sdf::Polygon> m_polygon = nullptr;
+		std::vector<std::shared_ptr<sdf::Polygon>> m_polygons;
+		size_t m_polygonSelect = 0;
 		bool m_addPolygonVertexState = false;
-		void GenPointCloudPolygon();
+		bool m_changePolygonOriginState = false;
+		bool m_movePolygonState = false;
+		bool m_createPolygonState = false;
+		bool m_renderPolygonAtMouseState = false;
+		void GenPointCloudPolygon(std::shared_ptr<sdf::Polygon> polygon, vec2 center);
 		int m_polygonCount = 0;
 		bool m_renderPolygon = false;
 

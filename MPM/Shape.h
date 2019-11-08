@@ -166,7 +166,18 @@ namespace sdf {
 		}
 
 		void AddVertex(vec2 v) {
-			vertices.push_back(v);
+			vertices.push_back(v - center);
+		}
+
+		void RedefinePolygonOrigin(vec2 new_center) {
+			// Without changing where the polygon is currently displayed, change the origin of the polygon's coordinate system
+
+			for (size_t i = 0; i < vertices.size(); i++) {
+				vertices[i] = vertices[i] + center - new_center;
+			}
+
+			center = new_center;
+			
 		}
 
 		// TODO: Define the polygon w.r.t. the center so it can be easily moved around by moving the center

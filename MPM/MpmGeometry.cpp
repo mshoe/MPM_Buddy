@@ -1,6 +1,6 @@
 #include "MpmEngine.h"
 
-void mpm::MpmEngine::GenPointCloudPolygon()
+void mpm::MpmEngine::GenPointCloudPolygon(std::shared_ptr<sdf::Polygon> polygon, vec2 center)
 {
 	if (!m_paused)
 		return;
@@ -10,6 +10,10 @@ void mpm::MpmEngine::GenPointCloudPolygon()
 	time_point<high_resolution_clock> t2;
 	t1 = high_resolution_clock::now();
 
+	// First change the center point of the polygon to center:
+	vec2 original_center = polygon->center;
+	polygon->center = center;
+
 
 
 
@@ -18,9 +22,12 @@ void mpm::MpmEngine::GenPointCloudPolygon()
 
 	glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
 
-	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(polygonID, *m_polygon, real(m_chunks_x) * real(CHUNK_WIDTH), real(m_chunks_y) * real(CHUNK_WIDTH), 0.0, 0.0, m_particleSpacing, m_mpParameters, m_comodel, sdf::SDF_OPTION::NORMAL, m_invertedSdf, m_fixedPointCloud, m_initVelocity, color);
+	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(polygonID, *polygon, real(m_chunks_x) * real(CHUNK_WIDTH), real(m_chunks_y) * real(CHUNK_WIDTH), 0.0, 0.0, m_particleSpacing, m_mpParameters, m_comodel, sdf::SDF_OPTION::NORMAL, m_invertedSdf, m_fixedPointCloud, m_initVelocity, color);
 
 	t2 = high_resolution_clock::now();
+
+	// Change the center point of the polygon back to original:
+	polygon->center = original_center;
 
 	std::cout << "Finished generating " << pointCloud->N << " points for '" << polygonID << "' point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
 
@@ -251,14 +258,31 @@ void mpm::MpmEngine::HandleGeometryStates()
 	if (m_paused && m_addPolygonVertexState && m_leftButtonDown) {
 		m_addPolygonVertexState = false;
 
-		real vertexX = m_mouseMpmRenderScreenGridSpace.x;
-		real vertexY = m_mouseMpmRenderScreenGridSpace.y;
-
-		vec2 v = vec2(vertexX, vertexY);
 
 		//if (m_mouseMoved) {
-		m_polygon->AddVertex(v);
+		m_polygon->AddVertex(m_mouseMpmRenderScreenGridSpace);
 		//}
+	}
+
+	if (m_paused && m_changePolygonOriginState && m_leftButtonDown) {
+		m_changePolygonOriginState = false;
+		m_renderPolygonAtMouseState = false;
+
+		m_polygon->RedefinePolygonOrigin(m_mouseMpmRenderScreenGridSpace);
+	}
+
+	if (m_paused && m_movePolygonState && m_leftButtonDown) {
+		m_movePolygonState = false;
+		m_renderPolygonAtMouseState = false;
+
+		m_polygon->center = m_mouseMpmRenderScreenGridSpace;
+	}
+
+	if (m_paused && m_createPolygonState && m_leftButtonDown) {
+		m_createPolygonState = false;
+		m_renderPolygonAtMouseState = false;
+
+		GenPointCloudPolygon(m_polygon, m_mouseMpmRenderScreenGridSpace);
 	}
 
 	if (m_paused && m_addPWLineVertexState && m_leftButtonDown) {

@@ -206,6 +206,9 @@
     <ClInclude Include="external\imgui\imconfig.h">
       <Filter>Resource Files\imgui</Filter>
     </ClInclude>
+    <ClInclude Include="MpmGeometryEngine.h">
+      <Filter>Header Files\apps\MPM</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\compute\p2gCalculateVolumes.comp">

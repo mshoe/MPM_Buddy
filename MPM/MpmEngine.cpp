@@ -71,6 +71,7 @@ void mpm::MpmEngine::ProcessKeyboardInput(GLFWwindow* window, real lag)
 	}*/
 
 	if (m_paused) {
+
 		if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
 			ClearCreateStates();
 			m_createCircleState = true;
@@ -144,6 +145,10 @@ void mpm::MpmEngine::ProcessMouseInput(GLFWwindow* window, real lag)
 	// Grid space can be found from the OpenGLScreen's center and dimensions
 	m_leftButtonDown = (bool)left_click;
 	m_rightButtonDown = (bool)right_click;
+
+	if (m_rightButtonDown) {
+		ClearCreateStates();
+	}
 
 }
 
