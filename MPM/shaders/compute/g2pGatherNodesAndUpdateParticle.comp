@@ -62,6 +62,11 @@ void main() {
 	// THIS IS WHERE DIFFERENT CONSTITUTIVE MODELS ARE EVALUATED
 
 	// forces only come from elastic deformation gradient
+	double lam = points[pid].lam;
+	double mew = points[pid].mew;
+	double crit_c = points[pid].crit_c;
+	double crit_s = points[pid].crit_s;
+	double hardening = points[pid].hardening;
 	if (comodel == NEO_HOOKEAN) {
 		points[pid].Fe = dfp*points[pid].Fe;
 		dmat2 Fe = points[pid].Fe;

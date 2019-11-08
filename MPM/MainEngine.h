@@ -37,8 +37,6 @@ private:
 
 	std::shared_ptr<mpm::MpmEngine> m_mpmEngine;
 
-	std::shared_ptr<Engine> m_currentEngine;
-
 	real m_time = 0.f;
 };
 

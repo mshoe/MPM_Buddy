@@ -1,5 +1,13 @@
 #include "MpmEngine.h"
 
+bool mpm::MpmEngine::InitEngines()
+{
+	m_mpmGeometryEngine = std::make_shared<MpmGeometryEngine>();
+
+	m_mpmGeometryEngine->SetMpmEngine(this);
+	return true;
+}
+
 bool mpm::MpmEngine::InitComputeShaderPipeline()
 {
 	using namespace std::chrono;
@@ -13,14 +21,7 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 	glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &work_group_size);
 	std::cout << "max work group size: " << work_group_size << std::endl;
 
-	std::string computePath = "shaders\\compute\\";
-	std::string mpmHeadersPath = "shaders\\compute\\mpmHeaders\\";
-	std::string graphicsPath = "shaders\\graphics\\";
-	std::string graphicsGeometryPath = graphicsPath + "geometryEditor\\";
-	std::string graphicsGridPath = graphicsPath + "grid\\";
-	std::string graphicsMPPath = graphicsPath + "materialPoints\\";
-	std::string interactivePath = "shaders\\compute\\interactive\\";
-	std::string implicitPath = "shaders\\compute\\implicit\\";
+	using namespace ShaderPaths;
 
 	// first compile shaders
 	m_gReset = std::make_unique<ComputeShader>(
@@ -51,13 +52,9 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 	m_pMultDeformationGradients = std::make_unique<ComputeShader>(
 		std::vector<std::string>{interactivePath + "pMultiplyDeformationGradients.comp"},
 		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
-	m_pLassoTool = std::make_unique<ComputeShader>(
-		std::vector<std::string>{interactivePath + "pLassoTool.comp"},
+	m_pSetLameParamters = std::make_unique<ComputeShader>(
+		std::vector<std::string>{interactivePath + "pSetLameParameters.comp"},
 		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
-	m_pClearPointSelection = std::make_unique<ComputeShader>(
-		std::vector<std::string>{interactivePath + "pClearPointSelection.comp"},
-		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
-
 
 
 	// implict time integration shaders
@@ -120,27 +117,7 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 		std::vector<std::string>{graphicsGridPath + "marchingSquares.fs"},
 		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
 
-	m_circleShader = std::make_shared<StandardShader>(
-		std::vector<std::string>{graphicsGeometryPath + "polygon.vs"},
-		std::vector<std::string>{graphicsGeometryPath + "circle.gs"},
-		std::vector<std::string>{graphicsGeometryPath + "polygon.fs"},
-		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
-	m_polygonShader = std::make_shared<StandardShader>(
-		std::vector<std::string>{graphicsGeometryPath + "polygon.vs"},
-		std::vector<std::string>{graphicsGeometryPath + "polygon.gs"},
-		std::vector<std::string>{graphicsGeometryPath + "polygon.fs"},
-		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
-	m_pwLineShader = std::make_shared<StandardShader>(
-		std::vector<std::string>{graphicsGeometryPath + "polygon.vs"},
-		std::vector<std::string>{graphicsGeometryPath + "pwLine.gs"},
-		std::vector<std::string>{graphicsGeometryPath + "polygon.fs"},
-		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
-
-	m_polygonEditorShader = std::make_shared<StandardShader>(
-		std::vector<std::string>{graphicsGeometryPath + "polygon.vs"},
-		std::vector<std::string>{graphicsGeometryPath + "polygonEditor.gs"},
-		std::vector<std::string>{graphicsGeometryPath + "polygon.fs"},
-		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
+	
 
 
 	m_openGLScreen = std::make_shared<OpenGLScreen>();
@@ -181,8 +158,7 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 
 	m_mpParameters = m_energyModels[size_t(ENERGY_MODEL::FIXED_COROTATIONAL_ELASTICITY)];
 
-	m_polygon = std::make_shared<sdf::Polygon>();
-	m_pwLine = std::make_shared<sdf::PWLine>();
+	
 	return true;
 }
 
@@ -211,10 +187,10 @@ void mpm::MpmEngine::InitMpmRenderWindow()
 	m_mpmRenderWindow->sim_dimensions = vec2(800.0, 800.0);
 }
 
-void mpm::MpmEngine::InitPolygonEditorScreen()
-{
-	m_polygonEditorScreen = std::make_shared<ImGuiScreen>(vec2(450.0, 450.0));
-	m_polygonEditorScreen->center = vec2(225.0, 225.0);
-	//m_zoomWindow->screen_dimensions = vec2(450.0, 450.0);
-	m_polygonEditorScreen->sim_dimensions = vec2(450.0, 450.0);
-}
+//void mpm::MpmEngine::InitPolygonEditorScreen()
+//{
+//	m_polygonEditorScreen = std::make_shared<ImGuiScreen>(vec2(450.0, 450.0));
+//	m_polygonEditorScreen->center = vec2(225.0, 225.0);
+//	//m_zoomWindow->screen_dimensions = vec2(450.0, 450.0);
+//	m_polygonEditorScreen->sim_dimensions = vec2(450.0, 450.0);
+//}

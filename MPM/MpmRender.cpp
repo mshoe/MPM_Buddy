@@ -90,20 +90,22 @@ void mpm::MpmEngine::MpmRender()
 	}
 
 	// Render Shapes
-	if (m_createCircleState) {
-		RenderCircle(m_zoomPoint, 1.0, m_mpmRenderWindow, m_circleShader);
-	}
-	if (m_renderPolygonAtMouseState) {
-		RenderPolygon(m_mouseMpmRenderScreenGridSpace, false, m_zoomPoint, 1.0, m_mpmRenderWindow, m_polygonShader);
-	}
+	//if (m_createCircleState) {
+	//	RenderCircle(m_zoomPoint, 1.0, m_mpmRenderWindow, m_circleShader);
+	//}
+	//if (m_renderPolygonAtMouseState) {
+	//	RenderPolygon(m_mouseMpmRenderScreenGridSpace, false, m_zoomPoint, 1.0, m_mpmRenderWindow, m_polygonShader);
+	//}
 
-	if (m_renderPolygon) {
-		RenderPolygon(m_polygon->center, m_addPolygonVertexState, m_zoomPoint, 1.0, m_mpmRenderWindow, m_polygonShader);
-	}
+	//if (m_renderPolygon) {
+	//	RenderPolygon(m_polygon->center, m_addPolygonVertexState, m_zoomPoint, 1.0, m_mpmRenderWindow, m_polygonShader);
+	//}
 
-	if (m_renderPWLine) {
-		RenderPWLine(m_zoomPoint, 1.0, m_mpmRenderWindow, m_pwLineShader);
-	}
+	//if (m_renderPWLine) {
+	//	RenderPWLine(m_zoomPoint, 1.0, m_mpmRenderWindow, m_pwLineShader);
+	//}
+
+	m_mpmGeometryEngine->Render(m_zoomPoint, 1.0, m_mpmRenderWindow);
 	m_mpmRenderWindow->UnbindFBO();
 
 }
@@ -126,7 +128,7 @@ void mpm::MpmEngine::ZoomRender()
 	}
 	// Render polygon
 
-	if (m_createCircleState) {
+	/*if (m_createCircleState) {
 		RenderCircle(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_circleShader);
 	}
 
@@ -140,20 +142,9 @@ void mpm::MpmEngine::ZoomRender()
 
 	if (m_renderPWLine) {
 		RenderPWLine(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_pwLineShader);
-	}
-	m_zoomWindow->UnbindFBO();
-}
-
-void mpm::MpmEngine::GeometryEditorScreenRender()
-{
-	m_polygonEditorScreen->BindFBO();
-	/*glViewport(0, 0, (GLsizei)m_zoomWindow->screen_dimensions.x, (GLsizei)m_zoomWindow->screen_dimensions.y);
-	glClearColor(m_backgroundColor[0], m_backgroundColor[1], m_backgroundColor[2], m_backgroundColor[3]);
-	glClear(GL_COLOR_BUFFER_BIT);
-	if (m_renderPolygon) {
-		RenderPolygon(m_zoomPoint, 1.0, m_polygonEditorScreen, m_polygonShader);
 	}*/
-	m_polygonEditorScreen->UnbindFBO();
+	m_mpmGeometryEngine->Render(m_zoomPoint, m_zoomFactor, m_zoomWindow);
+	m_zoomWindow->UnbindFBO();
 }
 
 void mpm::MpmEngine::Render()
@@ -245,17 +236,16 @@ void mpm::MpmEngine::RenderPointClouds(vec2 zoomPoint, real zoomFactor, std::sha
 {
 
 	// RENDER POINT CLOUD
-	m_pPointCloudShader->Use();
-	m_pPointCloudShader->SetReal("maxSpeedClamp", m_maxSpeedClamp);
-	m_pPointCloudShader->SetReal("minSpeedClamp", m_minSpeedClamp);
-	m_pPointCloudShader->SetBool("visualizeSpeed", m_visualizeSpeed);
-	m_pPointCloudShader->SetReal("maxEnergyClamp", m_maxEnergyClamp);
-	m_pPointCloudShader->SetReal("minEnergyClamp", m_minEnergyClamp);
-	m_pPointCloudShader->SetBool("visualizeEnergy", m_visualizeEnergy);
-	m_pPointCloudShader->SetBool("visualizeSelected", m_visualizeSelected);
-	m_pPointCloudShader->SetVec("pointSelectColor", m_pointSelectColor);
-	m_pPointCloudShader->SetReal("zoomFactor", zoomFactor);
-	m_pPointCloudShader->SetVec("zoomPoint", zoomPoint);
+	pointShader->Use();
+	pointShader->SetReal("maxSpeedClamp", m_maxSpeedClamp);
+	pointShader->SetReal("minSpeedClamp", m_minSpeedClamp);
+	pointShader->SetBool("visualizeSpeed", m_visualizeSpeed);
+	pointShader->SetReal("maxEnergyClamp", m_maxEnergyClamp);
+	pointShader->SetReal("minEnergyClamp", m_minEnergyClamp);
+	pointShader->SetBool("visualizeEnergy", m_visualizeEnergy);
+	m_mpmGeometryEngine->SetSelectionUniforms(pointShader);
+	pointShader->SetReal("zoomFactor", zoomFactor);
+	pointShader->SetVec("zoomPoint", zoomPoint);
 	// iResolution and iSourceResolution should be same for the zoom window we make, and iCenter should be the actual center
 	//m_pPointCloudShader->SetVec("iResolution", openGLScreen->sim_dimensions);
 	//m_pPointCloudShader->SetVec("iSourceResolution", openGLScreen->screen_dimensions);
@@ -263,7 +253,7 @@ void mpm::MpmEngine::RenderPointClouds(vec2 zoomPoint, real zoomFactor, std::sha
 	//m_pPointCloudShader->SetVec("iCenter", m_openGLScreen->center);
 	glBindVertexArray(VisualizeVAO);
 	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
-		m_pPointCloudShader->SetVec("pointCloudColor", pointCloudPair.second->color);
+		pointShader->SetVec("pointCloudColor", pointCloudPair.second->color);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudPair.second->ssbo);
 		glDrawArrays(GL_POINTS, 0, (GLsizei)pointCloudPair.second->N);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
@@ -319,84 +309,3 @@ void mpm::MpmEngine::RenderMarchingSquares(vec2 zoomPoint, real zoomFactor, std:
 	glBindVertexArray(0);
 }
 
-void mpm::MpmEngine::RenderCircle(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> circleShader)
-{
-	circleShader->Use();
-	circleShader->SetVec("mouse", m_mouseMpmRenderScreenGridSpaceFull);
-	circleShader->SetReal("radius", m_circle_r);
-	circleShader->SetVec("zoomPoint", zoomPoint);
-	circleShader->SetReal("zoomFactor",zoomFactor);
-
-	glBindVertexArray(VisualizeVAO);
-	glDrawArrays(GL_POINTS, 0, (GLsizei)1);
-	glBindVertexArray(0);
-
-	circleShader->Use();
-	circleShader->SetVec("mouse", m_mouseMpmRenderScreenGridSpaceFull);
-	circleShader->SetReal("radius", m_circle_inner_radius);
-	circleShader->SetVec("zoomPoint", zoomPoint);
-	circleShader->SetReal("zoomFactor", zoomFactor);
-
-	glBindVertexArray(VisualizeVAO);
-	glDrawArrays(GL_POINTS, 0, (GLsizei)1);
-	glBindVertexArray(0);
-}
-
-void mpm::MpmEngine::RenderPolygon(vec2 polygonCenter, bool addPolygonVertexState, vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> polygonShader)
-{
-	if (m_polygon->vertices.size() == 0)
-		return;
-
-	polygonShader->Use();
-	polygonShader->SetVec("mouse", m_mouseMpmRenderScreenGridSpaceFull);
-	polygonShader->SetBool("lastVertexMouse", addPolygonVertexState);
-
-	polygonShader->SetVec("zoomPoint", zoomPoint);
-	polygonShader->SetReal("zoomFactor", zoomFactor);
-	polygonShader->SetVec("polygonCenter", polygonCenter);
-	GLuint polygonSSBO;
-	glCreateBuffers(1, &polygonSSBO);
-
-	glNamedBufferStorage(
-		polygonSSBO,
-		sizeof(vec2) * m_polygon->vertices.size(),
-		&(m_polygon->vertices.front()),
-		GL_MAP_READ_BIT | GL_MAP_WRITE_BIT // adding write bit for debug purposes
-	);
-	glBindVertexArray(VisualizeVAO);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, polygonSSBO);
-	glDrawArrays(GL_POINTS, 0, (GLsizei)1);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, 0);
-	glBindVertexArray(0);
-
-	glDeleteBuffers(1, &polygonSSBO);
-}
-
-void mpm::MpmEngine::RenderPWLine(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> pwLineShader)
-{
-	if (m_pwLine->vertices.size() == 0)
-		return;
-
-	pwLineShader->Use();
-	pwLineShader->SetVec("mouse", m_mouseMpmRenderScreenGridSpaceFull);
-	pwLineShader->SetBool("lastVertexMouse", m_addPWLineVertexState);
-
-	pwLineShader->SetVec("zoomPoint", zoomPoint);
-	pwLineShader->SetReal("zoomFactor", zoomFactor);
-	GLuint pwLineSSBO;
-	glCreateBuffers(1, &pwLineSSBO);
-
-	glNamedBufferStorage(
-		pwLineSSBO,
-		sizeof(vec2) * m_pwLine->vertices.size(),
-		&(m_pwLine->vertices.front()),
-		GL_MAP_READ_BIT | GL_MAP_WRITE_BIT // adding write bit for debug purposes
-	);
-	glBindVertexArray(VisualizeVAO);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, pwLineSSBO);
-	glDrawArrays(GL_POINTS, 0, (GLsizei)1);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
-	glBindVertexArray(0);
-
-	glDeleteBuffers(1, &pwLineSSBO);
-}

@@ -23,6 +23,13 @@ struct materialPoint {
 	dmat2 Fp; // plastic deformation gradient
 	dmat2 P; // piola-kirchoff stress tensor
 
+	double lam;
+	double mew;
+	double crit_c;
+	double crit_s;
+	double hardening;
+	double padding2;
+
 	// extra not neccessary to store, but useful for debugging
 	dmat2 FePolar_R;
 	dmat2 FePolar_S;

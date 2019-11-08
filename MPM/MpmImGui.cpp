@@ -46,18 +46,9 @@ void mpm::MpmEngine::RenderGUI()
 				}
 				ImGui::EndMenu();
 			}
-			if (ImGui::BeginMenu("Geometry")) {
-				if (ImGui::MenuItem("Basic Shapes", "", m_imguiBasicShapesEditor)) {
-					m_imguiBasicShapesEditor = !m_imguiBasicShapesEditor;
-				}
-				if (ImGui::MenuItem("Polygon Editor", "", m_imguiPolygonEditor)) {
-					m_imguiPolygonEditor = !m_imguiPolygonEditor;
-				}
-				if (ImGui::MenuItem("Piecewise Line Editor", "", m_imguiPWLineEditor)) {
-					m_imguiPWLineEditor = !m_imguiPWLineEditor;
-				}
-				ImGui::EndMenu();
-			}
+			
+			m_mpmGeometryEngine->Menu();
+
 			if (ImGui::BeginMenu("Material")) {
 				if (ImGui::MenuItem("Material Parameters Editor", "", m_imguiMaterialParametersEditor)) {
 					m_imguiMaterialParametersEditor = !m_imguiMaterialParametersEditor;
@@ -103,9 +94,9 @@ void mpm::MpmEngine::RenderGUI()
 		if (m_imguiExternalForceController) ImGuiExternalForceController();
 		if (m_imguiDeformationGradientController) ImGuiDeformationGradientController();
 		if (m_imguiMaterialParameterController) ImGuiMaterialParameterController();
-		if (m_imguiPolygonEditor) ImGuiPolygonEditor();
-		if (m_imguiPWLineEditor) ImGuiPWLineEditor();
-		if (m_imguiBasicShapesEditor) ImGuiBasicShapesEditor();
+		
+		m_mpmGeometryEngine->GUI();
+
 		if (m_imguiMaterialParametersEditor) ImGuiMaterialParametersEditor();
 		if (m_imguiGridOptions) ImGuiGridOptions();
 		if (m_imguiGridNodeViewer) ImGuiGridNodeViewer();
@@ -250,160 +241,6 @@ void mpm::MpmEngine::ImGuiTimeIntegrator()
 	ImGui::End();
 }
 
-void mpm::MpmEngine::ImGuiExternalForceController()
-{
-	if (ImGui::Begin("MPM External Force Controller", &m_imguiExternalForceController)) {
-
-
-		ImGui::InputReal("drag", &m_drag, 0.0001, 0.01, "%.4f");
-
-		ImGui::InputReal("Global Force x", &m_globalForce.x, 0.1, 1.0, "%.16f");
-		ImGui::InputReal("Global Force y", &m_globalForce.y, 0.1, 1.0, "%.16f");
-
-		ImGui::InputReal("Mouse power", &m_mousePower);
-
-	}
-
-	ImGui::End();
-}
-
-void mpm::MpmEngine::ImGuiDeformationGradientController() {
-	if (ImGui::Begin("MPM Deformation Gradient Controller", &m_imguiDeformationGradientController)) {
-
-		static std::string pointCloudSelectStr = "";
-		ImGuiSelectPointCloud(pointCloudSelectStr);
-
-		
-		static std::vector<mat2> controlFeVec = { mat2(1.0) };
-		//mat2 tempFe = m_setFe;
-
-		//ImGui::Text("Fe:");
-		//ImGui::InputReal("Fe[0][0]: ", &tempFe[0][0], 0.1, 1.0, "%.6f");
-		//ImGui::InputReal("Fe[0][1]: ", &tempFe[0][1], 0.1, 1.0, "%.6f");
-		//ImGui::InputReal("Fe[1][0]: ", &tempFe[1][0], 0.1, 1.0, "%.6f");
-		//ImGui::InputReal("Fe[1][1]: ", &tempFe[1][1], 0.1, 1.0, "%.6f");
-		//// Make sure the Fe is non-singular
-		//if (glm::determinant(tempFe) != 0.0) {
-		//	m_setFe = tempFe;
-		//}
-		//ImGui::DisplayNamedGlmMatrixMixColor("Fe: ", m_setFe, glm::highp_fvec4(1.0f, 0.0f, 0.0f, 1.0f), glm::highp_fvec4(0.0f, 1.0f, 0.0f, 1.0f));
-
-		/*if (ImGui::Button("Set Selection PC Deformation Gradients")) {
-			SetDeformationGradients(pointCloudDefGradControlSelectStr, m_setFe, m_setFp);
-		}
-		if (ImGui::Button("Set All Deformation Gradients")) {
-			for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
-				SetDeformationGradients(pointCloudPair.first, m_setFe, m_setFp);
-			}
-		}*/
-
-		std::string vecSizeStr = "Number of control deformation gradients: " + std::to_string(int(controlFeVec.size()));
-		ImGui::Text(vecSizeStr.c_str());
-
-		if (ImGui::Button("Clear control deformation gradient vector")) {
-			controlFeVec.clear();
-		}
-		if (ImGui::Button("Add control deformation gradient")) {
-			controlFeVec.push_back(mat2(1.0));
-		}
-		static bool multSelected = false;
-		static bool setSelected = false;
-
-		ImGui::Checkbox("Set Fe for selected points", &setSelected);
-		ImGui::Checkbox("Mult Fe for selected points", &multSelected);
-
-		static int Fselect = 0;
-
-		ImGui::InputInt("multFe selection", &Fselect);
-
-		Fselect = glm::max(glm::min(Fselect, int(controlFeVec.size()) - 1), 0);
-
-		if (Fselect < controlFeVec.size() && Fselect >= 0) {
-			ImGui::InputReal("Fe[0][0]: ", &controlFeVec[Fselect][0][0], 0.1, 1.0, "%.6f");
-			ImGui::InputReal("Fe[0][1]: ", &controlFeVec[Fselect][0][1], 0.1, 1.0, "%.6f");
-			ImGui::InputReal("Fe[1][0]: ", &controlFeVec[Fselect][1][0], 0.1, 1.0, "%.6f");
-			ImGui::InputReal("Fe[1][1]: ", &controlFeVec[Fselect][1][1], 0.1, 1.0, "%.6f");
-		}
-
-		for (size_t i = 0; i < controlFeVec.size(); i++) {
-			std::string currFeStr = "Fe(" + std::to_string(i) + ")";
-			ImGui::DisplayNamedGlmMatrixMixColor("multFe: ", controlFeVec[i], glm::highp_fvec4(1.0f, 0.0f, 0.0f, 1.0f), glm::highp_fvec4(0.0f, 1.0f, 0.0f, 1.0f));
-
-			std::string setFeStr = "Set '" + pointCloudSelectStr + "' deformation gradients to " + currFeStr;
-			if (ImGui::Button(setFeStr.c_str())) {
-				SetDeformationGradients(pointCloudSelectStr, controlFeVec[i], mat2(1.0), setSelected);
-			}
-			std::string setAllFeStr = "Set all point cloud deformation gradients to " + currFeStr;
-			if (ImGui::Button(setAllFeStr.c_str())) {
-				for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
-					SetDeformationGradients(pointCloudPair.first, controlFeVec[i], mat2(1.0), setSelected);
-				}
-			}
-			std::string multFeStr = "Multiply '" + pointCloudSelectStr + "' deformation gradients by " + currFeStr;
-			if (ImGui::Button(multFeStr.c_str())) {
-				MultiplyDeformationGradients(pointCloudSelectStr, controlFeVec[i], mat2(1.0), multSelected);
-			}
-			std::string multAllFeStr = "Multiply all point cloud deformation gradients by " + currFeStr;
-			if (ImGui::Button(multAllFeStr.c_str())) {
-				for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
-					MultiplyDeformationGradients(pointCloudPair.first, controlFeVec[i], mat2(1.0), multSelected);
-				}
-			}	
-		}
-	}
-	ImGui::End();
-}
-
-void mpm::MpmEngine::ImGuiMaterialParameterController() {
-
-	if (ImGui::Begin("MPM Material Parameter Controller", &m_imguiMaterialParameterController)) {
-
-		static MaterialParameters materialParametersControl;
-		static std::string currPointCloud = "";
-		static std::string pointCloudSelectStr = "";
-		ImGuiSelectPointCloud(pointCloudSelectStr);
-
-		if (currPointCloud != pointCloudSelectStr && m_pointCloudMap.count(pointCloudSelectStr)) {
-			currPointCloud = pointCloudSelectStr;
-			materialParametersControl = m_pointCloudMap[currPointCloud]->parameters;
-		}
-
-		ImGui::InputReal("Young's Modulus", &materialParametersControl.youngMod);
-		ImGui::InputReal("Poisson's Ratio", &materialParametersControl.poisson);
-		if (ImGui::Button("Calculate Lame Parameters")) {
-			materialParametersControl.CalculateLameParameters();
-		}
-		ImGui::InputReal("Lame's 1st Parameter (lambda)", &materialParametersControl.lam);
-		ImGui::InputReal("Lame 2nd Parameter (mew, shear modulus)", &materialParametersControl.mew);
-		ImGui::InputReal("Critical Compression", &materialParametersControl.crit_c);
-		ImGui::InputReal("Critical Stretch", &materialParametersControl.crit_s);
-		ImGui::InputReal("Hardening coefficient", &materialParametersControl.hardening);
-
-
-		std::string setCurrPointCloudStr = "Set '" + currPointCloud + "' material parameters";
-		if (ImGui::Button(setCurrPointCloudStr.c_str())) {
-			if (m_pointCloudMap.count(currPointCloud)) {
-				m_pointCloudMap[currPointCloud]->parameters = materialParametersControl;
-			}
-		}
-		if (ImGui::Button("Set all point cloud material parameters")) {
-			for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
-				pointCloudPair.second->parameters = materialParametersControl;
-				//pointCloudPair.second->mew = m_mpParameters.youngMod / (2.f + 2.f * m_mpParameters.poisson);
-				//pointCloudPair.second->lam = m_mpParameters.youngMod * m_mpParameters.poisson / ((1.f + m_mpParameters.poisson) * (1.f - 2.f * m_mpParameters.poisson));
-			}
-		}
-
-		/*
-		if (ImGui::Button("Set All Point Cloud mew and lam")) {
-			for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
-				pointCloudPair.second->mew = m_controlMaterialParameters.mew;
-				pointCloudPair.second->lam = m_controlMaterialParameters.lam;
-			}
-		}*/
-	}
-	ImGui::End();
-}
 
 
 void mpm::MpmEngine::ImGuiMaterialParametersEditor()
@@ -503,7 +340,7 @@ void mpm::MpmEngine::ImGuiGridOptions()
 			}
 		}
 
-		if (ImGui::CollapsingHeader("Experimental grid forces")) {
+		/*if (ImGui::CollapsingHeader("Experimental grid forces")) {
 
 			ImGui::Checkbox("Collective node selection graphics", &m_collectiveNodeSelectionGraphics);
 			if (ImGui::Button("Select nodes in polygon")) {
@@ -544,7 +381,7 @@ void mpm::MpmEngine::ImGuiGridOptions()
 			if (ImGui::Button("Clear nodal accelerations")) {
 				ClearNodalAcclerations(m_chunks_x * CHUNK_WIDTH, m_chunks_y * CHUNK_WIDTH);
 			}
-		}
+		}*/
 
 		if (ImGui::CollapsingHeader("Misc. experimental")) {
 			if (ImGui::Button("Get node largest |rk|")) {
@@ -642,19 +479,7 @@ void mpm::MpmEngine::ImGuiMaterialPointViewer()
 		ImGui::InputReal("Min speed clamp (for coloring)", &m_minSpeedClamp, 1.0, 1000.0, "%.1f");
 		ImGui::Checkbox("Visualize Speed", &m_visualizeSpeed);
 
-		ImGui::Checkbox("Visualize selected points", &m_visualizeSelected);
-		static float selectColor[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
-		selectColor[0] = m_pointSelectColor.x;
-		selectColor[1] = m_pointSelectColor.y;
-		selectColor[2] = m_pointSelectColor.z;
-		selectColor[3] = m_pointSelectColor.w;
-		ImGui::ColorEdit4("Selected points color", selectColor);
-
-		if (ImGui::Button("Select points in polygon")) {
-			for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
-				SelectPointsInPolygon(pointCloudPair.first);
-			}
-		}
+		
 
 		if (m_pointCloudMap.count(m_pointCloudViewSelectStr)) {
 			m_mp = m_pointCloudMap[m_pointCloudViewSelectStr]->points[pointIndex];
@@ -712,8 +537,7 @@ void mpm::MpmEngine::ImGuiCPUMode()
 			m_chunks_y = 1;
 		}
 		if (ImGui::Button("Small circle")) {
-			m_circle_r = 2;
-			m_particleSpacing = 0.5;
+			m_mpmGeometryEngine->SmallCircle(); 
 		}
 
 		ImGui::Text(std::to_string(m_time).c_str());

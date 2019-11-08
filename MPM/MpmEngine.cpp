@@ -71,34 +71,12 @@ void mpm::MpmEngine::ProcessKeyboardInput(GLFWwindow* window, real lag)
 	}*/
 
 	if (m_paused) {
-
-		if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
-			ClearCreateStates();
-			m_createCircleState = true;
-		}
-
-		if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
-			ClearCreateStates();
-			m_createRectState = true;
-		}
-
-		if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
-			ClearCreateStates();
-			m_createIsoTriState = true;
-		}
-
 		if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS) {
 			MpmReset_GLSL();
 		}
-
-		if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
-			m_addPolygonVertexState = true;
-		}
-
-		if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
-			m_addPWLineVertexState = true;
-		}
 	}
+
+	m_mpmGeometryEngine->ProcessKeyboardInput(window, lag);
 
 	if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS) {
 		m_selectNodeState = true;
@@ -146,10 +124,7 @@ void mpm::MpmEngine::ProcessMouseInput(GLFWwindow* window, real lag)
 	m_leftButtonDown = (bool)left_click;
 	m_rightButtonDown = (bool)right_click;
 
-	if (m_rightButtonDown) {
-		ClearCreateStates();
-	}
-
+	m_mpmGeometryEngine->ProcessMouseInput();
 }
 
 void mpm::MpmEngine::HandleStates()
@@ -174,7 +149,7 @@ void mpm::MpmEngine::HandleStates()
 		m_zoomPoint = m_mouseMpmRenderScreenGridSpace;
 	}
 
-	HandleGeometryStates();
+	m_mpmGeometryEngine->HandleGeometryStates();
 }
 
 void mpm::MpmEngine::UpdatePointCloudData(std::string pointCloudStr)

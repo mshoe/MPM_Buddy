@@ -11,6 +11,8 @@
 #include <iostream>
 #include <chrono>
 
+
+
 class AdvancedShader {
 public:
 
@@ -108,7 +110,7 @@ protected:
 
 		shaders.resize(shaderPaths.size());
 		for (size_t i = 0; i < shaderPaths.size(); i++) {
-			std::cout << "Compiling:" << shaderPaths[i] << std::endl;
+			std::cout << "Compiling: " << shaderPaths[i] << std::endl;
 			high_resolution_clock clock;
 			time_point<high_resolution_clock> t1 = clock.now();
 
@@ -242,7 +244,7 @@ public:
 		checkCompileErrors(m_ID, "PROGRAM");
 
 		t2 = clock.now();
-		std::cout << "Finished linking program in " << duration_cast<seconds>(t2 - t1).count() << " seconds." << std::endl;
+		std::cout << "Finished linking program in " << duration_cast<seconds>(t2 - t1).count() << " seconds." << std::endl << std::endl;
 
 		// delete the shaders as they're linked into our program now and no longer necessary
 		for (GLuint vert : vertexShaders) {
@@ -351,7 +353,7 @@ public:
 		checkCompileErrors(m_ID, "PROGRAM");
 
 		t2 = clock.now();
-		std::cout << "Finished linking program in " << duration_cast<seconds>(t2 - t1).count() << " seconds." << std::endl;
+		std::cout << "Finished linking program in " << duration_cast<seconds>(t2 - t1).count() << " seconds." << std::endl << std::endl;
 
 		for (GLuint comp : computes) {
 			glDeleteShader(comp);

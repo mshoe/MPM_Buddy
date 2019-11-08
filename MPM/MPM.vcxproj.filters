@@ -123,9 +123,6 @@
     <ClCompile Include="MpmGeometry.cpp">
       <Filter>Source Files\MPM\Geometry</Filter>
     </ClCompile>
-    <ClCompile Include="MpmInteractions.cpp">
-      <Filter>Source Files\MPM\Control</Filter>
-    </ClCompile>
     <ClCompile Include="MpmRender.cpp">
       <Filter>Source Files\MPM\Graphics</Filter>
     </ClCompile>
@@ -138,8 +135,29 @@
     <ClCompile Include="MpmGeometryImGui.cpp">
       <Filter>Source Files\MPM\Geometry</Filter>
     </ClCompile>
-    <ClCompile Include="MpmEngineInitialization.cpp">
+    <ClCompile Include="MpmControl.cpp">
+      <Filter>Source Files\MPM\Control</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmControlImGui.cpp">
+      <Filter>Source Files\MPM\Control</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmGeometryRender.cpp">
+      <Filter>Source Files\MPM\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmGeometryInit.cpp">
+      <Filter>Source Files\MPM\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmEngineInit.cpp">
       <Filter>Source Files\MPM\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmAlgorithm.cpp">
+      <Filter>Source Files\MPM\Algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmGeometryEngine.cpp">
+      <Filter>Source Files\MPM\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmGeometrySelection.cpp">
+      <Filter>Source Files\MPM\Geometry</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -208,6 +226,9 @@
     </ClInclude>
     <ClInclude Include="MpmGeometryEngine.h">
       <Filter>Header Files\apps\MPM</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineHeader.h">
+      <Filter>Header Files\apps</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,8 +1,7 @@
 #pragma once
 
 #include "Constants.h"
-
-#include "Engine.h"
+#include "EngineHeader.h"
 
 #include "Shader.h"
 #include "Shape.h"
@@ -10,6 +9,8 @@
 #include "Grid.h"
 
 #include "OpenGLScreen.h"
+
+#include "MpmGeometryEngine.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -25,11 +26,15 @@
 
 namespace mpm {
 
-	class MpmEngine : public Engine {
+	class MpmEngine {
 	public:
-		MpmEngine() { InitComputeShaderPipeline();  }
+		MpmEngine() { 
+			InitEngines();
+			InitComputeShaderPipeline(); 
+		}
 		~MpmEngine() { CleanupComputeShaderPipeline(); }
 
+		bool InitEngines();
 		bool InitComputeShaderPipeline();
 		bool CleanupComputeShaderPipeline();
 
@@ -40,11 +45,40 @@ namespace mpm {
 		void ProcessMouseInput(GLFWwindow* window, real lag);
 		void HandleStates();
 
+		// PUBLIC VARIABLES
+		
+		int m_chunks_y = 4;
+		int m_chunks_x = 4;
+		
+		/******************** MOUSE STATES ********************/
+		vec2 m_mouseGlobalScreen = vec2(0.0);
+		vec2 m_mouseMpmRenderScreen = vec2(0.0);
+		vec2 m_mouseMpmRenderScreenNormalized = vec2(0.0);
+		vec2 m_mouseMpmRenderScreenGridSpace = vec2(0.0);
+		vec4 m_mouseMpmRenderScreenGridSpaceFull = vec4(0.0);
+		bool m_mouseMoved = false;
+		bool m_leftButtonDown = false;
+		bool m_midButtonDown = false;
+		bool m_rightButtonDown = false;
 
+		GLuint gridSSBO;
+		GLuint VisualizeVAO;
+
+		bool m_paused = true;
+
+
+		std::map<std::string, std::shared_ptr<PointCloud>> m_pointCloudMap;
+		unsigned int m_circleCount = 0;
+		unsigned int m_rectCount = 0;
+		unsigned int m_isoTriCount = 0;
+		int m_pwLineCount = 0;
+		int m_polygonCount = 0;
 	private:
 
-		int m_chunks_x = 4;
-		int m_chunks_y = 4;
+		// Other Engines
+		std::shared_ptr<MpmGeometryEngine> m_mpmGeometryEngine = nullptr;
+
+		
 
 		enum class MPM_ALGORITHM_CODE {
 			GLSL = 0,
@@ -53,6 +87,10 @@ namespace mpm {
 
 		MPM_ALGORITHM_CODE m_algo_code = MPM_ALGORITHM_CODE::GLSL;
 
+	public: // geometry engine wants access to this
+		void CalculatePointCloudVolumes(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
+	
+	private:
 		/******************** MPM FUNCTIONS GLSL COMPUTE SHADER IMPLEMENTATION ********************/
 		void MpmReset_GLSL();
 		void MpmTimeStep_GLSL(real dt);
@@ -91,9 +129,9 @@ namespace mpm {
 		void RenderPointClouds(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> pointShader);
 		void RenderGrid(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> gridShader);
 		void RenderMarchingSquares(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> gridShader);
-		void RenderCircle(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> circleShader);
-		void RenderPolygon(vec2 polygonCenter, bool addPolygonVertexState, vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> polygonShader);
-		void RenderPWLine(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> pwLineShader);
+		//void RenderCircle(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> circleShader);
+		//void RenderPolygon(vec2 polygonCenter, bool addPolygonVertexState, vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> polygonShader);
+		//void RenderPWLine(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> pwLineShader);
 		
 
 
@@ -107,9 +145,9 @@ namespace mpm {
 		void ImGuiDeformationGradientController();
 		void ImGuiMaterialParameterController();
 		
-		void ImGuiBasicShapesEditor();
-		void ImGuiPolygonEditor();
-		void ImGuiPWLineEditor();
+		//void ImGuiBasicShapesEditor();
+		//void ImGuiPolygonEditor();
+		//void ImGuiPWLineEditor();
 		
 		void ImGuiMaterialParametersEditor();
 		void ImGuiGridOptions();
@@ -128,9 +166,9 @@ namespace mpm {
 		bool m_imguiMpmRenderWindow = true;
 
 		// geometry
-		bool m_imguiBasicShapesEditor = false;
+		/*bool m_imguiBasicShapesEditor = false;
 		bool m_imguiPolygonEditor = false;
-		bool m_imguiPWLineEditor = false;
+		bool m_imguiPWLineEditor = false;*/
 
 		// grid
 		bool m_imguiGridOptions = false;
@@ -166,7 +204,6 @@ namespace mpm {
 		void ImGuiMpmRenderWindow();
 		void MpmRender();
 		void ZoomRender();
-		void GeometryEditorScreenRender();
 		std::shared_ptr<ImGuiScreen> m_mpmRenderWindow = nullptr;
 
 
@@ -186,8 +223,7 @@ namespace mpm {
 		// INTERACTIONS
 		std::unique_ptr<ComputeShader> m_pSetDeformationGradients = nullptr;
 		std::unique_ptr<ComputeShader> m_pMultDeformationGradients = nullptr;
-		std::unique_ptr<ComputeShader> m_pLassoTool = nullptr;
-		std::unique_ptr<ComputeShader> m_pClearPointSelection = nullptr;
+		std::unique_ptr<ComputeShader> m_pSetLameParamters = nullptr;
 
 		// RENDERING
 		std::shared_ptr<StandardShader> m_pPointCloudShader = nullptr;
@@ -198,27 +234,15 @@ namespace mpm {
 		std::shared_ptr<StandardShader> m_gridShaderVector = nullptr;
 		std::shared_ptr<StandardShader> m_gridShaderMarchingSquares = nullptr;
 
-		std::shared_ptr<StandardShader> m_circleShader = nullptr;
-		std::shared_ptr<StandardShader> m_polygonShader = nullptr;
-		std::shared_ptr<StandardShader> m_pwLineShader = nullptr;
-		std::shared_ptr<StandardShader> m_polygonEditorShader = nullptr;
+		//std::shared_ptr<StandardShader> m_circleShader = nullptr;
+		//std::shared_ptr<StandardShader> m_polygonShader = nullptr;
+		//std::shared_ptr<StandardShader> m_pwLineShader = nullptr;
+		//std::shared_ptr<StandardShader> m_polygonEditorShader = nullptr;
 
 
 		std::shared_ptr<OpenGLScreen> m_openGLScreen = nullptr;
 
 
-		/******************** MOUSE STATES ********************/
-		vec2 m_mouseGlobalScreen = vec2(0.0);
-		vec2 m_mouseMpmRenderScreen = vec2(0.0);
-		vec2 m_mouseMpmRenderScreenNormalized = vec2(0.0);
-		vec2 m_mouseMpmRenderScreenGridSpace = vec2(0.0);
-		vec4 m_mouseMpmRenderScreenGridSpaceFull = vec4(0.0);
-		bool m_mouseMoved = false;
-		bool m_leftButtonDown = false;
-		bool m_midButtonDown = false;
-		bool m_rightButtonDown = false;
-
-		
 
 		// Implict time integration shaders
 		std::unique_ptr<ComputeShader> m_p2g2pDeltaForce = nullptr;
@@ -229,11 +253,9 @@ namespace mpm {
 		std::unique_ptr<ComputeShader> m_gConjugateResidualsStepPart2 = nullptr;
 		std::unique_ptr<ComputeShader> m_gConjugateResidualsConclusion = nullptr;
 		
-		GLuint gridSSBO;
-		GLuint VisualizeVAO;
+		
 
 		/******************** MATERIAL POINT VIEWER ********************/
-		std::map<std::string, std::shared_ptr<PointCloud>> m_pointCloudMap;
 		std::string m_pointCloudViewSelectStr = "";
 		MaterialPoint m_mp = MaterialPoint(vec2(0.0), vec2(0.0), 0.0); // selecting material points
 		void UpdatePointCloudData(std::string pointCloudStr);
@@ -244,10 +266,7 @@ namespace mpm {
 		double m_minEnergyClamp = 0.0;
 		bool m_visualizeEnergy = true;
 		bool m_viewPointClouds = true;
-		bool m_visualizeSelected = false;
-		glm::highp_fvec4 m_pointSelectColor = glm::highp_fvec4(1.0, 1.0, 0.0, 1.0);
-		void SelectPointsInPolygon(std::string pointCloudID);
-		void ClearPointSelection(std::string pointCloudID);
+		
 		
 		/******************** GRID NODE VIEWER ********************/
 		Grid m_grid;
@@ -304,8 +323,6 @@ namespace mpm {
 		/******************** EXTERNAL FORCE CONTROLLER ********************/
 		real m_drag = 0.5;
 		vec2 m_globalForce = vec2(0.0, -9.81);
-		real m_dt = 1.0 / 120.0;
-		bool m_paused = true;
 		GLreal m_mousePower = 25.0;
 
 
@@ -313,6 +330,7 @@ namespace mpm {
 		/******************** INTERNAL FORCE CONTROLLER ********************/
 		void SetDeformationGradients(std::string pointCloudID, mat2 Fe, mat2 Fp, bool multSelected);
 		void MultiplyDeformationGradients(std::string pointCloudID, mat2 multFe, mat2 multFp, bool setSelected);
+		void SetLameParamters(std::string pointCloudID, real lam, real mew, bool setSelected);
 
 		/******************** CONJUGATE RESIDUALS FOR SEMI-IMPLICT TIME INTEGRATION ********************/
 		bool m_semi_implicit_CR = false;
@@ -328,6 +346,7 @@ namespace mpm {
 		/******************** TIME INTEGRATOR ********************/
 		int m_timeStep = 0;
 		real m_time = 0.0;
+		real m_dt = 1.0 / 120.0;
 		bool m_rt = true; // realtime
 
 		// TRANSFER SCHEMES (PIC/RPIC/APIC)
@@ -344,6 +363,7 @@ namespace mpm {
 		TRANSFER_SCHEME m_transferScheme = TRANSFER_SCHEME::APIC;
 
 		/******************** MATERIAL PARAMETERS EDITOR ********************/
+	public:
 		MaterialParameters m_mpParameters;
 		std::vector<MaterialParameters> m_energyModels = std::vector<MaterialParameters>(size_t(ENERGY_MODEL::Count), MaterialParameters());
 		std::vector<std::string> m_energyModelsStrVec = {
@@ -356,78 +376,75 @@ namespace mpm {
 		float m_backgroundColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 		float m_color[4] = { 1.0f, 0.0f, 0.0f, 1.0f}; // color needs to be float
 		vec2 m_initVelocity = vec2(0.0);
-
+	
+	private:
 		
 
 		/******************** GEOMETRY EDITOR ********************/
-		bool m_fixedPointCloud = false;
-		bool m_invertedSdf = false;
-		void HandleGeometryStates();
-		std::shared_ptr<PointCloud> GenPointCloud(const std::string pointCloudID, sdf::Shape& shape,
-			const real gridDimX, const real gridDimY,
-			const real inner_rounding, const real outer_rounding,
-			const real particle_spacing, const MaterialParameters& parameters,
-			const ENERGY_MODEL comodel, sdf::SDF_OPTION sdfOption,
-			bool inverted, bool fixed,
-			vec2 initialVelocity, glm::highp_fvec4 color);
-		void ClearCreateStates() {
-			m_createCircleState = false;
-			m_createRectState = false;
-			m_createIsoTriState = false;
+		//bool m_fixedPointCloud = false;
+		//bool m_invertedSdf = false;
+		//void HandleGeometryStates();
+		//std::shared_ptr<PointCloud> GenPointCloud(const std::string pointCloudID, sdf::Shape& shape,
+		//	const real gridDimX, const real gridDimY,
+		//	const real inner_rounding, const real outer_rounding,
+		//	const real particle_spacing, const MaterialParameters& parameters,
+		//	const ENERGY_MODEL comodel, sdf::SDF_OPTION sdfOption,
+		//	bool inverted, bool fixed,
+		//	vec2 initialVelocity, glm::highp_fvec4 color);
+		//void ClearCreateStates() {
+		//	m_createCircleState = false;
+		//	m_createRectState = false;
+		//	m_createIsoTriState = false;
 
-			m_addPolygonVertexState = false;
-			m_changePolygonOriginState = false;
-			m_movePolygonState = false;
-			m_createPolygonState = false;
-			m_renderPolygonAtMouseState = false;
-		}
+		//	m_addPolygonVertexState = false;
+		//	m_changePolygonOriginState = false;
+		//	m_movePolygonState = false;
+		//	m_createPolygonState = false;
+		//	m_renderPolygonAtMouseState = false;
+		//}
 
-		real m_particleSpacing = 0.25;
+		//real m_particleSpacing = 0.25;
 
-		std::shared_ptr<sdf::Polygon> m_polygon = nullptr;
-		std::vector<std::shared_ptr<sdf::Polygon>> m_polygons;
-		size_t m_polygonSelect = 0;
-		bool m_addPolygonVertexState = false;
-		bool m_changePolygonOriginState = false;
-		bool m_movePolygonState = false;
-		bool m_createPolygonState = false;
-		bool m_renderPolygonAtMouseState = false;
-		void GenPointCloudPolygon(std::shared_ptr<sdf::Polygon> polygon, vec2 center);
-		int m_polygonCount = 0;
-		bool m_renderPolygon = false;
+		//std::shared_ptr<sdf::Polygon> m_polygon = nullptr;
+		//std::vector<std::shared_ptr<sdf::Polygon>> m_polygons;
+		//size_t m_polygonSelect = 0;
+		//bool m_addPolygonVertexState = false;
+		//bool m_changePolygonOriginState = false;
+		//bool m_movePolygonState = false;
+		//bool m_createPolygonState = false;
+		//bool m_renderPolygonAtMouseState = false;
+		//void GenPointCloudPolygon(std::shared_ptr<sdf::Polygon> polygon, vec2 center);
+		//int m_polygonCount = 0;
+		//bool m_renderPolygon = false;
 
-		// Window just for editing polygons
-		void InitPolygonEditorScreen();
-		std::shared_ptr<ImGuiScreen> m_polygonEditorScreen = nullptr;
+		//// Window just for editing polygons
+		//void InitPolygonEditorScreen();
+		//std::shared_ptr<ImGuiScreen> m_polygonEditorScreen = nullptr;
 
-		std::shared_ptr<sdf::PWLine> m_pwLine = nullptr;
-		bool m_addPWLineVertexState = false;
-		real m_pwLineRounding = 2.0;
-		void GenPointCloudPWLine();
-		int m_pwLineCount = 0;
-		bool m_renderPWLine = false;
-		bool m_createCircleState = false;
-		real m_circle_r = 5.0;
-		real m_circle_inner_radius = 0.0;
-		real m_circle_rounding = 0.0;
+		//std::shared_ptr<sdf::PWLine> m_pwLine = nullptr;
+		//bool m_addPWLineVertexState = false;
+		//real m_pwLineRounding = 2.0;
+		//void GenPointCloudPWLine();
+		//int m_pwLineCount = 0;
+		//bool m_renderPWLine = false;
+		//bool m_createCircleState = false;
+		//real m_circle_r = 5.0;
+		//real m_circle_inner_radius = 0.0;
+		//real m_circle_rounding = 0.0;
 
-		bool m_createRectState = false;
-		real m_rect_b = 3.0;
-		real m_rect_h = 3.0;
-		real m_rect_inner_radius = 0.0;
-		real m_rect_rounding = 2.0;
+		//bool m_createRectState = false;
+		//real m_rect_b = 3.0;
+		//real m_rect_h = 3.0;
+		//real m_rect_inner_radius = 0.0;
+		//real m_rect_rounding = 2.0;
 
-		bool m_createIsoTriState = false;
-		real m_iso_tri_b = 3.0;
-		real m_iso_tri_h = 3.0;
-		real m_iso_tri_inner_radius = 0.0;
-		real m_iso_tri_rounding = 2.0;
+		//bool m_createIsoTriState = false;
+		//real m_iso_tri_b = 3.0;
+		//real m_iso_tri_h = 3.0;
+		//real m_iso_tri_inner_radius = 0.0;
+		//real m_iso_tri_rounding = 2.0;
 
 		// counters (used for naming point clouds in map)
-		unsigned int m_circleCount = 0;
-		unsigned int m_rectCount = 0;
-		unsigned int m_isoTriCount = 0;
-		unsigned int m_lineDivCount = 0;
 
 		// imgui stuff
 		bool m_imguiGUI = true;

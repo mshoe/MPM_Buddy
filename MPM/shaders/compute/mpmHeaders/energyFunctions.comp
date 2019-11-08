@@ -3,12 +3,12 @@ const uint FIXED_COROTATED = 1;
 const uint SIMPLE_SNOW = 2;
 uniform uint comodel = 1; //FIXED_COROTATED;
 
-uniform double mew = 41.66666667;
-uniform double lam = 27.77777778;
+// uniform double mew = 41.66666667;
+// uniform double lam = 27.77777778;
 
-uniform double crit_c = 0.025;
-uniform double crit_s = 0.0075;
-uniform double hardening = 10.0;
+// uniform double crit_c = 0.025;
+// uniform double crit_s = 0.0075;
+// uniform double hardening = 10.0;
 
 bool isnanVec2(in dvec2 v) {
 	return isnan(v.x) || isnan(v.y);

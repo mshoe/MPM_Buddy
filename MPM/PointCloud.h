@@ -16,6 +16,29 @@ namespace mpm {
 		Count
 	};
 
+	struct MaterialParameters {
+
+		// Geometry parameters, TODO: move this to something else
+		//real particleSpacing = 0.25;
+		real density = 0.16;
+
+		// Actual material parameters
+		real youngMod = 400.0;
+		real poisson = 0.3;
+
+		real lam = 38888.9;
+		real mew = 58333.0;
+
+		real crit_c = 0.025;
+		real crit_s = 0.0075;
+		real hardening = 10.0;
+
+		void CalculateLameParameters() {
+			lam = youngMod * poisson / ((1.f + poisson) * (1.f - 2.f * poisson));
+			mew = youngMod / (2.f + 2.f * poisson);
+		}
+	};
+
 	struct MaterialPoint {
 		MaterialPoint(vec2 _x, vec2 _v, GLreal _m) : x(_x), v(_v), m(_m) {}
 
@@ -30,6 +53,13 @@ namespace mpm {
 		mat2 Fp = mat2(1.0);
 		mat2 P = mat2(0.0);
 
+		real lam = 0.0;
+		real mew = 0.0;
+		real crit_c = 0.0;
+		real crit_s = 0.0;
+		real hardening = 0.0;
+		real padding2 = 4.2;
+
 		// extra not neccessary to store, but useful for debugging:
 		mat2 FePolar_R = mat2(1.0);
 		mat2 FePolar_S = mat2(1.0);
@@ -41,8 +71,15 @@ namespace mpm {
 
 
 		real energy = 0.0;
-
 		real selected = 0.0;
+
+		void SetMaterialParameters(const MaterialParameters& parameters) {
+			lam = parameters.lam;
+			mew = parameters.mew;
+			crit_c = parameters.crit_c;
+			crit_s = parameters.crit_s;
+			hardening = parameters.hardening;
+		}
 
 		friend std::ostream& operator << (std::ostream& out, const MaterialPoint& c) {
 			out << std::setprecision(std::numeric_limits<double>::digits10 + 1);
@@ -76,6 +113,12 @@ namespace mpm {
 			ImGui::DisplayNamedGlmRealColor("vol", vol, max_color);
 			ImGui::DisplayNamedGlmRealColor("Lz", Lz, max_color);
 			ImGui::DisplayNamedGlmRealColor("padding", padding, max_color);
+			ImGui::DisplayNamedGlmRealColor("lam", lam, max_color);
+			ImGui::DisplayNamedGlmRealColor("mew", mew, max_color);
+			ImGui::DisplayNamedGlmRealColor("crit_c", crit_c, max_color);
+			ImGui::DisplayNamedGlmRealColor("crit_s", crit_s, max_color);
+			ImGui::DisplayNamedGlmRealColor("hardening", hardening, max_color);
+			ImGui::DisplayNamedGlmRealColor("padding2", padding2, max_color);
 			ImGui::DisplayNamedGlmMatrixMixColor("B", B, min_color, max_color);
 			ImGui::DisplayNamedGlmMatrixMixColor("Fe", Fe, min_color, max_color);
 			ImGui::DisplayNamedGlmMatrixMixColor("Fp", Fp, min_color, max_color);
@@ -93,44 +136,7 @@ namespace mpm {
 		}
 	};
 
-	struct MaterialPointPhysicalProperties {
-		real m;
-		real vol = 0.0; // initial volume
-	};
-
-	struct ElasticityProperties : public MaterialPointPhysicalProperties {
-		real lam = 38888.9;
-		real mew = 58333.0;
-	};
-
-	struct SnowProperties : public ElasticityProperties {
-		real crit_c = 0.025;
-		real crit_s = 0.0075;
-		real hardening = 10.0;
-	};
-
-	struct MaterialParameters {
-
-		// Geometry parameters, TODO: move this to something else
-		//real particleSpacing = 0.25;
-		real density = 0.16;
-
-		// Actual material parameters
-		real youngMod = 400.0;
-		real poisson = 0.3;
-
-		real lam = 38888.9;
-		real mew = 58333.0;
-
-		real crit_c = 0.025;
-		real crit_s = 0.0075;
-		real hardening = 10.0;
-
-		void CalculateLameParameters() {
-			lam = youngMod * poisson / ((1.f + poisson) * (1.f - 2.f * poisson));
-			mew = youngMod / (2.f + 2.f * poisson);
-		}
-	};
+	
 
 	// optimize move semantics later
 	struct PointCloud {
@@ -141,7 +147,7 @@ namespace mpm {
 
 		size_t N = 0;
 		std::vector<MaterialPoint> points;
-		std::vector<MaterialPointPhysicalProperties> properties;
+		//std::vector<MaterialPointPhysicalProperties> properties;
 
 		glm::highp_fvec4 color = glm::highp_fvec4(1.f, 0.f, 0.f, 1.f);
 

@@ -581,8 +581,8 @@ void mpm::MpmEngine::MpmTimeStepG2P_CPP(real dt)
 			point.x += dt * vp; // update position
 
 
-			real mew = pointCloudPair.second->parameters.mew;
-			real lam = pointCloudPair.second->parameters.lam;
+			real mew = point.mew;
+			real lam = point.lam;
 
 			// cant put in switch statement because it will be redefinition error
 			mat2 Fe;
@@ -646,8 +646,8 @@ void mpm::MpmEngine::MpmTimeStepG2P_CPP(real dt)
 
 					SVD(R, S, U, sig1, sig2, V);
 
-					crit_c = pointCloudPair.second->parameters.crit_c;
-					crit_s = pointCloudPair.second->parameters.crit_s;
+					crit_c = point.crit_c;
+					crit_s = point.crit_s;
 
 					sig1 = glm::clamp(sig1, 1.0 - crit_c, 1.0 + crit_s);
 					sig2 = glm::clamp(sig2, 1.0 - crit_c, 1.0 + crit_s);
@@ -665,7 +665,7 @@ void mpm::MpmEngine::MpmTimeStepG2P_CPP(real dt)
 					Je = glm::determinant(Fe);
 					Jp = glm::determinant(Fp);
 
-					hardening = pointCloudPair.second->parameters.hardening;
+					hardening = point.hardening;
 
 					// exp does not work for doubles, so this is a sacrifice we will make for now
 					pcof = real(glm::exp(float(hardening * (1.0 - Jp))));

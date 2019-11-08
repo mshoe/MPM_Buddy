@@ -37,3 +37,16 @@ const int GRID_SIZE_Y = CHUNK_WIDTH * 4;
 //const int G_NUM_GROUPS_X = 4;
 //const int G_NUM_GROUPS_Y = 4;
 const int G2P_WORKGROUP_SIZE = 1024;
+
+
+
+namespace ShaderPaths {
+	const std::string computePath = "shaders\\compute\\";
+	const std::string mpmHeadersPath = "shaders\\compute\\mpmHeaders\\";
+	const std::string graphicsPath = "shaders\\graphics\\";
+	const std::string graphicsGeometryPath = graphicsPath + "geometryEditor\\";
+	const std::string graphicsGridPath = graphicsPath + "grid\\";
+	const std::string graphicsMPPath = graphicsPath + "materialPoints\\";
+	const std::string interactivePath = "shaders\\compute\\interactive\\";
+	const std::string implicitPath = "shaders\\compute\\implicit\\";
+}

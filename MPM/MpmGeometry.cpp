@@ -1,8 +1,8 @@
-#include "MpmEngine.h"
+#include "MpmGeometryEngine.h"
 
-void mpm::MpmEngine::GenPointCloudPolygon(std::shared_ptr<sdf::Polygon> polygon, vec2 center)
+void mpm::MpmGeometryEngine::GenPointCloudPolygon(std::shared_ptr<sdf::Polygon> polygon, vec2 center)
 {
-	if (!m_paused)
+	if (!m_mpmEngine->m_paused)
 		return;
 
 	using namespace std::chrono;
@@ -17,12 +17,17 @@ void mpm::MpmEngine::GenPointCloudPolygon(std::shared_ptr<sdf::Polygon> polygon,
 
 
 
-	std::string polygonID = "polygon" + std::to_string(m_polygonCount);
-	m_polygonCount++;
+	std::string polygonID = "polygon" + std::to_string(m_mpmEngine->m_polygonCount);
+	m_mpmEngine->m_polygonCount++;
 
-	glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
+	glm::highp_fvec4 color = glm::highp_fvec4(m_mpmEngine->m_color[0], m_mpmEngine->m_color[1], m_mpmEngine->m_color[2], m_mpmEngine->m_color[3]);
 
-	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(polygonID, *polygon, real(m_chunks_x) * real(CHUNK_WIDTH), real(m_chunks_y) * real(CHUNK_WIDTH), 0.0, 0.0, m_particleSpacing, m_mpParameters, m_comodel, sdf::SDF_OPTION::NORMAL, m_invertedSdf, m_fixedPointCloud, m_initVelocity, color);
+	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(polygonID, *polygon, 
+														   real(m_mpmEngine->m_chunks_x) * real(CHUNK_WIDTH), real(m_mpmEngine->m_chunks_y) * real(CHUNK_WIDTH), 
+														   0.0, 0.0, m_particleSpacing, 
+														   m_mpmEngine->m_mpParameters, m_mpmEngine->m_comodel, 
+														   sdf::SDF_OPTION::NORMAL, m_invertedSdf, m_fixedPointCloud, 
+														   m_mpmEngine->m_initVelocity, color);
 
 	t2 = high_resolution_clock::now();
 
@@ -33,9 +38,9 @@ void mpm::MpmEngine::GenPointCloudPolygon(std::shared_ptr<sdf::Polygon> polygon,
 
 }
 
-void mpm::MpmEngine::GenPointCloudPWLine()
+void mpm::MpmGeometryEngine::GenPointCloudPWLine()
 {
-	if (!m_paused)
+	if (!m_mpmEngine->m_paused)
 		return;
 
 	using namespace std::chrono;
@@ -46,19 +51,24 @@ void mpm::MpmEngine::GenPointCloudPWLine()
 
 
 
-	std::string pwLineID = "line" + std::to_string(m_pwLineCount);
-	m_pwLineCount++;
+	std::string pwLineID = "line" + std::to_string(m_mpmEngine->m_pwLineCount);
+	m_mpmEngine->m_pwLineCount++;
 
-	glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
+	glm::highp_fvec4 color = glm::highp_fvec4(m_mpmEngine->m_color[0], m_mpmEngine->m_color[1], m_mpmEngine->m_color[2], m_mpmEngine->m_color[3]);
 
-	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(pwLineID, *m_pwLine, real(m_chunks_x) * real(CHUNK_WIDTH), real(m_chunks_y) * real(CHUNK_WIDTH), 0.0, m_pwLineRounding, m_particleSpacing, m_mpParameters, m_comodel, sdf::SDF_OPTION::ROUNDED, false, m_fixedPointCloud, m_initVelocity, color);
+	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(pwLineID, *m_pwLine, 
+														   real(m_mpmEngine->m_chunks_x) * real(CHUNK_WIDTH), real(m_mpmEngine->m_chunks_y) * real(CHUNK_WIDTH), 
+														   0.0, m_pwLineRounding, m_particleSpacing, 
+														   m_mpmEngine->m_mpParameters, m_mpmEngine->m_comodel, 
+														   sdf::SDF_OPTION::ROUNDED, false, m_fixedPointCloud, 
+														   m_mpmEngine->m_initVelocity, color);
 
 	t2 = high_resolution_clock::now();
 
 	std::cout << "Finished generating " << pointCloud->N << " points for '" << pwLineID << "' point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
 }
 
-std::shared_ptr<mpm::PointCloud> mpm::MpmEngine::GenPointCloud(const std::string pointCloudID, sdf::Shape& shape,
+std::shared_ptr<mpm::PointCloud> mpm::MpmGeometryEngine::GenPointCloud(const std::string pointCloudID, sdf::Shape& shape,
 															   const real gridDimX, const real gridDimY,
 															   const real inner_rounding, const real outer_rounding,
 															   const real particle_spacing, const MaterialParameters& parameters,
@@ -110,6 +120,7 @@ std::shared_ptr<mpm::PointCloud> mpm::MpmEngine::GenPointCloud(const std::string
 
 			if (sd < 0.0) {
 				MaterialPoint mp(p, initialVelocity, GLreal(mass));
+				mp.SetMaterialParameters(parameters);
 				// calculate mp.vol in a compute shader (not here)
 
 
@@ -132,37 +143,38 @@ std::shared_ptr<mpm::PointCloud> mpm::MpmEngine::GenPointCloud(const std::string
 			GL_MAP_READ_BIT | GL_MAP_WRITE_BIT // add write bit for cpu mode
 		);
 
-		// Calculate volumes for the point cloud (volumes stored in SSBO on GPU)
-		CalculatePointCloudVolumes_GLSL(pointCloudID, pointCloud);
+		m_mpmEngine->CalculatePointCloudVolumes(pointCloudID, pointCloud);
 
-		if (m_algo_code == MPM_ALGORITHM_CODE::CPP) {
-			// for CPU mode calculate volumes
-			GetPointCloudVolumesFromGPUtoCPU(pointCloudID, pointCloud);
-		}
-
-
-		m_pointCloudMap[pointCloudID] = pointCloud;
+		m_mpmEngine->m_pointCloudMap[pointCloudID] = pointCloud;
 	}
 
 	return pointCloud;
 }
 
 
-void mpm::MpmEngine::HandleGeometryStates()
+void mpm::MpmGeometryEngine::HandleGeometryStates()
 {
 	using namespace std::chrono;
 	time_point<high_resolution_clock> t1;
 	time_point<high_resolution_clock> t2;
 
-	if (m_paused && m_rightButtonDown) {
+	bool paused = m_mpmEngine->m_paused;
+	bool rightButtonDown = m_mpmEngine->m_rightButtonDown;
+	bool leftButtonDown = m_mpmEngine->m_leftButtonDown;
+	vec2 mpmMouse2 = m_mpmEngine->m_mouseMpmRenderScreenGridSpace;
+	vec4 mpmMouse4 = m_mpmEngine->m_mouseMpmRenderScreenGridSpaceFull;
+	int chunks_x = m_mpmEngine->m_chunks_x;
+	int chunks_y = m_mpmEngine->m_chunks_y;
+
+	if (paused && rightButtonDown) {
 		ClearCreateStates();
 	}
 
-	if (m_paused && m_createCircleState && m_leftButtonDown)
+	if (paused && m_createCircleState && leftButtonDown)
 	{
 		m_createCircleState = false;
 
-		std::cout << "Mouse position is at (" << m_mouseMpmRenderScreenGridSpace.x << ", " << m_mouseMpmRenderScreenGridSpace.y << ")" << std::endl;
+		std::cout << "Mouse position is at (" << mpmMouse2.x << ", " << mpmMouse2.y << ")" << std::endl;
 
 		// 1. Create point clouds
 		std::cout << "Generating point cloud...\n";
@@ -170,18 +182,23 @@ void mpm::MpmEngine::HandleGeometryStates()
 		t1 = high_resolution_clock::now();
 
 
-		m_circleCount++;
+		m_mpmEngine->m_circleCount++;
 		//sdf::sdFunc dCircle(sdf::DemoCircle);
-		sdf::Circle shape(m_mouseMpmRenderScreenGridSpace, m_circle_r);
-		std::string circleID = "circle" + std::to_string(m_circleCount);
+		sdf::Circle shape(mpmMouse2, m_circle_r);
+		std::string circleID = "circle" + std::to_string(m_mpmEngine->m_circleCount);
 
-		glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
+		glm::highp_fvec4 color = glm::highp_fvec4(m_mpmEngine->m_color[0], m_mpmEngine->m_color[1], m_mpmEngine->m_color[2], m_mpmEngine->m_color[3]);
 		/*color.x = (float)glm::clamp(m_color[0], 0, 255) / 255.f;
 		color.y = (float)glm::clamp(m_color[1], 0, 255) / 255.f;
 		color.z = (float)glm::clamp(m_color[2], 0, 255) / 255.f;*/
 
 		real inner_rounding = m_circle_r - m_circle_inner_radius;
-		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(circleID, shape, real(m_chunks_x) * real(CHUNK_WIDTH), real(m_chunks_y) * real(CHUNK_WIDTH), inner_rounding, m_circle_rounding, m_particleSpacing, m_mpParameters, m_comodel, sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, m_initVelocity, color);
+		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(circleID, shape, 
+															   real(chunks_x) * real(CHUNK_WIDTH), real(chunks_y) * real(CHUNK_WIDTH), 
+															   inner_rounding, m_circle_rounding, m_particleSpacing, 
+															   m_mpmEngine->m_mpParameters, m_mpmEngine->m_comodel, 
+															   sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, 
+															   m_mpmEngine->m_initVelocity, color);
 
 		t2 = high_resolution_clock::now();
 
@@ -190,11 +207,11 @@ void mpm::MpmEngine::HandleGeometryStates()
 		std::cout << "Finished generating " << pointCloud->N << " points for '" << circleID << "' point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
 	}
 
-	if (m_paused && m_createRectState && m_leftButtonDown)
+	if (paused && m_createRectState && leftButtonDown)
 	{
 		m_createRectState = false;
 
-		std::cout << "Mouse position is at (" << m_mouseMpmRenderScreenGridSpace.x << ", " << m_mouseMpmRenderScreenGridSpace.y << ")" << std::endl;
+		std::cout << "Mouse position is at (" << mpmMouse2.x << ", " << mpmMouse2.y << ")" << std::endl;
 
 		// 1. Create point clouds
 		std::cout << "Generating point cloud...\n";
@@ -202,16 +219,21 @@ void mpm::MpmEngine::HandleGeometryStates()
 		t1 = high_resolution_clock::now();
 
 
-		m_rectCount++;
+		m_mpmEngine->m_rectCount++;
 		//sdf::sdFunc dCircle(sdf::DemoCircle);
-		sdf::Rectangle shape(m_mouseMpmRenderScreenGridSpace, m_rect_b, m_rect_h);
-		std::string rectID = "rect" + std::to_string(m_rectCount);
+		sdf::Rectangle shape(mpmMouse2, m_rect_b, m_rect_h);
+		std::string rectID = "rect" + std::to_string(m_mpmEngine->m_rectCount);
 
-		glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
+		glm::highp_fvec4 color = glm::highp_fvec4(m_mpmEngine->m_color[0], m_mpmEngine->m_color[1], m_mpmEngine->m_color[2], m_mpmEngine->m_color[3]);
 
 
 		real inner_rounding = glm::min(m_rect_b, m_rect_h) - m_rect_inner_radius;
-		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(rectID, shape, real(m_chunks_x) * real(CHUNK_WIDTH), real(m_chunks_y) * real(CHUNK_WIDTH), inner_rounding, m_rect_rounding, m_particleSpacing, m_mpParameters, m_comodel, sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, m_initVelocity, color);
+		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(rectID, shape, 
+															   real(chunks_x) * real(CHUNK_WIDTH), real(chunks_y) * real(CHUNK_WIDTH), 
+															   inner_rounding, m_rect_rounding, m_particleSpacing, 
+															   m_mpmEngine->m_mpParameters, m_mpmEngine->m_comodel,
+															   sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, 
+															   m_mpmEngine->m_initVelocity, color);
 
 		t2 = high_resolution_clock::now();
 
@@ -220,11 +242,11 @@ void mpm::MpmEngine::HandleGeometryStates()
 		std::cout << "Finished generating " << pointCloud->N << " points for '" << rectID << "' point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
 	}
 
-	if (m_paused && m_createIsoTriState && m_leftButtonDown)
+	if (paused && m_createIsoTriState && leftButtonDown)
 	{
 		m_createIsoTriState = false;
 
-		std::cout << "Mouse position is at (" << m_mouseMpmRenderScreenGridSpace.x << ", " << m_mouseMpmRenderScreenGridSpace.y << ")" << std::endl;
+		std::cout << "Mouse position is at (" << mpmMouse2.x << ", " << mpmMouse2.y << ")" << std::endl;
 
 		// 1. Create point clouds
 		std::cout << "Generating point cloud...\n";
@@ -232,15 +254,20 @@ void mpm::MpmEngine::HandleGeometryStates()
 		t1 = high_resolution_clock::now();
 
 
-		m_isoTriCount++;
+		m_mpmEngine->m_isoTriCount++;
 		//sdf::sdFunc dCircle(sdf::DemoCircle);
-		sdf::IsoscelesTriangle shape(m_mouseMpmRenderScreenGridSpace, m_iso_tri_b, m_iso_tri_h);
-		std::string isoTriID = "isoTri" + std::to_string(m_isoTriCount);
+		sdf::IsoscelesTriangle shape(mpmMouse2, m_iso_tri_b, m_iso_tri_h);
+		std::string isoTriID = "isoTri" + std::to_string(m_mpmEngine->m_isoTriCount);
 
-		glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
+		glm::highp_fvec4 color = glm::highp_fvec4(m_mpmEngine->m_color[0], m_mpmEngine->m_color[1], m_mpmEngine->m_color[2], m_mpmEngine->m_color[3]);
 
 		real inner_rounding = glm::min(m_iso_tri_b, m_iso_tri_h) - m_iso_tri_inner_radius;
-		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(isoTriID, shape, real(m_chunks_x) * real(CHUNK_WIDTH), real(m_chunks_y) * real(CHUNK_WIDTH), inner_rounding, m_iso_tri_rounding, m_particleSpacing, m_mpParameters, m_comodel, sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, m_initVelocity, color);
+		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(isoTriID, shape, 
+															   real(chunks_x) * real(CHUNK_WIDTH), real(chunks_y) * real(CHUNK_WIDTH), 
+															   inner_rounding, m_iso_tri_rounding, m_particleSpacing, 
+															   m_mpmEngine->m_mpParameters, m_mpmEngine->m_comodel,
+															   sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, 
+															   m_mpmEngine->m_initVelocity, color);
 
 		t2 = high_resolution_clock::now();
 
@@ -248,51 +275,55 @@ void mpm::MpmEngine::HandleGeometryStates()
 		std::cout << "Finished generating " << pointCloud->N << " points for '" << isoTriID << "' point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
 	}
 
-	if (m_paused && m_selectNodeState && m_leftButtonDown) {
-		m_selectNodeState = false;
+	// THIS GOES TO mpmEngine
+	//if (paused && m_selectNodeState && leftButtonDown) {
+	//	m_selectNodeState = false;
 
-		m_node[0] = glm::clamp((int)(m_mouseMpmRenderScreenGridSpace.x), 0, GRID_SIZE_X - 1);
-		m_node[1] = glm::clamp((int)(m_mouseMpmRenderScreenGridSpace.y), 0, GRID_SIZE_Y - 1);
-	}
+	//	m_node[0] = glm::clamp((int)(m_mouseMpmRenderScreenGridSpace.x), 0, GRID_SIZE_X - 1);
+	//	m_node[1] = glm::clamp((int)(m_mouseMpmRenderScreenGridSpace.y), 0, GRID_SIZE_Y - 1);
+	//}
 
-	if (m_paused && m_addPolygonVertexState && m_leftButtonDown) {
+	if (paused && m_addPolygonVertexState && leftButtonDown) {
 		m_addPolygonVertexState = false;
 
 
 		//if (m_mouseMoved) {
-		m_polygon->AddVertex(m_mouseMpmRenderScreenGridSpace);
+		m_polygon->AddVertex(mpmMouse2);
 		//}
 	}
 
-	if (m_paused && m_changePolygonOriginState && m_leftButtonDown) {
+	if (paused && m_changePolygonOriginState && leftButtonDown) {
 		m_changePolygonOriginState = false;
 		m_renderPolygonAtMouseState = false;
 
-		m_polygon->RedefinePolygonOrigin(m_mouseMpmRenderScreenGridSpace);
+		m_polygon->RedefinePolygonOrigin(mpmMouse2);
 	}
 
-	if (m_paused && m_movePolygonState && m_leftButtonDown) {
+	if (paused && m_movePolygonState && leftButtonDown) {
 		m_movePolygonState = false;
 		m_renderPolygonAtMouseState = false;
 
-		m_polygon->center = m_mouseMpmRenderScreenGridSpace;
+		m_polygon->center = mpmMouse2;
 	}
 
-	if (m_paused && m_createPolygonState && m_leftButtonDown) {
+	if (paused && m_createPolygonState && leftButtonDown) {
 		m_createPolygonState = false;
 		m_renderPolygonAtMouseState = false;
 
-		GenPointCloudPolygon(m_polygon, m_mouseMpmRenderScreenGridSpace);
+		GenPointCloudPolygon(m_polygon, mpmMouse2);
 	}
 
-	if (m_paused && m_addPWLineVertexState && m_leftButtonDown) {
+	if (paused && m_addPWLineVertexState && leftButtonDown) {
 		m_addPWLineVertexState = false;
 
-		real vertexX = m_mouseMpmRenderScreenGridSpace.x;
-		real vertexY = m_mouseMpmRenderScreenGridSpace.y;
-
-		vec2 v = vec2(vertexX, vertexY);
-
-		m_pwLine->AddVertex(v);
+		m_pwLine->AddVertex(mpmMouse2);
 	}
 }
+
+void mpm::MpmGeometryEngine::SmallCircle()
+{
+	m_circle_r = 2;
+	m_particleSpacing = 0.5;
+}
+
+

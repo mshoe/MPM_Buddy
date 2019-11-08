@@ -60,6 +60,8 @@ void main() {
 
 	dmat2 A = dmat2(0.0);
 
+	double lam = points[pid].lam;
+	double mew = points[pid].mew;
 
 	// lam*J*F^-T * (J*F^-T : dF) term
 	A += J*J*Fit*(innerProduct(Fit, dF));
