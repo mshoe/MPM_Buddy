@@ -137,9 +137,11 @@
     <ClCompile Include="external\imgui\imgui_widgets.cpp" />
     <ClCompile Include="external\src\glad\glad.c" />
     <ClCompile Include="MpmAlgorithm.cpp" />
+    <ClCompile Include="MpmAlgorithmSemiImplicit_CPP.cpp" />
     <ClCompile Include="MpmControlImGui.cpp" />
     <ClCompile Include="MpmControlInit.cpp" />
     <ClCompile Include="MpmEngineInit.cpp" />
+    <ClCompile Include="MpmFunctions.cpp" />
     <ClCompile Include="MpmGeometryEngine.cpp" />
     <ClCompile Include="MpmGeometryImGui.cpp" />
     <ClCompile Include="glm_imgui.cpp" />
@@ -179,6 +181,7 @@
     <ClInclude Include="MainEngine.h" />
     <ClInclude Include="MpmControlEngine.h" />
     <ClInclude Include="MpmEngine.h" />
+    <ClInclude Include="MpmFunctions.h" />
     <ClInclude Include="MpmGeometryEngine.h" />
     <ClInclude Include="OpenGLScreen.h" />
     <ClInclude Include="PointCloud.h" />

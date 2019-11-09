@@ -162,6 +162,12 @@
     <ClCompile Include="MpmControlInit.cpp">
       <Filter>Source Files\MPM\Control</Filter>
     </ClCompile>
+    <ClCompile Include="MpmAlgorithmSemiImplicit_CPP.cpp">
+      <Filter>Source Files\MPM\Algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmFunctions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainEngine.h">
@@ -235,6 +241,9 @@
     </ClInclude>
     <ClInclude Include="MpmControlEngine.h">
       <Filter>Header Files\MPM</Filter>
+    </ClInclude>
+    <ClInclude Include="MpmFunctions.h">
+      <Filter>Header Files\Math</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

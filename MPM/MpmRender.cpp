@@ -106,6 +106,10 @@ void mpm::MpmEngine::MpmRender()
 	//}
 
 	m_mpmGeometryEngine->Render(m_zoomPoint, 1.0, m_mpmRenderWindow);
+
+
+	RenderGridBorder(m_zoomPoint, 1.0, m_mpmRenderWindow, m_borderShader);
+
 	m_mpmRenderWindow->UnbindFBO();
 
 }
@@ -144,6 +148,9 @@ void mpm::MpmEngine::ZoomRender()
 		RenderPWLine(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_pwLineShader);
 	}*/
 	m_mpmGeometryEngine->Render(m_zoomPoint, m_zoomFactor, m_zoomWindow);
+
+	RenderGridBorder(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_borderShader);
+
 	m_zoomWindow->UnbindFBO();
 }
 
@@ -306,6 +313,19 @@ void mpm::MpmEngine::RenderMarchingSquares(vec2 zoomPoint, real zoomFactor, std:
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
 	glDrawArrays(GL_POINTS, 0, (GLsizei)(GRID_SIZE_X * GRID_SIZE_Y));
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
+	glBindVertexArray(0);
+}
+
+void mpm::MpmEngine::RenderGridBorder(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> borderShader)
+{
+	// Render the grid border
+	borderShader->Use();
+	borderShader->SetInt("CHUNKS_X", m_chunks_x);
+	borderShader->SetInt("CHUNKS_Y", m_chunks_y);
+	borderShader->SetVec("zoomPoint", zoomPoint);
+	borderShader->SetReal("zoomFactor", zoomFactor);
+	glBindVertexArray(VisualizeVAO);
+	glDrawArrays(GL_POINTS, 0, (GLsizei)1);
 	glBindVertexArray(0);
 }
 

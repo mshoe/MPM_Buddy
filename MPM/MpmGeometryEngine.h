@@ -93,6 +93,10 @@ namespace mpm {
 		glm::highp_fvec4 m_pointSelectColor = glm::highp_fvec4(1.0, 1.0, 0.0, 1.0);
 
 		/******************** GEOMETRY EDITOR ********************/
+
+		float m_color[4] = { 1.0f, 0.0f, 0.0f, 1.0f }; // color needs to be float
+		vec2 m_initVelocity = vec2(0.0);
+
 		bool m_fixedPointCloud = false;
 		bool m_invertedSdf = false;
 		std::shared_ptr<PointCloud> GenPointCloud(const std::string pointCloudID, sdf::Shape& shape,

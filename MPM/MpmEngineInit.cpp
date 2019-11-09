@@ -110,7 +110,11 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 		std::vector<std::string>{graphicsGridPath + "marchingSquares.fs"},
 		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
 
-	
+	m_borderShader = std::make_shared<StandardShader>(
+		std::vector<std::string>{graphicsGeometryPath + "polygon.vs"},
+		std::vector<std::string>{graphicsGridPath + "border.gs"},
+		std::vector<std::string>{graphicsGeometryPath + "polygon.fs"},
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
 
 
 	m_openGLScreen = std::make_shared<OpenGLScreen>();

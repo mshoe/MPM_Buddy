@@ -2,8 +2,8 @@
 
 layout (local_size_x = 1024) in;
 
-uniform dmat2 setLam;
-uniform dmat2 setMew;
+uniform double setLam;
+uniform double setMew;
 uniform bool setSelected = false;
 
 /*** HEADER ***/

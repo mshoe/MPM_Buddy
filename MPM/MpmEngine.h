@@ -104,7 +104,6 @@ namespace mpm {
 		void MpmCRInit_GLSL(real dt);
 		bool MpmCRStep_GLSL(real dt, real& L2_norm_rk, bool& L2_converged, bool& L_inf_converged);
 		void MpmCREnd_GLSL(real dt);
-		//void MpmTimeStepSemiImplicitDirectSolve(real dt);
 		void CalculatePointCloudVolumes_GLSL(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
 
 		/******************** MPM FUNCTIONS CPU C++ IMPLEMENTATION ********************/
@@ -114,6 +113,8 @@ namespace mpm {
 		void MpmTimeStepExplicitGridUpdate_CPP(real dt);
 		void MpmTimeStepSemiImplicitGridUpdate_CPP(real dt, real beta);
 		void MpmTimeStepG2P_CPP(real dt);
+
+		
 
 		bool m_semiImplicitCPP = false;
 		double m_beta = 1.0;
@@ -132,7 +133,7 @@ namespace mpm {
 		void RenderPointClouds(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> pointShader);
 		void RenderGrid(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> gridShader);
 		void RenderMarchingSquares(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> gridShader);
-
+		void RenderGridBorder(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> borderShader);
 		//*** GUI FUNCTIONS ***//
 	public:
 		void RenderGUI();
@@ -143,10 +144,6 @@ namespace mpm {
 
 	private:
 		void ImGuiTimeIntegrator();
-		//void ImGuiExternalForceController();
-		//void ImGuiDeformationGradientController();
-		//void ImGuiMaterialParameterController();
-		
 		void ImGuiMaterialParametersEditor();
 		void ImGuiGridOptions();
 		void ImGuiGridNodeViewer();
@@ -168,11 +165,6 @@ namespace mpm {
 		// material point
 		bool m_imguiMaterialPointViewer = false;
 		bool m_imguiMaterialParametersEditor = false;
-
-		//// control
-		//bool m_imguiExternalForceController = false;
-		//bool m_imguiDeformationGradientController = false;
-		//bool m_imguiMaterialParameterController = false;
 
 		// experimental
 		bool m_imguiCPUMode = false;
@@ -210,11 +202,6 @@ namespace mpm {
 		std::unique_ptr<ComputeShader> m_p2gCalcVolumes = nullptr;
 		std::unique_ptr<ComputeShader> m_g2pCalcVolumes = nullptr;
 
-		//// INTERACTIONS
-		//std::unique_ptr<ComputeShader> m_pSetDeformationGradients = nullptr;
-		//std::unique_ptr<ComputeShader> m_pMultDeformationGradients = nullptr;
-		//std::unique_ptr<ComputeShader> m_pSetLameParamters = nullptr;
-
 		// RENDERING
 		std::shared_ptr<StandardShader> m_pPointCloudShader = nullptr;
 		std::shared_ptr<StandardShader> m_pPointCloudVectorShader = nullptr;
@@ -223,6 +210,8 @@ namespace mpm {
 		std::shared_ptr<StandardShader> m_gridShader = nullptr;
 		std::shared_ptr<StandardShader> m_gridShaderVector = nullptr;
 		std::shared_ptr<StandardShader> m_gridShaderMarchingSquares = nullptr;
+
+		std::shared_ptr<StandardShader> m_borderShader = nullptr;
 
 		std::shared_ptr<OpenGLScreen> m_openGLScreen = nullptr;
 
@@ -304,18 +293,6 @@ namespace mpm {
 		void ClearNodalAcclerations(const int gridDimX, const int gridDimY);*/
 
 
-		///******************** EXTERNAL FORCE CONTROLLER ********************/
-		//real m_drag = 0.5;
-		//vec2 m_globalForce = vec2(0.0, -9.81);
-		//GLreal m_mousePower = 25.0;
-
-
-
-		///******************** INTERNAL FORCE CONTROLLER ********************/
-		//void SetDeformationGradients(std::string pointCloudID, mat2 Fe, mat2 Fp, bool multSelected);
-		//void MultiplyDeformationGradients(std::string pointCloudID, mat2 multFe, mat2 multFp, bool setSelected);
-		//void SetLameParamters(std::string pointCloudID, real lam, real mew, bool setSelected);
-
 		/******************** CONJUGATE RESIDUALS FOR SEMI-IMPLICT TIME INTEGRATION ********************/
 		bool m_semi_implicit_CR = false;
 		real m_semi_implicit_ratio = 1.0;
@@ -358,8 +335,7 @@ namespace mpm {
 		ENERGY_MODEL m_comodel = ENERGY_MODEL::FIXED_COROTATIONAL_ELASTICITY;
 		void ChangeEnergyModel(ENERGY_MODEL);
 		float m_backgroundColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-		float m_color[4] = { 1.0f, 0.0f, 0.0f, 1.0f}; // color needs to be float
-		vec2 m_initVelocity = vec2(0.0);
+		
 	
 	private:
 		// imgui stuff

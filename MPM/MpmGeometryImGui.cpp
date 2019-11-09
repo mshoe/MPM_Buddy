@@ -31,10 +31,12 @@ void mpm::MpmGeometryEngine::ImGuiBasicShapesEditor()
 {
 	if (ImGui::Begin("Basic Shapes Editor", &m_imguiBasicShapesEditor)) {
 
+		ImGui::ColorEdit4("Point Cloud Color", m_color);
+		ImGui::InputReal("Initial Velocity X", &m_initVelocity.x, 0.1, 1.0, "%.1f");
+		ImGui::InputReal("Initial Velocity Y", &m_initVelocity.y, 0.1, 1.0, "%.1f");
 
-
-		ImGui::Checkbox("Fixed point cloud", &m_fixedPointCloud);
-		ImGui::Checkbox("Inverted SDF (DANGER)", &m_invertedSdf);
+		/*ImGui::Checkbox("Fixed point cloud", &m_fixedPointCloud);
+		ImGui::Checkbox("Inverted SDF (DANGER)", &m_invertedSdf);*/
 
 		ImGui::InputReal("Point Spacing", &m_particleSpacing, 0.01, 0.1, "%.2f");
 		ImGui::Text("");
@@ -128,7 +130,7 @@ void mpm::MpmGeometryEngine::ImGuiPWLineEditor()
 {
 	static glm::highp_fvec4 min_color(1.0f, 0.0f, 0.0f, 1.0f);
 	static glm::highp_fvec4 max_color(0.0f, 1.0f, 0.0f, 1.0f);
-	if (ImGui::Begin("Piecewise Line Editor", &m_imguiPolygonEditor)) {
+	if (ImGui::Begin("Piecewise Line Editor", &m_imguiPWLineEditor)) {
 		ImGui::Checkbox("Render piecewise line", &m_renderPWLine);
 		if (ImGui::Button("Add line Vertex")) {
 			m_addPWLineVertexState = true;

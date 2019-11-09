@@ -238,9 +238,7 @@ void mpm::MpmEngine::ImGuiMaterialParametersEditor()
 {
 	if (ImGui::Begin("Material Parameters Editor", &m_imguiMaterialParametersEditor)) {
 		//ImGui::Color
-		ImGui::ColorEdit4("Color", m_color);
-		ImGui::InputReal("Initial Velocity X", &m_initVelocity.x, 0.1, 1.0, "%.1f");
-		ImGui::InputReal("Initial Velocity Y", &m_initVelocity.y, 0.1, 1.0, "%.1f");
+		
 
 		//ImGui::InputInt3("Color", m_color);
 

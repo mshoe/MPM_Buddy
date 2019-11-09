@@ -20,14 +20,14 @@ void mpm::MpmGeometryEngine::GenPointCloudPolygon(std::shared_ptr<sdf::Polygon> 
 	std::string polygonID = "polygon" + std::to_string(m_mpmEngine->m_polygonCount);
 	m_mpmEngine->m_polygonCount++;
 
-	glm::highp_fvec4 color = glm::highp_fvec4(m_mpmEngine->m_color[0], m_mpmEngine->m_color[1], m_mpmEngine->m_color[2], m_mpmEngine->m_color[3]);
+	glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
 
 	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(polygonID, *polygon, 
 														   real(m_mpmEngine->m_chunks_x) * real(CHUNK_WIDTH), real(m_mpmEngine->m_chunks_y) * real(CHUNK_WIDTH), 
 														   0.0, 0.0, m_particleSpacing, 
 														   m_mpmEngine->m_mpParameters, m_mpmEngine->m_comodel, 
 														   sdf::SDF_OPTION::NORMAL, m_invertedSdf, m_fixedPointCloud, 
-														   m_mpmEngine->m_initVelocity, color);
+														   m_initVelocity, color);
 
 	t2 = high_resolution_clock::now();
 
@@ -54,14 +54,14 @@ void mpm::MpmGeometryEngine::GenPointCloudPWLine()
 	std::string pwLineID = "line" + std::to_string(m_mpmEngine->m_pwLineCount);
 	m_mpmEngine->m_pwLineCount++;
 
-	glm::highp_fvec4 color = glm::highp_fvec4(m_mpmEngine->m_color[0], m_mpmEngine->m_color[1], m_mpmEngine->m_color[2], m_mpmEngine->m_color[3]);
+	glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
 
 	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(pwLineID, *m_pwLine, 
 														   real(m_mpmEngine->m_chunks_x) * real(CHUNK_WIDTH), real(m_mpmEngine->m_chunks_y) * real(CHUNK_WIDTH), 
 														   0.0, m_pwLineRounding, m_particleSpacing, 
 														   m_mpmEngine->m_mpParameters, m_mpmEngine->m_comodel, 
 														   sdf::SDF_OPTION::ROUNDED, false, m_fixedPointCloud, 
-														   m_mpmEngine->m_initVelocity, color);
+														   m_initVelocity, color);
 
 	t2 = high_resolution_clock::now();
 
@@ -187,7 +187,7 @@ void mpm::MpmGeometryEngine::HandleGeometryStates()
 		sdf::Circle shape(mpmMouse2, m_circle_r);
 		std::string circleID = "circle" + std::to_string(m_mpmEngine->m_circleCount);
 
-		glm::highp_fvec4 color = glm::highp_fvec4(m_mpmEngine->m_color[0], m_mpmEngine->m_color[1], m_mpmEngine->m_color[2], m_mpmEngine->m_color[3]);
+		glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
 		/*color.x = (float)glm::clamp(m_color[0], 0, 255) / 255.f;
 		color.y = (float)glm::clamp(m_color[1], 0, 255) / 255.f;
 		color.z = (float)glm::clamp(m_color[2], 0, 255) / 255.f;*/
@@ -198,7 +198,7 @@ void mpm::MpmGeometryEngine::HandleGeometryStates()
 															   inner_rounding, m_circle_rounding, m_particleSpacing, 
 															   m_mpmEngine->m_mpParameters, m_mpmEngine->m_comodel, 
 															   sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, 
-															   m_mpmEngine->m_initVelocity, color);
+															   m_initVelocity, color);
 
 		t2 = high_resolution_clock::now();
 
@@ -224,7 +224,7 @@ void mpm::MpmGeometryEngine::HandleGeometryStates()
 		sdf::Rectangle shape(mpmMouse2, m_rect_b, m_rect_h);
 		std::string rectID = "rect" + std::to_string(m_mpmEngine->m_rectCount);
 
-		glm::highp_fvec4 color = glm::highp_fvec4(m_mpmEngine->m_color[0], m_mpmEngine->m_color[1], m_mpmEngine->m_color[2], m_mpmEngine->m_color[3]);
+		glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
 
 
 		real inner_rounding = glm::min(m_rect_b, m_rect_h) - m_rect_inner_radius;
@@ -233,7 +233,7 @@ void mpm::MpmGeometryEngine::HandleGeometryStates()
 															   inner_rounding, m_rect_rounding, m_particleSpacing, 
 															   m_mpmEngine->m_mpParameters, m_mpmEngine->m_comodel,
 															   sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, 
-															   m_mpmEngine->m_initVelocity, color);
+															   m_initVelocity, color);
 
 		t2 = high_resolution_clock::now();
 
@@ -259,7 +259,7 @@ void mpm::MpmGeometryEngine::HandleGeometryStates()
 		sdf::IsoscelesTriangle shape(mpmMouse2, m_iso_tri_b, m_iso_tri_h);
 		std::string isoTriID = "isoTri" + std::to_string(m_mpmEngine->m_isoTriCount);
 
-		glm::highp_fvec4 color = glm::highp_fvec4(m_mpmEngine->m_color[0], m_mpmEngine->m_color[1], m_mpmEngine->m_color[2], m_mpmEngine->m_color[3]);
+		glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
 
 		real inner_rounding = glm::min(m_iso_tri_b, m_iso_tri_h) - m_iso_tri_inner_radius;
 		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(isoTriID, shape, 
@@ -267,7 +267,7 @@ void mpm::MpmGeometryEngine::HandleGeometryStates()
 															   inner_rounding, m_iso_tri_rounding, m_particleSpacing, 
 															   m_mpmEngine->m_mpParameters, m_mpmEngine->m_comodel,
 															   sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, 
-															   m_mpmEngine->m_initVelocity, color);
+															   m_initVelocity, color);
 
 		t2 = high_resolution_clock::now();
 

@@ -5,6 +5,11 @@
 void mpm::MpmEngine::MpmReset_GLSL()
 {
 	m_pointCloudMap.clear();
+	m_circleCount = 0;
+	m_rectCount = 0;
+	m_isoTriCount = 0;
+	m_polygonCount = 0;
+	m_pwLineCount = 0;
 	m_timeStep = 0;
 	m_time = 0.0;
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
