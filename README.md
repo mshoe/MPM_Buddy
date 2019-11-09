@@ -70,12 +70,17 @@ https://open.umich.edu/find/open-educational-resources/engineering/lectures-cont
 Bonet, J. and Wood, R. (2008). Nonlinear continuum mechanics for finite element analysis. Cambridge University Press.
 
 __Papers implemented:__<br/>
+Snow energy model:<br/>
 Alexey Stomakhin, Craig Schroeder, Lawrence Chai, Joseph Teran, and Andrew Selle. 2013. A material point method for snow simulation. ACM Trans. Graph. 32, 4, Article 102 (July 2013), 10 pages. DOI: https://doi.org/10.1145/2461912.2461948
 
+APIC particle-grid transfers:<br/>
 Chenfanfu Jiang, Craig Schroeder, Andrew Selle, Joseph Teran, and Alexey Stomakhin. 2015. The affine particle-in-cell method. ACM Trans. Graph. 34, 4, Article 51 (July 2015), 10 pages. DOI: https://doi.org/10.1145/2766996
 
+General MPM knowledge:<br/>
 Chenfanfu Jiang, Craig Schroeder, Joseph Teran, Alexey Stomakhin, and Andrew Selle. 2016. The material point method for simulating continuum materials. In ACM SIGGRAPH 2016 Courses (SIGGRAPH '16)
 
+MLS-MPM particle-grid transfers (and soon CPIC, so users can play with rigid bodies in the MPM environment):<br/>
+Yuanming Hu, Yu Fang, Ziheng Ge, Ziyin Qu, Yixin Zhu, Andre Pradhana, and Chenfanfu Jiang. 2018. A moving least squares material point method with displacement discontinuity and two-way rigid body coupling. ACM Trans. Graph. 37, 4, Article 150 (July 2018), 14 pages. DOI: https://doi.org/10.1145/3197517.3201293
 
 __Useful implementation references:__<br/>
 T. Gast, C. Fu, C. Jiang, J. Teran, Implicit-shifted Symmetric QR Singular Value Decomposition of 3x3 Matrices. UCLA Mathematics Department Technical Report (CAM16-19, 2016).

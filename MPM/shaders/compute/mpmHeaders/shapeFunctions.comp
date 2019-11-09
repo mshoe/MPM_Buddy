@@ -2,6 +2,7 @@ const dmat2 Dp_inv = 3 * dmat2(1.0); // 3 * dx^2 * I, inverse of inertia tensor 
 const uint PIC = 0;
 const uint RPIC = 1;
 const uint APIC = 2;
+const uint MLS = 3;
 uniform uint transferScheme = APIC; // 0 = PIC, 1 = RPIC, 2 = APIC
 
 int GetGridNodeIndex(int node_i, int node_j) {

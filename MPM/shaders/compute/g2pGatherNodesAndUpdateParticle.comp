@@ -35,15 +35,23 @@ void main() {
 			double dx = -dpg.x; // sign matters for gradient
 			double dy = -dpg.y;
 			double wpg = BSpline(dx) * BSpline(dy);
-			dvec2 wpgGrad = dvec2(BSplineSlope(dx) * BSpline(dy),
-								BSpline(dx) * BSplineSlope(dy));
+			
 
 			dvec2 vg = nodes[curNode_i][curNode_j].v*inb; // if inb is 0, then no data is changed
-			dfp += dt*outerProduct(vg, wpgGrad)*inb;
 			vp += wpg*vg*inb;
-			if (transferScheme == APIC) {
+
+			// key contribution of MLS: no need to calculate wpgGrad
+			if (transferScheme != MLS) {
+				dvec2 wpgGrad = dvec2(BSplineSlope(dx) * BSpline(dy),
+									BSpline(dx) * BSplineSlope(dy));
+				dfp += dt*outerProduct(vg, wpgGrad)*inb;
+			}
+			
+			
+			if (transferScheme == APIC || transferScheme == MLS) { // MLS uses APIC here
 				bp += wpg * outerProduct(vg, dpg)*inb;
-			} else if (transferScheme == RPIC) {
+			}
+			else if (transferScheme == RPIC) {
 				Lp += wpg * cross(dvec3(dpg, 0.0), dvec3(vg, 0.0));
 			}
 		}
@@ -51,7 +59,10 @@ void main() {
 
 	points[pid].v = vp;
 	if (transferScheme == APIC) {
-		points[pid].B = bp;
+		points[pid].B = Dp_inv * bp;
+	} else if (transferScheme == MLS) {
+		points[pid].B = Dp_inv * bp;
+		dfp += dt * points[pid].B; // in MLS, velocity gradient is just the affine transfer matrix
 	} else if (transferScheme == RPIC) {
 		points[pid].Lz = points[pid].m * Lp.z;
 	} else if (transferScheme == PIC) {
@@ -67,9 +78,16 @@ void main() {
 	double crit_c = points[pid].crit_c;
 	double crit_s = points[pid].crit_s;
 	double hardening = points[pid].hardening;
+
+
+
+	// All energy models need to calculate this value first
+	dmat2 Fe = dfp * points[pid].Fe;
 	if (comodel == NEO_HOOKEAN) {
-		points[pid].Fe = dfp*points[pid].Fe;
-		dmat2 Fe = points[pid].Fe;
+		//points[pid].Fe = dfp*points[pid].Fe;
+		//dmat2 Fe = points[pid].Fe;
+		points[pid].Fe = Fe;
+		
 		dmat2 Fit = transpose(inverse(points[pid].Fe));
 		double J = determinant(Fe);
 		double logJ = double(log(float(J)));
@@ -98,8 +116,10 @@ void main() {
 
 	} else if (comodel == FIXED_COROTATED) {
 		
-		points[pid].Fe = dfp*points[pid].Fe;
-		dmat2 Fe = points[pid].Fe;
+		//points[pid].Fe = dfp*points[pid].Fe;
+		//dmat2 Fe = points[pid].Fe;
+
+		points[pid].Fe = Fe;
 		dmat2 Fit = transpose(inverse(points[pid].Fe));
 		double J = determinant(Fe);
 		
@@ -130,7 +150,8 @@ void main() {
 	} else if (comodel == SIMPLE_SNOW) {
 
 		// temporarilly update the Fe
-		dmat2 Fe = dfp*points[pid].Fe;
+		//dmat2 Fe = dfp*points[pid].Fe;
+
 		dmat2 Fp = points[pid].Fp;
 
 		dmat2 F_total = Fe*Fp;

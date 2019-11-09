@@ -38,8 +38,7 @@ void main() {
 			double dx = -dpg.x; // sign matters for gradient
 			double dy = -dpg.y;
 			double wpg = BSpline(dx) * BSpline(dy);
-			dvec2 wpgGrad = dvec2(BSplineSlope(dx) * BSpline(dy),
-								BSpline(dx) * BSplineSlope(dy));
+			
 
 			atomicAdd(nodes[curNode_i][curNode_j].m, wpg * points[pid].m);
 
@@ -47,8 +46,10 @@ void main() {
 
 			dvec2 momentumAdd;
 			// B is used for APIC transfer
-			if (transferScheme == APIC)  { // APIC
-				momentumAdd = wpg * points[pid].m * (points[pid].v + points[pid].B * Dp_inv * dpg);
+			if (transferScheme == APIC || transferScheme == MLS)  { // APIC, MLS also uses APIC
+				momentumAdd = wpg * points[pid].m * (points[pid].v + points[pid].B * dpg);
+			// } else if (transferScheme == MLS) {
+			// 	momentumAdd = wpg * points[pid].m * (points[pid].B * dpg);
 			} else if (transferScheme == RPIC) { // RPIC
 				
 				dmat3 Kp_inv = 3.0 * dmat3(1.0);
@@ -63,7 +64,15 @@ void main() {
 
 			barrier();
 
-			dvec2 forceAdd = -points[pid].vol * points[pid].P * transpose(points[pid].Fe) * wpgGrad;
+			dvec2 forceAdd;
+			if (transferScheme == MLS) { // MLS doesn't need wpgGrad
+				forceAdd = -Dp_inv * points[pid].vol * points[pid].P * transpose(points[pid].Fe) * dpg * wpg;
+			}
+			else {
+				dvec2 wpgGrad = dvec2(BSplineSlope(dx) * BSpline(dy),
+								BSpline(dx) * BSplineSlope(dy));
+				forceAdd = -points[pid].vol * points[pid].P * transpose(points[pid].Fe) * wpgGrad;
+			}
 			atomicAdd(nodes[curNode_i][curNode_j].force.x, forceAdd.x);
 			atomicAdd(nodes[curNode_i][curNode_j].force.y, forceAdd.y);
 

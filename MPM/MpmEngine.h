@@ -314,12 +314,14 @@ namespace mpm {
 		enum class TRANSFER_SCHEME {
 			PIC = 0,
 			RPIC = 1,
-			APIC = 2
+			APIC = 2,
+			MLS = 3
 		};
 		std::vector<std::string> m_transferSchemeStrVec = {
 			"PIC",
 			"RPIC (not working)",
-			"APIC"
+			"APIC",
+			"MLS"
 		};
 		TRANSFER_SCHEME m_transferScheme = TRANSFER_SCHEME::APIC;
 
