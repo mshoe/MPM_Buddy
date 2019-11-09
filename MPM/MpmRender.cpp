@@ -287,7 +287,7 @@ void mpm::MpmEngine::RenderGrid(vec2 zoomPoint, real zoomFactor, std::shared_ptr
 	gridShader->SetBool("nodeGraphicsActive", m_nodeGraphicsActive);
 	gridShader->SetInt("selectedNodeI", m_node[0]);
 	gridShader->SetInt("selectedNodeJ", m_node[1]);
-	gridShader->SetReal("dt", m_dt);
+	gridShader->SetReal("dt", m_mpmAlgorithmEngine->m_dt);
 	gridShader->SetuInt("selectedVector", unsigned int(m_gridVectorOption));
 	gridShader->SetReal("maxGridVectorLength", m_maxGridVectorLength);
 	gridShader->SetReal("maxGridVectorVisualLength", m_maxGridVectorVisualLength);
@@ -307,7 +307,7 @@ void mpm::MpmEngine::RenderMarchingSquares(vec2 zoomPoint, real zoomFactor, std:
 	gridShader->SetVec("zoomPoint", zoomPoint);
 	gridShader->SetReal("isoMass", m_isoMass);
 	gridShader->SetVec("mscolor", m_marchingSquaresColor);
-	gridShader->SetReal("dt", m_dt);
+	gridShader->SetReal("dt", m_mpmAlgorithmEngine->m_dt);
 
 	glBindVertexArray(VisualizeVAO);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);

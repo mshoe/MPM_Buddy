@@ -1,24 +1,24 @@
-#include "MpmEngine.h"
+#include "MpmAlgorithmEngine.h"
 
 
 
-void mpm::MpmEngine::MpmReset_GLSL()
+void mpm::MpmAlgorithmEngine::MpmReset_GLSL()
 {
-	m_pointCloudMap.clear();
-	m_circleCount = 0;
-	m_rectCount = 0;
-	m_isoTriCount = 0;
-	m_polygonCount = 0;
-	m_pwLineCount = 0;
+	m_mpmEngine->m_pointCloudMap.clear();
+	m_mpmEngine->m_circleCount = 0;
+	m_mpmEngine->m_rectCount = 0;
+	m_mpmEngine->m_isoTriCount = 0;
+	m_mpmEngine->m_polygonCount = 0;
+	m_mpmEngine->m_pwLineCount = 0;
 	m_timeStep = 0;
 	m_time = 0.0;
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_mpmEngine->gridSSBO);
 	m_gReset->Use();
-	glDispatchCompute(m_chunks_x, m_chunks_y, 1);
+	glDispatchCompute(m_mpmEngine->m_chunks_x, m_mpmEngine->m_chunks_y, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
-void mpm::MpmEngine::MpmTimeStep_GLSL(real dt)
+void mpm::MpmAlgorithmEngine::MpmTimeStep_GLSL(real dt)
 {
 #ifdef MPM_DEBUG
 	using namespace std::chrono;
@@ -45,21 +45,21 @@ void mpm::MpmEngine::MpmTimeStep_GLSL(real dt)
 #endif
 }
 
-void mpm::MpmEngine::MpmTimeStepP2G_GLSL(real dt)
+void mpm::MpmAlgorithmEngine::MpmTimeStepP2G_GLSL(real dt)
 {
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_mpmEngine->gridSSBO);
 	m_gReset->Use();
-	glDispatchCompute(m_chunks_x, m_chunks_y, 1);
+	glDispatchCompute(m_mpmEngine->m_chunks_x, m_mpmEngine->m_chunks_y, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 	m_p2gScatter->Use();
 	m_p2gScatter->SetReal("dt", dt);
-	m_p2gScatter->SetInt("CHUNKS_X", m_chunks_x);
-	m_p2gScatter->SetInt("CHUNKS_Y", m_chunks_y);
+	m_p2gScatter->SetInt("CHUNKS_X", m_mpmEngine->m_chunks_x);
+	m_p2gScatter->SetInt("CHUNKS_Y", m_mpmEngine->m_chunks_y);
 	m_p2gScatter->SetuInt("transferScheme", unsigned int(m_transferScheme));
-	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_mpmEngine->m_pointCloudMap) {
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudPair.second->ssbo);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_mpmEngine->gridSSBO);
 		/*m_p2gGather->Use();
 		m_p2gGather->SetFloat("dt", dt);
 		glDispatchCompute(G_NUM_GROUPS_X, G_NUM_GROUPS_Y, 1);*/
@@ -71,30 +71,30 @@ void mpm::MpmEngine::MpmTimeStepP2G_GLSL(real dt)
 	}
 }
 
-void mpm::MpmEngine::MpmTimeStepExplicitGridUpdate_GLSL(real dt)
+void mpm::MpmAlgorithmEngine::MpmTimeStepExplicitGridUpdate_GLSL(real dt)
 {
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_mpmEngine->gridSSBO);
 	m_gUpdate->Use();
 	m_gUpdate->SetReal("dt", dt);
 	m_gUpdate->SetVec("globalForce", m_mpmControlEngine->m_globalForce);
-	m_gUpdate->SetVec("iMpmMouse", m_mouseMpmRenderScreenGridSpaceFull);
+	m_gUpdate->SetVec("iMpmMouse", m_mpmEngine->m_mouseMpmRenderScreenGridSpaceFull);
 	m_gUpdate->SetReal("drag", m_mpmControlEngine->m_drag);
 	m_gUpdate->SetReal("mousePower", m_mpmControlEngine->m_mousePower);
-	glDispatchCompute(m_chunks_x, m_chunks_y, 1);
+	glDispatchCompute(m_mpmEngine->m_chunks_x, m_mpmEngine->m_chunks_y, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
 
 
-void mpm::MpmEngine::MpmTimeStepG2P_GLSL(real dt)
+void mpm::MpmAlgorithmEngine::MpmTimeStepG2P_GLSL(real dt)
 {
 
 	m_g2pGather->Use();
 	m_g2pGather->SetReal("dt", dt);
-	m_g2pGather->SetInt("CHUNKS_X", m_chunks_x);
-	m_g2pGather->SetInt("CHUNKS_Y", m_chunks_y);
+	m_g2pGather->SetInt("CHUNKS_X", m_mpmEngine->m_chunks_x);
+	m_g2pGather->SetInt("CHUNKS_Y", m_mpmEngine->m_chunks_y);
 	m_g2pGather->SetuInt("transferScheme", (unsigned int)m_transferScheme);
-	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_mpmEngine->m_pointCloudMap) {
 
 		//// don't advect fixed point clouds
 		if (pointCloudPair.second->fixed)
@@ -107,7 +107,7 @@ void mpm::MpmEngine::MpmTimeStepG2P_GLSL(real dt)
 		m_g2pGather->SetReal("hardening", pointCloudPair.second->parameters.hardening);*/
 		m_g2pGather->SetuInt("comodel", unsigned int(pointCloudPair.second->comodel));
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloudPair.second->ssbo);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_mpmEngine->gridSSBO);
 		//m_g2pGather->SetBool("fixedPointCloud", pointCloudPair.second->fixed);
 		int g2p_workgroups = int(glm::ceil(real(pointCloudPair.second->N) / real(G2P_WORKGROUP_SIZE)));
 		glDispatchCompute(g2p_workgroups, 1, 1);
@@ -119,7 +119,7 @@ void mpm::MpmEngine::MpmTimeStepG2P_GLSL(real dt)
 
 
 
-void mpm::MpmEngine::CalculatePointCloudVolumes_GLSL(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud)
+void mpm::MpmAlgorithmEngine::CalculatePointCloudVolumes_GLSL(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud)
 {
 	using namespace std::chrono;
 
@@ -129,14 +129,14 @@ void mpm::MpmEngine::CalculatePointCloudVolumes_GLSL(std::string pointCloudID, s
 	std::cout << "Calculating initial volumes for '" << pointCloudID << "'...\n";
 
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloud->ssbo);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_mpmEngine->gridSSBO);
 	t1 = high_resolution_clock::now();
 	m_p2gCalcVolumes->Use();
-	glDispatchCompute(m_chunks_x, m_chunks_y, 1);
+	glDispatchCompute(m_mpmEngine->m_chunks_x, m_mpmEngine->m_chunks_y, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 	m_g2pCalcVolumes->Use();
-	m_g2pCalcVolumes->SetInt("CHUNKS_X", m_chunks_x);
-	m_g2pCalcVolumes->SetInt("CHUNKS_Y", m_chunks_y);
+	m_g2pCalcVolumes->SetInt("CHUNKS_X", m_mpmEngine->m_chunks_x);
+	m_g2pCalcVolumes->SetInt("CHUNKS_Y", m_mpmEngine->m_chunks_y);
 	int g2p_workgroups = int(glm::ceil(real(pointCloud->N) / real(G2P_WORKGROUP_SIZE)));
 	glDispatchCompute(g2p_workgroups, 1, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);

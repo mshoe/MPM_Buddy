@@ -1,6 +1,6 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
-#include "MpmEngine.h"
+#include "MpmAlgorithmEngine.h"
 #include "MpmFunctions.h"
 
 void d2Psi_dF2(Eigen::Matrix4d& dPdF, double mew, double lam, const mpm::MaterialPoint& mp) {
@@ -246,23 +246,23 @@ void VectorToGridVelocity(mpm::Grid& grid, const Eigen::VectorXd& v_semi_implici
 	}
 }
 
-void mpm::MpmEngine::MpmTimeStepSemiImplicitGridUpdate_CPP(real dt, real beta)
+void mpm::MpmAlgorithmEngine::MpmTimeStepSemiImplicitGridUpdate_CPP(real dt, real beta)
 {
 
 	SparseMatrixd H;
-	EnergyHessian(H, m_chunks_x, m_chunks_y, m_pointCloudMap);
+	EnergyHessian(H, m_mpmEngine->m_chunks_x, m_mpmEngine->m_chunks_y, m_mpmEngine->m_pointCloudMap);
 
 	std::vector<glm::ivec2> gridDegreesOfFreedom;
-	GridDegreesOfFreedomVector(gridDegreesOfFreedom, m_chunks_x, m_chunks_y, m_grid);
+	GridDegreesOfFreedomVector(gridDegreesOfFreedom, m_mpmEngine->m_chunks_x, m_mpmEngine->m_chunks_y, m_mpmEngine->m_grid);
 
 	SparseMatrixd P;
-	SelectionMatrix(P, gridDegreesOfFreedom, m_chunks_x, m_chunks_y, m_grid);
+	SelectionMatrix(P, gridDegreesOfFreedom, m_mpmEngine->m_chunks_x, m_mpmEngine->m_chunks_y, m_mpmEngine->m_grid);
 
 	SparseMatrixd M_inv;
-	InverseMassMatrix(M_inv, gridDegreesOfFreedom, m_chunks_x, m_chunks_y, m_grid);
+	InverseMassMatrix(M_inv, gridDegreesOfFreedom, m_mpmEngine->m_chunks_x, m_mpmEngine->m_chunks_y, m_mpmEngine->m_grid);
 
 	Eigen::VectorXd V_symplectic_euler;
-	GridVelocityToVector(V_symplectic_euler, gridDegreesOfFreedom, m_grid);
+	GridVelocityToVector(V_symplectic_euler, gridDegreesOfFreedom, m_mpmEngine->m_grid);
 
 	SparseMatrixd A;
 	A.resize(gridDegreesOfFreedom.size() * 2, gridDegreesOfFreedom.size() * 2);
@@ -307,6 +307,6 @@ void mpm::MpmEngine::MpmTimeStepSemiImplicitGridUpdate_CPP(real dt, real beta)
 
 	Eigen::VectorXd V_semi_implict_euler = solver.solve(V_symplectic_euler);
 
-	VectorToGridVelocity(m_grid, V_semi_implict_euler, gridDegreesOfFreedom);
+	VectorToGridVelocity(m_mpmEngine->m_grid, V_semi_implict_euler, gridDegreesOfFreedom);
 
 }

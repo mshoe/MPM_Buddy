@@ -2,7 +2,7 @@
 
 void mpm::MpmGeometryEngine::GenPointCloudPolygon(std::shared_ptr<sdf::Polygon> polygon, vec2 center)
 {
-	if (!m_mpmEngine->m_paused)
+	if (!m_mpmAlgorithmEngine->m_paused)
 		return;
 
 	using namespace std::chrono;
@@ -25,7 +25,7 @@ void mpm::MpmGeometryEngine::GenPointCloudPolygon(std::shared_ptr<sdf::Polygon> 
 	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(polygonID, *polygon, 
 														   real(m_mpmEngine->m_chunks_x) * real(CHUNK_WIDTH), real(m_mpmEngine->m_chunks_y) * real(CHUNK_WIDTH), 
 														   0.0, 0.0, m_particleSpacing, 
-														   m_mpmEngine->m_mpParameters, m_mpmEngine->m_comodel, 
+														   m_mpmAlgorithmEngine->m_mpParameters, m_mpmAlgorithmEngine->m_comodel,
 														   sdf::SDF_OPTION::NORMAL, m_invertedSdf, m_fixedPointCloud, 
 														   m_initVelocity, color);
 
@@ -40,7 +40,7 @@ void mpm::MpmGeometryEngine::GenPointCloudPolygon(std::shared_ptr<sdf::Polygon> 
 
 void mpm::MpmGeometryEngine::GenPointCloudPWLine()
 {
-	if (!m_mpmEngine->m_paused)
+	if (!m_mpmAlgorithmEngine->m_paused)
 		return;
 
 	using namespace std::chrono;
@@ -59,7 +59,7 @@ void mpm::MpmGeometryEngine::GenPointCloudPWLine()
 	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(pwLineID, *m_pwLine, 
 														   real(m_mpmEngine->m_chunks_x) * real(CHUNK_WIDTH), real(m_mpmEngine->m_chunks_y) * real(CHUNK_WIDTH), 
 														   0.0, m_pwLineRounding, m_particleSpacing, 
-														   m_mpmEngine->m_mpParameters, m_mpmEngine->m_comodel, 
+														   m_mpmAlgorithmEngine->m_mpParameters, m_mpmAlgorithmEngine->m_comodel,
 														   sdf::SDF_OPTION::ROUNDED, false, m_fixedPointCloud, 
 														   m_initVelocity, color);
 
@@ -143,7 +143,7 @@ std::shared_ptr<mpm::PointCloud> mpm::MpmGeometryEngine::GenPointCloud(const std
 			GL_MAP_READ_BIT | GL_MAP_WRITE_BIT // add write bit for cpu mode
 		);
 
-		m_mpmEngine->CalculatePointCloudVolumes(pointCloudID, pointCloud);
+		m_mpmAlgorithmEngine->CalculatePointCloudVolumes(pointCloudID, pointCloud);
 
 		m_mpmEngine->m_pointCloudMap[pointCloudID] = pointCloud;
 	}
@@ -158,7 +158,7 @@ void mpm::MpmGeometryEngine::HandleGeometryStates()
 	time_point<high_resolution_clock> t1;
 	time_point<high_resolution_clock> t2;
 
-	bool paused = m_mpmEngine->m_paused;
+	bool paused = m_mpmAlgorithmEngine->m_paused;
 	bool rightButtonDown = m_mpmEngine->m_rightButtonDown;
 	bool leftButtonDown = m_mpmEngine->m_leftButtonDown;
 	vec2 mpmMouse2 = m_mpmEngine->m_mouseMpmRenderScreenGridSpace;
@@ -196,7 +196,7 @@ void mpm::MpmGeometryEngine::HandleGeometryStates()
 		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(circleID, shape, 
 															   real(chunks_x) * real(CHUNK_WIDTH), real(chunks_y) * real(CHUNK_WIDTH), 
 															   inner_rounding, m_circle_rounding, m_particleSpacing, 
-															   m_mpmEngine->m_mpParameters, m_mpmEngine->m_comodel, 
+															   m_mpmAlgorithmEngine->m_mpParameters, m_mpmAlgorithmEngine->m_comodel,
 															   sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, 
 															   m_initVelocity, color);
 
@@ -231,7 +231,7 @@ void mpm::MpmGeometryEngine::HandleGeometryStates()
 		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(rectID, shape, 
 															   real(chunks_x) * real(CHUNK_WIDTH), real(chunks_y) * real(CHUNK_WIDTH), 
 															   inner_rounding, m_rect_rounding, m_particleSpacing, 
-															   m_mpmEngine->m_mpParameters, m_mpmEngine->m_comodel,
+															   m_mpmAlgorithmEngine->m_mpParameters, m_mpmAlgorithmEngine->m_comodel,
 															   sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, 
 															   m_initVelocity, color);
 
@@ -265,7 +265,7 @@ void mpm::MpmGeometryEngine::HandleGeometryStates()
 		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(isoTriID, shape, 
 															   real(chunks_x) * real(CHUNK_WIDTH), real(chunks_y) * real(CHUNK_WIDTH), 
 															   inner_rounding, m_iso_tri_rounding, m_particleSpacing, 
-															   m_mpmEngine->m_mpParameters, m_mpmEngine->m_comodel,
+															   m_mpmAlgorithmEngine->m_mpParameters, m_mpmAlgorithmEngine->m_comodel,
 															   sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, 
 															   m_initVelocity, color);
 

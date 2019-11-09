@@ -12,6 +12,7 @@
 
 #include "MpmGeometryEngine.h"
 #include "MpmControlEngine.h"
+#include "MpmAlgorithmEngine.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -65,10 +66,18 @@ namespace mpm {
 		GLuint gridSSBO;
 		GLuint VisualizeVAO;
 
-		bool m_paused = true;
+		
 
-
+		// MPM DATA STRUCTURES
+		Grid m_grid;
 		std::map<std::string, std::shared_ptr<PointCloud>> m_pointCloudMap;
+		
+		// MPM data structure interaction
+		std::string m_pointCloudViewSelectStr = "";
+		void UpdatePointCloudData(std::string pointCloudStr);
+		void UpdateNodeData();
+
+
 
 		// counters for naming things in m_pointCloudMap
 		unsigned int m_circleCount = 0;
@@ -76,84 +85,43 @@ namespace mpm {
 		unsigned int m_isoTriCount = 0;
 		int m_pwLineCount = 0;
 		int m_polygonCount = 0;
+
+		float m_backgroundColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+
 	private:
 
 		// Other Engines
 		std::shared_ptr<MpmGeometryEngine> m_mpmGeometryEngine = nullptr;
 		std::shared_ptr<MpmControlEngine> m_mpmControlEngine = nullptr;
+		std::shared_ptr<MpmAlgorithmEngine> m_mpmAlgorithmEngine = nullptr;
 		
 
-		enum class MPM_ALGORITHM_CODE {
-			GLSL = 0,
-			CPP = 1
-		};
-
-		MPM_ALGORITHM_CODE m_algo_code = MPM_ALGORITHM_CODE::GLSL;
-
-	public: // geometry engine wants access to this
-		void CalculatePointCloudVolumes(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
 	
-	private:
-		/******************** MPM FUNCTIONS GLSL COMPUTE SHADER IMPLEMENTATION ********************/
-		void MpmReset_GLSL();
-		void MpmTimeStep_GLSL(real dt);
-		void MpmTimeStepP2G_GLSL(real dt);
-		void MpmTimeStepExplicitGridUpdate_GLSL(real dt);
-		void MpmTimeStepG2P_GLSL(real dt);
-		void MpmTimeStepSemiImplicitCRGridUpdate_GLSL(real dt);
-		void MpmCRInit_GLSL(real dt);
-		bool MpmCRStep_GLSL(real dt, real& L2_norm_rk, bool& L2_converged, bool& L_inf_converged);
-		void MpmCREnd_GLSL(real dt);
-		void CalculatePointCloudVolumes_GLSL(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
-
-		/******************** MPM FUNCTIONS CPU C++ IMPLEMENTATION ********************/
-		void MpmReset_CPP();
-		void MpmTimeStep_CPP(real dt);
-		void MpmTimeStepP2G_CPP(real dt);
-		void MpmTimeStepExplicitGridUpdate_CPP(real dt);
-		void MpmTimeStepSemiImplicitGridUpdate_CPP(real dt, real beta);
-		void MpmTimeStepG2P_CPP(real dt);
-
-		
-
-		bool m_semiImplicitCPP = false;
-		double m_beta = 1.0;
-
-		void GetPointCloudVolumesFromGPUtoCPU(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
-		
-		void MapCPUPointCloudsToGPU();
-		void MapCPUGridToGPU();
 
 
 		//*** RENDERING FUNCTIONS ***//
 	public:
 		void Render();
+		void RenderGUI();
+		// re-used helper functions for imgui
+		void ImGuiSelectPointCloud(std::string& pointCloudSelectStr);
+		void ImGuiDropDown(const std::string& combo_name, size_t& index, const std::vector<std::string>& string_vec);
+
 	private:
 		void RenderScreenShader(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen);
 		void RenderPointClouds(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> pointShader);
 		void RenderGrid(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> gridShader);
 		void RenderMarchingSquares(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> gridShader);
 		void RenderGridBorder(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> borderShader);
+		
 		//*** GUI FUNCTIONS ***//
-	public:
-		void RenderGUI();
-		// re-used helper functions for imgui
-		void ImGuiSelectPointCloud(std::string& pointCloudSelectStr);
-		void ImGuiDropDown(const std::string& combo_name, size_t& index, const std::vector<std::string>& string_vec);
-
-
-	private:
-		void ImGuiTimeIntegrator();
-		void ImGuiMaterialParametersEditor();
 		void ImGuiGridOptions();
 		void ImGuiGridNodeViewer();
 		void ImGuiMaterialPointViewer();
-		void ImGuiCPUMode();
-
 		
 
 		// state variables for rendering different windows
-		bool m_imguiTimeIntegrator = false;
+		
 		bool m_imguiZoomWindow = false;
 
 		bool m_imguiMpmRenderWindow = true;
@@ -164,10 +132,6 @@ namespace mpm {
 
 		// material point
 		bool m_imguiMaterialPointViewer = false;
-		bool m_imguiMaterialParametersEditor = false;
-
-		// experimental
-		bool m_imguiCPUMode = false;
 
 		/******************** ZOOM WINDOW ********************/
 		void InitZoomWindow();
@@ -191,16 +155,7 @@ namespace mpm {
 
 
 
-		/********************SHADERS ********************/
-		std::unique_ptr<ComputeShader> m_gReset = nullptr;
-		std::unique_ptr<ComputeShader> m_p2gScatter = nullptr;
-		std::unique_ptr<ComputeShader> m_p2gGather = nullptr;
-		std::unique_ptr<ComputeShader> m_gUpdate = nullptr;
-		std::unique_ptr<ComputeShader> m_g2pGather = nullptr;
 		
-
-		std::unique_ptr<ComputeShader> m_p2gCalcVolumes = nullptr;
-		std::unique_ptr<ComputeShader> m_g2pCalcVolumes = nullptr;
 
 		// RENDERING
 		std::shared_ptr<StandardShader> m_pPointCloudShader = nullptr;
@@ -217,21 +172,12 @@ namespace mpm {
 
 
 
-		// Implict time integration shaders
-		std::unique_ptr<ComputeShader> m_p2g2pDeltaForce = nullptr;
-		std::unique_ptr<ComputeShader> m_gConjugateResidualsInitPart1 = nullptr;
-		std::unique_ptr<ComputeShader> m_gConjugateResidualsInitPart2 = nullptr;
-		std::unique_ptr<ComputeShader> m_gConjugateResidualsInitPart3 = nullptr;
-		std::unique_ptr<ComputeShader> m_gConjugateResidualsStepPart1 = nullptr;
-		std::unique_ptr<ComputeShader> m_gConjugateResidualsStepPart2 = nullptr;
-		std::unique_ptr<ComputeShader> m_gConjugateResidualsConclusion = nullptr;
+		
 		
 		
 
 		/******************** MATERIAL POINT VIEWER ********************/
-		std::string m_pointCloudViewSelectStr = "";
 		MaterialPoint m_mp = MaterialPoint(vec2(0.0), vec2(0.0), 0.0); // selecting material points
-		void UpdatePointCloudData(std::string pointCloudStr);
 		double m_maxSpeedClamp = 25.0;
 		double m_minSpeedClamp = 0.0;
 		bool m_visualizeSpeed = true;
@@ -242,7 +188,7 @@ namespace mpm {
 		
 		
 		/******************** GRID NODE VIEWER ********************/
-		Grid m_grid;
+		
 		bool m_nodeGraphicsActive = false;
 		int m_node[2] = { 26, 8 };
 		bool m_viewGrid = false;
@@ -281,7 +227,7 @@ namespace mpm {
 		// grid node control
 		GridNode m_gn; // selecting grid node
 		bool m_selectNodeState = false;
-		void UpdateNodeData();
+
 		/*void SelectNodesInShape(sdf::Shape& shape,
 			const int gridDimX, const int gridDimY,
 			const real inner_rounding, const real outer_rounding, 
@@ -293,53 +239,11 @@ namespace mpm {
 		void ClearNodalAcclerations(const int gridDimX, const int gridDimY);*/
 
 
-		/******************** CONJUGATE RESIDUALS FOR SEMI-IMPLICT TIME INTEGRATION ********************/
-		bool m_semi_implicit_CR = false;
-		real m_semi_implicit_ratio = 1.0;
-		int m_max_conj_res_iter = 300;//30;// GRID_SIZE_X* GRID_SIZE_Y;
-		bool m_check_L2_norm = false;
-		bool m_check_L_inf_norm = false;
-		real m_L2_norm_threshold = 0.001; // * number of active nodes ?
-		real m_L_inf_norm_threshold = 1.0; // * 1.0 / node mass?;
-		int m_cr_step = 0;
-		bool m_pause_if_not_converged = true;
+		
 
-		/******************** TIME INTEGRATOR ********************/
-		int m_timeStep = 0;
-		real m_time = 0.0;
-		real m_dt = 1.0 / 120.0;
-		bool m_rt = true; // realtime
-
-		// TRANSFER SCHEMES (PIC/RPIC/APIC)
-		enum class TRANSFER_SCHEME {
-			PIC = 0,
-			RPIC = 1,
-			APIC = 2,
-			MLS = 3
-		};
-		std::vector<std::string> m_transferSchemeStrVec = {
-			"PIC",
-			"RPIC (not working)",
-			"APIC",
-			"MLS"
-		};
-		TRANSFER_SCHEME m_transferScheme = TRANSFER_SCHEME::APIC;
-
-		/******************** MATERIAL PARAMETERS EDITOR ********************/
-	public:
-		MaterialParameters m_mpParameters;
-		std::vector<MaterialParameters> m_energyModels = std::vector<MaterialParameters>(size_t(ENERGY_MODEL::Count), MaterialParameters());
-		std::vector<std::string> m_energyModelsStrVec = {
-			"Neohookean Elasticity",
-			"Fixed Corotational Elasticity",
-			"Snow (Stomakhin et. al 2013)"
-		};
-		ENERGY_MODEL m_comodel = ENERGY_MODEL::FIXED_COROTATIONAL_ELASTICITY;
-		void ChangeEnergyModel(ENERGY_MODEL);
-		float m_backgroundColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		
 		
 	
-	private:
 		// imgui stuff
 		bool m_imguiGUI = true;
 	};

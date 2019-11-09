@@ -144,9 +144,6 @@
     <ClCompile Include="MpmGeometryRender.cpp">
       <Filter>Source Files\MPM\Geometry</Filter>
     </ClCompile>
-    <ClCompile Include="MpmGeometryInit.cpp">
-      <Filter>Source Files\MPM\Geometry</Filter>
-    </ClCompile>
     <ClCompile Include="MpmEngineInit.cpp">
       <Filter>Source Files\MPM\Engine</Filter>
     </ClCompile>
@@ -159,14 +156,26 @@
     <ClCompile Include="MpmGeometrySelection.cpp">
       <Filter>Source Files\MPM\Geometry</Filter>
     </ClCompile>
-    <ClCompile Include="MpmControlInit.cpp">
-      <Filter>Source Files\MPM\Control</Filter>
-    </ClCompile>
     <ClCompile Include="MpmAlgorithmSemiImplicit_CPP.cpp">
       <Filter>Source Files\MPM\Algorithm</Filter>
     </ClCompile>
     <ClCompile Include="MpmFunctions.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\MPM\Algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmAlgorithmEngineInit.cpp">
+      <Filter>Source Files\MPM\Algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmControlEngineInit.cpp">
+      <Filter>Source Files\MPM\Control</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmGeometryEngineInit.cpp">
+      <Filter>Source Files\MPM\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmAlgorithmImGui.cpp">
+      <Filter>Source Files\MPM\Algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmAlgorithmEngine.cpp">
+      <Filter>Source Files\MPM\Algorithm</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -244,6 +253,9 @@
     </ClInclude>
     <ClInclude Include="MpmFunctions.h">
       <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="MpmAlgorithmEngine.h">
+      <Filter>Header Files\MPM</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

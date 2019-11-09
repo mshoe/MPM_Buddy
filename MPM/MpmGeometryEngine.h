@@ -11,6 +11,7 @@
 #include "OpenGLScreen.h"
 
 #include "MpmEngine.h"
+#include "MpmAlgorithmEngine.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -46,6 +47,9 @@ namespace mpm {
 		void SetMpmEngine(MpmEngine *mpmEngine) {
 			m_mpmEngine = mpmEngine;
 		}
+		void SetAlgorithmEngine(std::shared_ptr<MpmAlgorithmEngine> mpmAlgorithmEngine) {
+			m_mpmAlgorithmEngine = mpmAlgorithmEngine;
+		}
 
 		void HandleGeometryStates();
 
@@ -57,6 +61,7 @@ namespace mpm {
 
 		// Other Engines
 		MpmEngine *m_mpmEngine = nullptr;
+		std::shared_ptr<MpmAlgorithmEngine> m_mpmAlgorithmEngine = nullptr;
 
 		void InitShaders();
 		void CleanupShaders();

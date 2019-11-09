@@ -7,8 +7,15 @@ bool InBounds(int node_i, int node_j, int x_bound, int y_bound) {
 real CubicBSpline(real x) {
 	using glm::step;
 	x = abs(x);
-	return (x < 1.0) ? step(0.0, x) * (0.5 * x * x * x - x * x + 2.0 / 3.0) :
-		step(x, 2.0) * (2.0 - x) * (2.0 - x) * (2.0 - x) / 6.0;
+	if (0.0 < x && x < 1.0) {
+		return 0.5 * x * x * x - x * x + 2.0 / 3.0;
+	}
+	else if (1.0 <= x && x < 2.0) {
+		return (2.0 - x) * (2.0 - x) * (2.0 - x) / 6.0;
+	}
+	else {
+		return 0.0;
+	}
 }
 
 real CubicBSplineSlope(real x) {

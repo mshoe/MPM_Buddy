@@ -7,7 +7,7 @@ void mpm::MpmGeometryEngine::ProcessMouseInput()
 
 void mpm::MpmGeometryEngine::ProcessKeyboardInput(GLFWwindow* window, real lag)
 {
-	if (m_mpmEngine->m_paused) {
+	if (m_mpmAlgorithmEngine->m_paused) {
 
 		if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
 			ClearCreateStates();
