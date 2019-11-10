@@ -1,6 +1,7 @@
 #include "MpmAlgorithmEngine.h"
 
 #include "MpmFunctions.h"
+#include "EnergyFunctions.h"
 
 
 void mpm::MpmAlgorithmEngine::MpmReset_CPP()
@@ -66,13 +67,18 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepP2G_CPP(real dt)
 
 	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_mpmEngine->m_pointCloudMap) {
 
-		for (const MaterialPoint &point : pointCloudPair.second->points) {
+		for (MaterialPoint &point : pointCloudPair.second->points) {
 
 
 			int botLeftNode_i = int(glm::floor(point.x.x)) - 1;
 			int botLeftNode_j = int(glm::floor(point.x.y)) - 1;
 
 			vec2 xp = point.x;
+
+			mat2 P = FixedCorotationalElasticityPKTensor(point.Fe, point.lam, point.mew);
+			
+			// just store it for possible debugging purposes
+			point.P = P;
 
 			for (int i = 0; i <= 3; i++) {
 				for (int j = 0; j <= 3; j++) {
@@ -96,10 +102,14 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepP2G_CPP(real dt)
 					m_mpmEngine->m_grid.nodes[index].m += wpg * point.m;
 
 					// P2G APIC momentum transfer
-					m_mpmEngine->m_grid.nodes[index].momentum += wpg * point.m * (point.v + point.B * dpg);
+					mat2 Gp = -Dp_inv * dt * point.vol * point.P * glm::transpose(point.Fe) + point.m * point.B;
+					m_mpmEngine->m_grid.nodes[index].momentum += wpg * (point.m * point.v + Gp * dpg);
+					
+					//m_mpmEngine->m_grid.nodes[index].momentum += wpg * point.m * (point.v + point.B * dpg);
 
 					// MLS P2G force transfer
-					m_mpmEngine->m_grid.nodes[index].force += -Dp_inv * point.vol * point.P * glm::transpose(point.Fe) * dpg * wpg;
+					// In standard MLS-MPM formulation, we just add the force straight to the momentum term
+					// m_mpmEngine->m_grid.nodes[index].force += -Dp_inv * point.vol * point.P * glm::transpose(point.Fe) * dpg * wpg;
 				}
 			}
 		}
@@ -119,14 +129,15 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepExplicitGridUpdate_CPP(real dt)
 
 			vec2 xg = vec2(real(i), real(j));
 			vec2 nodeMomentum = m_mpmEngine->m_grid.nodes[index].momentum;
-			vec2 nodeForce = m_mpmEngine->m_grid.nodes[index].force;
+			//vec2 nodeForce = m_mpmEngine->m_grid.nodes[index].force;
 			vec2 mouseForce = m_mpmControlEngine->m_mousePower * real(m_mpmEngine->m_mouseMpmRenderScreenGridSpaceFull.w) * glm::normalize(vec2(m_mpmEngine->m_mouseMpmRenderScreenGridSpace.x - xg.x, m_mpmEngine->m_mouseMpmRenderScreenGridSpace.y - xg.y));
 			// ignoring (experimental) nodal acceleration
 			
 			vec2 gridV = nodeMomentum / nodeMass;
-			vec2 gridAcc = nodeForce / nodeMass;
-			vec2 gridUpdateV = gridV * (1.0 - dt * m_mpmControlEngine->m_drag) + dt * (gridAcc + m_mpmControlEngine->m_globalForce + mouseForce);
+			//vec2 gridAcc = nodeForce / nodeMass;
+			//vec2 gridUpdateV = gridV * (1.0 - dt * m_mpmControlEngine->m_drag) + dt * (gridAcc + m_mpmControlEngine->m_globalForce + mouseForce);
 
+			vec2 gridUpdateV = gridV * (1.0 - dt * m_mpmControlEngine->m_drag) + dt * (m_mpmControlEngine->m_globalForce + mouseForce);
 			m_mpmEngine->m_grid.nodes[index].v = gridUpdateV;
 
 		}
@@ -186,108 +197,14 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepG2P_CPP(real dt)
 
 			point.v = vp;
 			point.B = Dp_inv * bp; // for APIC
-			mat2 dfp = mat2(1.0) + dt * point.B; // for MLS
 			point.x += dt * vp; // update position
-
-
-			real mew = point.mew;
-			real lam = point.lam;
-
-			// cant put in switch statement because it will be redefinition error
-			mat2 Fe;
-			mat2 Fit;
-			mat2 Fp;
-			real J;
-			real logJ;
-			mat2 R;
-			mat2 S;
-
-			// for snow
-			mat2 F_total;
-			mat2 U;
-			real sig1;
-			real sig2;
-			mat2 V;
-			real crit_c;
-			real crit_s;
-			mat2 sigMat;
-			mat2 Feit;
-			real Je;
-			real Jp;
-			real hardening;
-			real pcof;
-			
-			// ignoring extra visualization and debugging stuff for now
-			switch (m_comodel) {
-				case ENERGY_MODEL::NEO_HOOKEAN_ELASTICITY:
-					point.Fe = dfp * point.Fe;
-					Fe = point.Fe;
-					Fit = glm::transpose(glm::inverse(Fe));
-					J = glm::determinant(Fe);
-					logJ = real(glm::log(float(J))); // doing it this way cuz glsl doesn't support log on doubles
-					point.P = mew * (Fe - Fit) + lam * logJ * Fit;
-
-					
-					break;
-				case ENERGY_MODEL::FIXED_COROTATIONAL_ELASTICITY:
-
-					point.Fe = dfp * point.Fe;
-					Fe = point.Fe;
-					Fit = glm::transpose(glm::inverse(point.Fe));
-					J = glm::determinant(Fe);
-
-					// calculate the polar decomposition F = RU.
-					// Then calculate P using F and R
-					PolarDecomp(Fe, R, S);
-
-					point.P = 2.0 * mew * (Fe - R) + lam * (J - 1.0) * J * Fit;
-					break;
-				case ENERGY_MODEL::SIMPLE_SNOW:
-					// temporarilly update the Fe
-					Fe = dfp * point.Fe;
-					Fp = point.Fp;
-
-					F_total = Fe * Fp;
-
-					// calculate the polar decomposition Fe = RU.
-					// then use polar decomp to calculate SVD of Fe
-					PolarDecomp(Fe, R, S);
-
-					SVD(R, S, U, sig1, sig2, V);
-
-					crit_c = point.crit_c;
-					crit_s = point.crit_s;
-
-					sig1 = glm::clamp(sig1, 1.0 - crit_c, 1.0 + crit_s);
-					sig2 = glm::clamp(sig2, 1.0 - crit_c, 1.0 + crit_s);
-
-					sigMat = mat2(sig1, 0.0, 0.0, sig2);
-
-					// finally calculate Fe and Fp
-					Fe = U * sigMat * transpose(V);
-					Fp = V * inverse(sigMat) * transpose(U) * F_total;
-
-					point.Fe = Fe;
-					point.Fp = Fp;
-
-					Feit = glm::transpose(glm::inverse(Fe));
-					Je = glm::determinant(Fe);
-					Jp = glm::determinant(Fp);
-
-					hardening = point.hardening;
-
-					// exp does not work for doubles, so this is a sacrifice we will make for now
-					pcof = real(glm::exp(float(hardening * (1.0 - Jp))));
-
-					point.P = 2.0 * mew * (Fe - R) + lam * (Je - 1.0) * Je * Feit;
-					point.P *= pcof;
-					break;
-				default:
-					break;
-			}
+			mat2 dfp = mat2(1.0) + dt * point.B; // for MLS
+			point.Fe = dfp * point.Fe; // update deformation gradient
 		}
 	}
 }
+
+
 
 void mpm::MpmAlgorithmEngine::GetPointCloudVolumesFromGPUtoCPU(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud)
 {

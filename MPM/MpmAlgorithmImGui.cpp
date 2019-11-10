@@ -179,7 +179,8 @@ void mpm::MpmAlgorithmEngine::ImGuiMaterialParametersEditor()
 }
 void mpm::MpmAlgorithmEngine::ImGuiCPUMode()
 {
-	if (ImGui::Begin("CPU Mode (MLS-MPM)", &m_imguiCPUMode)) {
+	if (ImGui::Begin("CPU Mode", &m_imguiCPUMode)) {
+		ImGui::Text("MLS-MPM and Fixed Corotational Elasticity are implemented");
 		static bool cpu_mode = false;
 		ImGui::Checkbox("CPU Mode", &cpu_mode);
 		if (cpu_mode) {

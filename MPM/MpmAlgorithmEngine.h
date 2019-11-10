@@ -101,7 +101,6 @@ namespace mpm {
 		void MpmTimeStepG2P_CPP(real dt);
 
 
-
 		void ImGuiMaterialParametersEditor();
 		void ImGuiCPUMode();
 

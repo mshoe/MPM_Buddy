@@ -167,6 +167,7 @@
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Constants.h" />
+    <ClInclude Include="EnergyFunctions.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="EngineHeader.h" />
     <ClInclude Include="external\imgui\imconfig.h" />

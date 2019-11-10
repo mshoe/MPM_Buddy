@@ -257,6 +257,9 @@
     <ClInclude Include="MpmAlgorithmEngine.h">
       <Filter>Header Files\MPM</Filter>
     </ClInclude>
+    <ClInclude Include="EnergyFunctions.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\compute\p2gCalculateVolumes.comp">
