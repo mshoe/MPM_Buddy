@@ -63,6 +63,18 @@ namespace mpm {
 		real m_time = 0.0;
 		real m_dt = 1.0 / 120.0;
 		bool m_rt = true; // realtime
+
+
+		// allow even smaller grid sizes for CPU mode
+		int m_cppChunkX = 32;
+		int m_cppChunkY = 32;
+
+		enum class MPM_ALGORITHM_CODE {
+			GLSL = 0,
+			CPP = 1
+		};
+
+		MPM_ALGORITHM_CODE m_algo_code = MPM_ALGORITHM_CODE::GLSL;
 	private:
 
 		// Other Engines
@@ -73,12 +85,7 @@ namespace mpm {
 		void InitShaders();
 		void CleanupShaders();
 
-		enum class MPM_ALGORITHM_CODE {
-			GLSL = 0,
-			CPP = 1
-		};
-
-		MPM_ALGORITHM_CODE m_algo_code = MPM_ALGORITHM_CODE::GLSL;
+		
 
 		/******************** MPM FUNCTIONS GLSL COMPUTE SHADER IMPLEMENTATION ********************/
 		void MpmReset_GLSL();
@@ -99,6 +106,7 @@ namespace mpm {
 		void MpmTimeStepExplicitGridUpdate_CPP(real dt);
 		void MpmTimeStepSemiImplicitGridUpdate_CPP(real dt, real beta);
 		void MpmTimeStepG2P_CPP(real dt);
+
 
 
 		void ImGuiMaterialParametersEditor();

@@ -8,6 +8,10 @@ layout (line_strip, max_vertices = 5) out;
 uniform dvec2 zoomPoint;
 uniform double zoomFactor;
 
+// FOR CPP MODE TO ALLOW SMALLER GRIDS
+uniform int chunk_size_x = 32;
+uniform int chunk_size_y = 32;
+
 void zoom(inout vec2 normPos, in vec2 normZoomPoint) {
     normPos -= normZoomPoint;
     normPos *= float(zoomFactor);
@@ -21,9 +25,9 @@ void main() {
     dvec2 grid_vec = dvec2(GRID_SIZE_X, GRID_SIZE_Y);
 
     vec2 bot_left_grid_corner = vec2(-1.0, -1.0);
-    vec2 top_left_grid_corner = vec2(-1.0, -1.0 + 2.0 * float(CHUNKS_Y) / 4.0);
-    vec2 top_right_grid_corner = vec2(-1.0 + 2.0 * float(CHUNKS_X) / 4.0, -1.0 + 2.0 * float(CHUNKS_Y) / 4.0);
-    vec2 bot_right_grid_corner = vec2(-1.0 + 2.0 * float(CHUNKS_X) / 4.0, -1.0);
+    vec2 top_left_grid_corner = vec2(-1.0, -1.0 + 2.0 * float(CHUNKS_Y) *  float(chunk_size_y) / float(GRID_SIZE_Y));
+    vec2 top_right_grid_corner = vec2(-1.0 + 2.0 * float(CHUNKS_X) * float(chunk_size_x) / float(GRID_SIZE_X), -1.0 + 2.0 * float(CHUNKS_Y) *  float(chunk_size_y) / float(GRID_SIZE_Y));
+    vec2 bot_right_grid_corner = vec2(-1.0 + 2.0 * float(CHUNKS_X) *  float(chunk_size_x) / float(GRID_SIZE_X), -1.0);
 
     vec2 normZoomPoint = vec2(float((zoomPoint / grid_vec).x), float((zoomPoint / grid_vec).y));
     normZoomPoint.x = mix(-1.0, 1.0, normZoomPoint.x);

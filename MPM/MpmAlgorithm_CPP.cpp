@@ -3,6 +3,7 @@
 #include "MpmFunctions.h"
 #include "EnergyFunctions.h"
 
+const real Dp_inv = 3.0;
 
 void mpm::MpmAlgorithmEngine::MpmReset_CPP()
 {
@@ -10,13 +11,12 @@ void mpm::MpmAlgorithmEngine::MpmReset_CPP()
 	m_timeStep = 0;
 	m_time = 0.0;
 
-	for (size_t i = 0; i < size_t(m_mpmEngine->m_chunks_x) * size_t(CHUNK_WIDTH); i++) {
-		for (size_t j = 0; j < size_t(m_mpmEngine->m_chunks_y) * size_t(CHUNK_WIDTH); j++) {
+	for (size_t i = 0; i < size_t(m_mpmEngine->m_chunks_x) * size_t(m_cppChunkX); i++) {
+		for (size_t j = 0; j < size_t(m_mpmEngine->m_chunks_y) * size_t(m_cppChunkY); j++) {
 			size_t index = i * GRID_SIZE_Y + j;
 			m_mpmEngine->m_grid.nodes[index].m = 0.0;
 			m_mpmEngine->m_grid.nodes[index].v = vec2(0.0);
 			m_mpmEngine->m_grid.nodes[index].momentum = vec2(0.0);
-			m_mpmEngine->m_grid.nodes[index].force = vec2(0.0);
 		}
 	}
 }
@@ -50,20 +50,17 @@ void mpm::MpmAlgorithmEngine::MpmTimeStep_CPP(real dt)
 void mpm::MpmAlgorithmEngine::MpmTimeStepP2G_CPP(real dt)
 {
 	// reset the grid
-	for (size_t i = 0; i < size_t(m_mpmEngine->m_chunks_x) * size_t(CHUNK_WIDTH); i++) {
-		for (size_t j = 0; j < size_t(m_mpmEngine->m_chunks_y) * size_t(CHUNK_WIDTH); j++) {
+	for (size_t i = 0; i < size_t(m_mpmEngine->m_chunks_x) * size_t(m_cppChunkX); i++) {
+		for (size_t j = 0; j < size_t(m_mpmEngine->m_chunks_y) * size_t(m_cppChunkY); j++) {
 			size_t index = i * GRID_SIZE_Y + j;
 			m_mpmEngine->m_grid.nodes[index].m = 0.0;
 			m_mpmEngine->m_grid.nodes[index].v = vec2(0.0);
 			m_mpmEngine->m_grid.nodes[index].momentum = vec2(0.0);
-			m_mpmEngine->m_grid.nodes[index].force = vec2(0.0);
 		}
 	}
 
-	int x_bound = m_mpmEngine->m_chunks_x * CHUNK_WIDTH;
-	int y_bound = m_mpmEngine->m_chunks_y * CHUNK_WIDTH;
-
-	static const real Dp_inv = 3.0; // actually 3 * identity matrix
+	int x_bound = m_mpmEngine->m_chunks_x * m_cppChunkX;
+	int y_bound = m_mpmEngine->m_chunks_y * m_cppChunkY;
 
 	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_mpmEngine->m_pointCloudMap) {
 
@@ -104,12 +101,6 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepP2G_CPP(real dt)
 					// P2G APIC momentum transfer
 					mat2 Gp = -Dp_inv * dt * point.vol * point.P * glm::transpose(point.Fe) + point.m * point.B;
 					m_mpmEngine->m_grid.nodes[index].momentum += wpg * (point.m * point.v + Gp * dpg);
-					
-					//m_mpmEngine->m_grid.nodes[index].momentum += wpg * point.m * (point.v + point.B * dpg);
-
-					// MLS P2G force transfer
-					// In standard MLS-MPM formulation, we just add the force straight to the momentum term
-					// m_mpmEngine->m_grid.nodes[index].force += -Dp_inv * point.vol * point.P * glm::transpose(point.Fe) * dpg * wpg;
 				}
 			}
 		}
@@ -118,8 +109,8 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepP2G_CPP(real dt)
 
 void mpm::MpmAlgorithmEngine::MpmTimeStepExplicitGridUpdate_CPP(real dt)
 {
-	for (size_t i = 0; i < size_t(m_mpmEngine->m_chunks_x) * size_t(CHUNK_WIDTH); i++) {
-		for (size_t j = 0; j < size_t(m_mpmEngine->m_chunks_y) * size_t(CHUNK_WIDTH); j++) {
+	for (size_t i = 0; i < size_t(m_mpmEngine->m_chunks_x) * size_t(m_cppChunkX); i++) {
+		for (size_t j = 0; j < size_t(m_mpmEngine->m_chunks_y) * size_t(m_cppChunkY); j++) {
 			size_t index = i * GRID_SIZE_Y + j;
 
 			real nodeMass = m_mpmEngine->m_grid.nodes[index].m;
@@ -129,13 +120,10 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepExplicitGridUpdate_CPP(real dt)
 
 			vec2 xg = vec2(real(i), real(j));
 			vec2 nodeMomentum = m_mpmEngine->m_grid.nodes[index].momentum;
-			//vec2 nodeForce = m_mpmEngine->m_grid.nodes[index].force;
 			vec2 mouseForce = m_mpmControlEngine->m_mousePower * real(m_mpmEngine->m_mouseMpmRenderScreenGridSpaceFull.w) * glm::normalize(vec2(m_mpmEngine->m_mouseMpmRenderScreenGridSpace.x - xg.x, m_mpmEngine->m_mouseMpmRenderScreenGridSpace.y - xg.y));
 			// ignoring (experimental) nodal acceleration
 			
 			vec2 gridV = nodeMomentum / nodeMass;
-			//vec2 gridAcc = nodeForce / nodeMass;
-			//vec2 gridUpdateV = gridV * (1.0 - dt * m_mpmControlEngine->m_drag) + dt * (gridAcc + m_mpmControlEngine->m_globalForce + mouseForce);
 
 			vec2 gridUpdateV = gridV * (1.0 - dt * m_mpmControlEngine->m_drag) + dt * (m_mpmControlEngine->m_globalForce + mouseForce);
 			m_mpmEngine->m_grid.nodes[index].v = gridUpdateV;
@@ -148,10 +136,8 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepExplicitGridUpdate_CPP(real dt)
 
 void mpm::MpmAlgorithmEngine::MpmTimeStepG2P_CPP(real dt)
 {
-	static const real Dp_inv = 3.0; // actually 3 * identity matrix
-
-	int x_bound = m_mpmEngine->m_chunks_x * CHUNK_WIDTH;
-	int y_bound = m_mpmEngine->m_chunks_y * CHUNK_WIDTH;
+	int x_bound = m_mpmEngine->m_chunks_x * m_cppChunkX;
+	int y_bound = m_mpmEngine->m_chunks_y * m_cppChunkY;
 
 	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_mpmEngine->m_pointCloudMap) {
 

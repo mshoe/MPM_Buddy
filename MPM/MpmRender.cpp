@@ -324,6 +324,10 @@ void mpm::MpmEngine::RenderGridBorder(vec2 zoomPoint, real zoomFactor, std::shar
 	borderShader->SetInt("CHUNKS_Y", m_chunks_y);
 	borderShader->SetVec("zoomPoint", zoomPoint);
 	borderShader->SetReal("zoomFactor", zoomFactor);
+	if (m_mpmAlgorithmEngine->m_algo_code == MpmAlgorithmEngine::MPM_ALGORITHM_CODE::CPP) {
+		borderShader->SetInt("chunk_size_x", m_mpmAlgorithmEngine->m_cppChunkX);
+		borderShader->SetInt("chunk_size_y", m_mpmAlgorithmEngine->m_cppChunkY);
+	}
 	glBindVertexArray(VisualizeVAO);
 	glDrawArrays(GL_POINTS, 0, (GLsizei)1);
 	glBindVertexArray(0);

@@ -72,12 +72,12 @@ void d2e_dxidxj(Eigen::Matrix2d& d2V,
 typedef Eigen::SparseMatrix<double> SparseMatrixd;
 typedef Eigen::Triplet<double> Tripletd;
 
-void EnergyHessian(SparseMatrixd& H, int chunks_x, int chunks_y, const std::map<std::string, std::shared_ptr<mpm::PointCloud>>& pointCloudMap) {
+void EnergyHessian(SparseMatrixd& H, int nodes_x, int nodes_y, const std::map<std::string, std::shared_ptr<mpm::PointCloud>>& pointCloudMap) {
 	using namespace mpm;
 
 	// FIRST need to identify grid degrees of freedom (nodes with non-zero mass), otherwise the linear solve Ax = b will not work.
 
-	int numNodes = chunks_x * CHUNK_WIDTH * chunks_y * CHUNK_WIDTH;
+	int numNodes = nodes_x * nodes_y;
 	H.resize(2 * numNodes, 2 * numNodes);
 	H.setZero();
 
@@ -93,8 +93,8 @@ void EnergyHessian(SparseMatrixd& H, int chunks_x, int chunks_y, const std::map<
 	//std::unordered_map<IntPair, Eigen::Matrix4d> hessianMap;
 
 	//SparseMatrixd
-	int x_bound = chunks_x * CHUNK_WIDTH;
-	int y_bound = chunks_y * CHUNK_WIDTH;
+	int x_bound = nodes_x;
+	int y_bound = nodes_y;
 
 	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : pointCloudMap) {
 		for (const MaterialPoint& point : pointCloudPair.second->points) {
@@ -175,14 +175,14 @@ void EnergyHessian(SparseMatrixd& H, int chunks_x, int chunks_y, const std::map<
 
 }
 
-void GridDegreesOfFreedomVector(std::vector<glm::ivec2>& gridDegreesOfFreedom, int chunks_x, int chunks_y, const mpm::Grid& grid) {
-	int numNodes = chunks_x * CHUNK_WIDTH * chunks_y * CHUNK_WIDTH;
+void GridDegreesOfFreedomVector(std::vector<glm::ivec2>& gridDegreesOfFreedom, int nodes_x, int nodes_y, const mpm::Grid& grid) {
+	int numNodes = nodes_x * nodes_y;
 
 	// First identify the grid degrees of freedom
 	gridDegreesOfFreedom.clear();
 	gridDegreesOfFreedom.reserve(numNodes);
-	for (size_t i = 0; i < size_t(chunks_x) * size_t(CHUNK_WIDTH); i++) {
-		for (size_t j = 0; j < size_t(chunks_y) * size_t(CHUNK_WIDTH); j++) {
+	for (size_t i = 0; i < size_t(nodes_x); i++) {
+		for (size_t j = 0; j < size_t(nodes_y); j++) {
 			size_t index = i * GRID_SIZE_Y + j;
 			//size_t spMatIndex = i * chunks_y * CHUNK_WIDTH + j;
 
@@ -195,8 +195,8 @@ void GridDegreesOfFreedomVector(std::vector<glm::ivec2>& gridDegreesOfFreedom, i
 	}
 }
 
-void SelectionMatrix(SparseMatrixd& P, const std::vector<glm::ivec2>& gridDegreesOfFreedom, int chunks_x, int chunks_y, const mpm::Grid& grid) {
-	int numNodes = chunks_x * CHUNK_WIDTH * chunks_y * CHUNK_WIDTH;
+void SelectionMatrix(SparseMatrixd& P, const std::vector<glm::ivec2>& gridDegreesOfFreedom, int nodes_x, int nodes_y, const mpm::Grid& grid) {
+	int numNodes = nodes_x * nodes_y;
 
 	// Then put it into a selection matrix
 	P.resize(gridDegreesOfFreedom.size() * 2, size_t(numNodes) * 2);
@@ -204,7 +204,7 @@ void SelectionMatrix(SparseMatrixd& P, const std::vector<glm::ivec2>& gridDegree
 	std::vector<Tripletd> selectionTriplets;
 	selectionTriplets.reserve(2 * gridDegreesOfFreedom.size());
 	for (int i = 0; i < gridDegreesOfFreedom.size(); i++) {
-		int nodeIndex = gridDegreesOfFreedom[i].x * chunks_y * CHUNK_WIDTH + gridDegreesOfFreedom[i].y;
+		int nodeIndex = gridDegreesOfFreedom[i].x * nodes_y + gridDegreesOfFreedom[i].y;
 		selectionTriplets.push_back(Tripletd(2 * i, 2 * nodeIndex, 1.0));
 		selectionTriplets.push_back(Tripletd(2 * i + 1, 2 * nodeIndex + 1, 1.0));
 	}
@@ -212,7 +212,7 @@ void SelectionMatrix(SparseMatrixd& P, const std::vector<glm::ivec2>& gridDegree
 	P.setFromTriplets(selectionTriplets.begin(), selectionTriplets.end());
 }
 
-void InverseMassMatrix(SparseMatrixd& M_inv, const std::vector<glm::ivec2>& gridDegreesOfFreedom, int chunks_x, int chunks_y, const mpm::Grid& grid) {
+void InverseMassMatrix(SparseMatrixd& M_inv, const std::vector<glm::ivec2>& gridDegreesOfFreedom, int nodes_x, int nodes_y, const mpm::Grid& grid) {
 	M_inv.resize(2 * gridDegreesOfFreedom.size(), 2 * gridDegreesOfFreedom.size());
 	M_inv.setZero();
 
@@ -249,17 +249,20 @@ void VectorToGridVelocity(mpm::Grid& grid, const Eigen::VectorXd& v_semi_implici
 void mpm::MpmAlgorithmEngine::MpmTimeStepSemiImplicitGridUpdate_CPP(real dt, real beta)
 {
 
+	int nodes_x = m_mpmEngine->m_chunks_x * m_cppChunkX;
+	int nodes_y = m_mpmEngine->m_chunks_x * m_cppChunkY;
+
 	SparseMatrixd H;
-	EnergyHessian(H, m_mpmEngine->m_chunks_x, m_mpmEngine->m_chunks_y, m_mpmEngine->m_pointCloudMap);
+	EnergyHessian(H, nodes_x, nodes_y, m_mpmEngine->m_pointCloudMap);
 
 	std::vector<glm::ivec2> gridDegreesOfFreedom;
-	GridDegreesOfFreedomVector(gridDegreesOfFreedom, m_mpmEngine->m_chunks_x, m_mpmEngine->m_chunks_y, m_mpmEngine->m_grid);
+	GridDegreesOfFreedomVector(gridDegreesOfFreedom, nodes_x, nodes_y, m_mpmEngine->m_grid);
 
 	SparseMatrixd P;
-	SelectionMatrix(P, gridDegreesOfFreedom, m_mpmEngine->m_chunks_x, m_mpmEngine->m_chunks_y, m_mpmEngine->m_grid);
+	SelectionMatrix(P, gridDegreesOfFreedom, nodes_x, nodes_y, m_mpmEngine->m_grid);
 
 	SparseMatrixd M_inv;
-	InverseMassMatrix(M_inv, gridDegreesOfFreedom, m_mpmEngine->m_chunks_x, m_mpmEngine->m_chunks_y, m_mpmEngine->m_grid);
+	InverseMassMatrix(M_inv, gridDegreesOfFreedom, nodes_x, nodes_y, m_mpmEngine->m_grid);
 
 	Eigen::VectorXd V_symplectic_euler;
 	GridVelocityToVector(V_symplectic_euler, gridDegreesOfFreedom, m_mpmEngine->m_grid);

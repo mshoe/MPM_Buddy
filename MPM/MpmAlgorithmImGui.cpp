@@ -190,9 +190,22 @@ void mpm::MpmAlgorithmEngine::ImGuiCPUMode()
 			m_algo_code = MPM_ALGORITHM_CODE::GLSL;
 		}
 
+		ImGui::InputInt("CPU Mode Chunk Size X", &m_cppChunkX, 1, 4);
+		ImGui::InputInt("CPU Mode Chunk Size Y", &m_cppChunkY, 1, 4);
+		m_cppChunkX = glm::max(glm::min(32, m_cppChunkX), 0);
+		m_cppChunkY = glm::max(glm::min(32, m_cppChunkY), 0);
+
 		if (ImGui::Button("32 x 32 grid")) {
 			m_mpmEngine->m_chunks_x = 1;
 			m_mpmEngine->m_chunks_y = 1;
+			m_cppChunkX = 32;
+			m_cppChunkY = 32;
+		}
+		if (ImGui::Button("20 x 20 grid")) {
+			m_mpmEngine->m_chunks_x = 1;
+			m_mpmEngine->m_chunks_y = 1;
+			m_cppChunkX = 20;
+			m_cppChunkY = 20;
 		}
 		if (ImGui::Button("Small circle")) {
 			m_mpmGeometryEngine->SmallCircle();
