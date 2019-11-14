@@ -132,6 +132,54 @@ void ImGui::DisplayNamedGlmMatrixMixColor(std::string name, mat2 mat, glm::highp
 	ImGui::Text(" ]");
 }
 
+void ImGui::DisplayNamedGlmMatrixMixColor(std::string name, mat4 mat, glm::highp_fvec4 min_color, glm::highp_fvec4 max_color)
+{
+	real max_element = glm::max(glm::max(mat[0][0], mat[0][1]), glm::max(mat[1][0], mat[1][1]));
+	real min_element = glm::min(glm::min(mat[0][0], mat[0][1]), glm::min(mat[1][0], mat[1][1]));
+
+	std::string firstLineStr = name + " = [ ";
+
+	ImGui::Text(firstLineStr.c_str());
+
+	ImGui::PopupCopyMatrixMATLAB(name, mat);
+
+	ImGui::SameLine();
+
+	for (int i = 0; i < 4; i++) {
+
+		if (i > 0) {
+			char space = ' ';
+			std::string secondLineStr = std::string(name.length(), space) + "   [ ";
+			ImGui::Text(secondLineStr.c_str());
+			ImGui::SameLine();
+		}
+
+		DisplayGlmRealMixColor(mat[0][i], min_element, max_element, min_color, max_color);
+		ImGui::SameLine();
+
+		ImGui::Text(" , ");
+		ImGui::SameLine();
+
+		DisplayGlmRealMixColor(mat[1][i], min_element, max_element, min_color, max_color);
+		ImGui::SameLine();
+
+		ImGui::Text(" , ");
+		ImGui::SameLine();
+
+		DisplayGlmRealMixColor(mat[2][i], min_element, max_element, min_color, max_color);
+		ImGui::SameLine();
+
+		ImGui::Text(" , ");
+		ImGui::SameLine();
+
+		DisplayGlmRealMixColor(mat[3][i], min_element, max_element, min_color, max_color);
+		ImGui::SameLine();
+
+		ImGui::Text(" ]");
+		
+	}
+}
+
 void ImGui::PopupCopyRealMATLAB(std::string name, real value)
 {
 	std::string menu_str = name + " menu";
@@ -159,6 +207,19 @@ void ImGui::PopupCopyVecMATLAB(std::string name, vec2 vec)
 }
 
 void ImGui::PopupCopyMatrixMATLAB(std::string name, mat2 mat)
+{
+	std::string menu_str = name + " menu";
+	std::string copy_str = "Copy " + name + " (MATLAB)";
+	if (ImGui::BeginPopupContextItem(menu_str.c_str())) {
+		if (ImGui::Button(copy_str.c_str())) {
+			ImGui::SetClipboardText(glmToMATLAB::MatStr(mat).c_str());
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
+	}
+}
+
+void ImGui::PopupCopyMatrixMATLAB(std::string name, mat4 mat)
 {
 	std::string menu_str = name + " menu";
 	std::string copy_str = "Copy " + name + " (MATLAB)";

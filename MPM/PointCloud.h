@@ -2,6 +2,8 @@
 
 #include "Constants.h"
 #include "glm_imgui.h"
+#include "MpmFunctions.h"
+#include "EnergyFunctions.h"
 
 #include <glad/glad.h>
 #include <vector>
@@ -103,7 +105,7 @@ namespace mpm {
 			return out;
 		}
 
-		void ImGuiDisplay() {
+		void ImGuiDisplay(bool calcDecomp, bool calcdPdF, bool calcVolumeRatio) {
 			glm::highp_fvec4 min_color = glm::highp_fvec4(1.0, 0.0, 0.0, 1.0);
 			glm::highp_fvec4 max_color = glm::highp_fvec4(0.0, 1.0, 0.0, 1.0);
 
@@ -123,11 +125,37 @@ namespace mpm {
 			ImGui::DisplayNamedGlmMatrixMixColor("Fe", Fe, min_color, max_color);
 			ImGui::DisplayNamedGlmMatrixMixColor("Fp", Fp, min_color, max_color);
 			ImGui::DisplayNamedGlmMatrixMixColor("P", P, min_color, max_color);
-			ImGui::DisplayNamedGlmMatrixMixColor("FePolar_R", FePolar_R, min_color, max_color);
-			ImGui::DisplayNamedGlmMatrixMixColor("FePolar_S", FePolar_S, min_color, max_color);
-			ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_U", FeSVD_U, min_color, max_color);
-			ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_S", FeSVD_S, min_color, max_color);
-			ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_V", FeSVD_V, min_color, max_color);
+
+			if (calcDecomp) {
+				mat2 R, S;
+				PolarDecomp(Fe, R, S);
+				ImGui::DisplayNamedGlmMatrixMixColor("FePolar_R", R, min_color, max_color);
+				ImGui::DisplayNamedGlmMatrixMixColor("FePolar_S", S, min_color, max_color);
+				mat2 U, V;
+				real sig1, sig2;
+				SVD(R, S, U, sig1, sig2, V);
+				ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_U", U, min_color, max_color);
+				ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_S", mat2(sig1, 0.0, 0.0, sig2), min_color, max_color);
+				ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_V", V, min_color, max_color);
+			}
+			else {
+				ImGui::DisplayNamedGlmMatrixMixColor("FePolar_R", FePolar_R, min_color, max_color);
+				ImGui::DisplayNamedGlmMatrixMixColor("FePolar_S", FePolar_S, min_color, max_color);
+				ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_U", FeSVD_U, min_color, max_color);
+				ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_S", FeSVD_S, min_color, max_color);
+				ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_V", FeSVD_V, min_color, max_color);
+			}
+
+			if (calcdPdF) {
+				mat4 dPdF;
+				dPdF = FixedCorotationalElasticity::d2Psi_dF2_Mat4(mew, lam, Fe);
+				ImGui::DisplayNamedGlmMatrixMixColor("dPdF", dPdF, min_color, max_color);
+			}
+
+			if (calcVolumeRatio) {
+				ImGui::DisplayNamedGlmRealColor("J", glm::determinant(Fe), max_color);
+			}
+			
 			ImGui::DisplayNamedGlmRealColor("energy", energy, max_color);
 			//ImGui::DisplayNamedBoolColor("padding1", padding1, max_color, min_color);
 			ImGui::DisplayNamedGlmRealColor("selected", selected, max_color);

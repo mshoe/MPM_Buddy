@@ -3,8 +3,6 @@
 #include "MpmFunctions.h"
 #include "EnergyFunctions.h"
 
-const real Dp_inv = 3.0;
-
 void mpm::MpmAlgorithmEngine::MpmReset_CPP()
 {
 	m_mpmEngine->m_pointCloudMap.clear();
@@ -72,7 +70,7 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepP2G_CPP(real dt)
 
 			vec2 xp = point.x;
 
-			mat2 P = FixedCorotationalElasticityPKTensor(point.Fe, point.lam, point.mew);
+			mat2 P = FixedCorotationalElasticity::PKTensor(point.Fe, point.lam, point.mew);
 			
 			// just store it for possible debugging purposes
 			point.P = P;

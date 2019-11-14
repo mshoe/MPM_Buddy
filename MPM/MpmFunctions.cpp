@@ -1,10 +1,10 @@
 #include "MpmFunctions.h"
 
-bool InBounds(int node_i, int node_j, int x_bound, int y_bound) {
+bool mpm::InBounds(int node_i, int node_j, int x_bound, int y_bound) {
 	return (node_i >= 0 && node_i < x_bound && node_j >= 0 && node_j < y_bound);
 }
 
-real CubicBSpline(real x) {
+real mpm::CubicBSpline(real x) {
 	using glm::step;
 	x = abs(x);
 	if (0.0 < x && x < 1.0) {
@@ -18,14 +18,14 @@ real CubicBSpline(real x) {
 	}
 }
 
-real CubicBSplineSlope(real x) {
+real mpm::CubicBSplineSlope(real x) {
 	using glm::step;
 	real absx = abs(x);
 	return (absx < 1.0) ? step(0.0, absx) * (1.5 * x * absx - 2 * x) :
 		step(absx, 2.0) * (-x * absx / 2 + 2 * x - 2 * x / absx);
 }
 
-void PolarDecomp(const mat2& F, mat2& R, mat2& S) {
+void mpm::PolarDecomp(const mat2& F, mat2& R, mat2& S) {
 	// calculate the polar decomposition F = RS.
 
 	real x = F[0][0] + F[1][1];
@@ -39,7 +39,7 @@ void PolarDecomp(const mat2& F, mat2& R, mat2& S) {
 	S = transpose(R) * F;
 }
 
-void SVD(const mat2& R, const mat2& S, mat2& U, real& sig1, real& sig2, mat2& V) {
+void mpm::SVD(const mat2& R, const mat2& S, mat2& U, real& sig1, real& sig2, mat2& V) {
 
 	// check if S is diagonal (S is symmetric for sure)
 	double c_hat, s_hat;
@@ -77,7 +77,7 @@ void SVD(const mat2& R, const mat2& S, mat2& U, real& sig1, real& sig2, mat2& V)
 	U = R * V;
 }
 
-double ExtractRotationAngle(mat2 R) {
+double mpm::ExtractRotationAngle(mat2 R) {
 	// assume R is a rotation matrix
 	/*
 	|cos(a), -sin(a)|

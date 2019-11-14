@@ -296,7 +296,14 @@ void mpm::MpmEngine::ImGuiMaterialPointViewer()
 		ImGui::InputReal("Min speed clamp (for coloring)", &m_minSpeedClamp, 1.0, 1000.0, "%.1f");
 		ImGui::Checkbox("Visualize Speed", &m_visualizeSpeed);
 
+		static bool calcDecomp = false;
+		ImGui::Checkbox("Calculate decompositions", &calcDecomp);
+
+		static bool calcdPdF = false;
+		ImGui::Checkbox("Calc dPdF for fixed corotational elasticity", &calcdPdF);
 		
+		static bool calcVolumeRatio = false;
+		ImGui::Checkbox("Calc volume ratio", &calcVolumeRatio);
 
 		if (m_pointCloudMap.count(m_pointCloudViewSelectStr)) {
 			m_mp = m_pointCloudMap[m_pointCloudViewSelectStr]->points[pointIndex];
@@ -306,7 +313,7 @@ void mpm::MpmEngine::ImGuiMaterialPointViewer()
 
 
 		if (ImGui::CollapsingHeader("Material Point")) {
-			m_mp.ImGuiDisplay();
+			m_mp.ImGuiDisplay(calcDecomp, calcdPdF, calcVolumeRatio);
 		}
 
 		

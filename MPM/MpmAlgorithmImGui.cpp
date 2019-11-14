@@ -221,6 +221,8 @@ void mpm::MpmAlgorithmEngine::ImGuiCPUMode()
 		}
 		ImGui::InputReal("dt", &m_dt, 0.001, 1.0 / 60.0, "%.6f");
 
+		ImGui::Checkbox("Realtime rendering", &m_rt);
+
 		ImGui::Checkbox("Paused", &m_paused);
 
 		ImGui::Checkbox("Semi Implict Time Integration (NOT WORKING)", &m_semiImplicitCPP);

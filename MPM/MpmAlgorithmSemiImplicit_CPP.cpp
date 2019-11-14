@@ -3,43 +3,54 @@
 #include "MpmAlgorithmEngine.h"
 #include "MpmFunctions.h"
 
-void d2Psi_dF2(Eigen::Matrix4d& dPdF, double mew, double lam, const mpm::MaterialPoint& mp) {
+#include <unordered_map>
 
-	mat2 R, S, U, V;
-	real s1, s2;
-	PolarDecomp(mp.Fe, R, S);
-	SVD(R, S, U, s1, s2, V);
+//void d2Psi_dF2(Eigen::Matrix4d& dPdF, double mew, double lam, const mpm::MaterialPoint& mp) {
+//
+//	mat2 R, S, U, V;
+//	real s1, s2;
+//	PolarDecomp(mp.Fe, R, S);
+//	SVD(R, S, U, s1, s2, V);
+//
+//	real u1 = ExtractRotationAngle(U);
+//	real v1 = ExtractRotationAngle(V);
+//
+//	// pooped out from MATLAB script: MATLAB/P_SVD.mlx
+//	// Assuming release mode will optimize this bad boy
+//
+//	real cosu1 = cos(u1);
+//	real sinu1 = sin(u1);
+//	real cosv1 = cos(v1);
+//	real sinv1 = sin(v1);
+//
+//
+//	dPdF(0, 0) = mew * cosu1 * cosv1 * 2.0 - lam * sinu1 * sinv1 + lam * (s2 * s2) * cosu1 * cosv1 + lam * s1 * s2 * sinu1 * sinv1 * 2.0;
+//	dPdF(0, 1) = lam * cosv1 * sinu1 + mew * cosu1 * sinv1 * 2.0 + lam * (s2 * s2) * cosu1 * sinv1 - lam * s1 * s2 * cosv1 * sinu1 * 2.0;
+//	dPdF(0, 2) = lam * cosu1 * sinv1 + mew * cosv1 * sinu1 * 2.0 + lam * (s2 * s2) * cosv1 * sinu1 - lam * s1 * s2 * cosu1 * sinv1 * 2.0;
+//	dPdF(0, 3) = -lam * cosu1 * cosv1 + mew * sinu1 * sinv1 * 2.0 + lam * (s2 * s2) * sinu1 * sinv1 + lam * s1 * s2 * cosu1 * cosv1 * 2.0;
+//	dPdF(1, 0) = -(mew * cosu1 * sinv1 * -2.0 + mew * cosv1 * sinu1 * 2.0 + lam * s1 * cosv1 * sinu1 + lam * s2 * cosv1 * sinu1 + mew * s1 * cosu1 * sinv1 * 2.0 + mew * s2 * cosu1 * sinv1 * 2.0 - lam * s1 * (s2 * s2) * cosv1 * sinu1 - lam * (s1 * s1) * s2 * cosv1 * sinu1) / (s1 + s2);
+//	dPdF(1, 1) = -(mew * cosu1 * cosv1 * 2.0 + mew * sinu1 * sinv1 * 2.0 + lam * s1 * sinu1 * sinv1 + lam * s2 * sinu1 * sinv1 - mew * s1 * cosu1 * cosv1 * 2.0 - mew * s2 * cosu1 * cosv1 * 2.0 - lam * s1 * (s2 * s2) * sinu1 * sinv1 - lam * (s1 * s1) * s2 * sinu1 * sinv1) / (s1 + s2);
+//	dPdF(1, 2) = (mew * cosu1 * cosv1 * 2.0 + mew * sinu1 * sinv1 * 2.0 - mew * s1 * sinu1 * sinv1 * 2.0 - mew * s2 * sinu1 * sinv1 * 2.0 + lam * s1 * cosu1 * cosv1 + lam * s2 * cosu1 * cosv1 - lam * s1 * (s2 * s2) * cosu1 * cosv1 - lam * (s1 * s1) * s2 * cosu1 * cosv1) / (s1 + s2);
+//	dPdF(1, 3) = (mew * cosu1 * sinv1 * 2.0 - mew * cosv1 * sinu1 * 2.0 + lam * s1 * cosu1 * sinv1 + lam * s2 * cosu1 * sinv1 + mew * s1 * cosv1 * sinu1 * 2.0 + mew * s2 * cosv1 * sinu1 * 2.0 - lam * s1 * (s2 * s2) * cosu1 * sinv1 - lam * (s1 * s1) * s2 * cosu1 * sinv1) / (s1 + s2);
+//	dPdF(2, 0) = -(mew * cosu1 * sinv1 * 2.0 - mew * cosv1 * sinu1 * 2.0 + lam * s1 * cosu1 * sinv1 + lam * s2 * cosu1 * sinv1 + mew * s1 * cosv1 * sinu1 * 2.0 + mew * s2 * cosv1 * sinu1 * 2.0 - lam * s1 * (s2 * s2) * cosu1 * sinv1 - lam * (s1 * s1) * s2 * cosu1 * sinv1) / (s1 + s2);
+//	dPdF(2, 1) = (mew * cosu1 * cosv1 * 2.0 + mew * sinu1 * sinv1 * 2.0 - mew * s1 * sinu1 * sinv1 * 2.0 - mew * s2 * sinu1 * sinv1 * 2.0 + lam * s1 * cosu1 * cosv1 + lam * s2 * cosu1 * cosv1 - lam * s1 * (s2 * s2) * cosu1 * cosv1 - lam * (s1 * s1) * s2 * cosu1 * cosv1) / (s1 + s2);
+//	dPdF(2, 2) = -(mew * cosu1 * cosv1 * 2.0 + mew * sinu1 * sinv1 * 2.0 + lam * s1 * sinu1 * sinv1 + lam * s2 * sinu1 * sinv1 - mew * s1 * cosu1 * cosv1 * 2.0 - mew * s2 * cosu1 * cosv1 * 2.0 - lam * s1 * (s2 * s2) * sinu1 * sinv1 - lam * (s1 * s1) * s2 * sinu1 * sinv1) / (s1 + s2);
+//	dPdF(2, 3) = (mew * cosu1 * sinv1 * -2.0 + mew * cosv1 * sinu1 * 2.0 + lam * s1 * cosv1 * sinu1 + lam * s2 * cosv1 * sinu1 + mew * s1 * cosu1 * sinv1 * 2.0 + mew * s2 * cosu1 * sinv1 * 2.0 - lam * s1 * (s2 * s2) * cosv1 * sinu1 - lam * (s1 * s1) * s2 * cosv1 * sinu1) / (s1 + s2);
+//	dPdF(3, 0) = -lam * cosu1 * cosv1 + mew * sinu1 * sinv1 * 2.0 + lam * (s1 * s1) * sinu1 * sinv1 + lam * s1 * s2 * cosu1 * cosv1 * 2.0;
+//	dPdF(3, 1) = -lam * cosu1 * sinv1 - mew * cosv1 * sinu1 * 2.0 - lam * (s1 * s1) * cosv1 * sinu1 + lam * s1 * s2 * cosu1 * sinv1 * 2.0;
+//	dPdF(3, 2) = -lam * cosv1 * sinu1 - mew * cosu1 * sinv1 * 2.0 - lam * (s1 * s1) * cosu1 * sinv1 + lam * s1 * s2 * cosv1 * sinu1 * 2.0;
+//	dPdF(3, 3) = mew * cosu1 * cosv1 * 2.0 - lam * sinu1 * sinv1 + lam * (s1 * s1) * cosu1 * cosv1 + lam * s1 * s2 * sinu1 * sinv1 * 2.0;
+//}
 
-	real u1 = ExtractRotationAngle(U);
-	real v1 = ExtractRotationAngle(V);
-
-	// pooped out from MATLAB script: MATLAB/P_SVD.mlx
-	// Assuming release mode will optimize this bad boy
-	dPdF(0, 0) = mew * cos(u1) * cos(v1) * 2.0 - lam * sin(u1) * sin(v1) + lam * (s2 * s2) * cos(u1) * cos(v1) + lam * s1 * s2 * sin(u1) * sin(v1) * 2.0;
-	dPdF(0, 1) = lam * cos(v1) * sin(u1) + mew * cos(u1) * sin(v1) * 2.0 + lam * (s2 * s2) * cos(u1) * sin(v1) - lam * s1 * s2 * cos(v1) * sin(u1) * 2.0;
-	dPdF(0, 2) = lam * cos(u1) * sin(v1) + mew * cos(v1) * sin(u1) * 2.0 + lam * (s2 * s2) * cos(v1) * sin(u1) - lam * s1 * s2 * cos(u1) * sin(v1) * 2.0;
-	dPdF(0, 3) = -lam * cos(u1) * cos(v1) + mew * sin(u1) * sin(v1) * 2.0 + lam * (s2 * s2) * sin(u1) * sin(v1) + lam * s1 * s2 * cos(u1) * cos(v1) * 2.0;
-	dPdF(1, 0) = -(mew * cos(u1) * sin(v1) * -2.0 + mew * cos(v1) * sin(u1) * 2.0 + lam * s1 * cos(v1) * sin(u1) + lam * s2 * cos(v1) * sin(u1) + mew * s1 * cos(u1) * sin(v1) * 2.0 + mew * s2 * cos(u1) * sin(v1) * 2.0 - lam * s1 * (s2 * s2) * cos(v1) * sin(u1) - lam * (s1 * s1) * s2 * cos(v1) * sin(u1)) / (s1 + s2);
-	dPdF(1, 1) = -(mew * cos(u1) * cos(v1) * 2.0 + mew * sin(u1) * sin(v1) * 2.0 + lam * s1 * sin(u1) * sin(v1) + lam * s2 * sin(u1) * sin(v1) - mew * s1 * cos(u1) * cos(v1) * 2.0 - mew * s2 * cos(u1) * cos(v1) * 2.0 - lam * s1 * (s2 * s2) * sin(u1) * sin(v1) - lam * (s1 * s1) * s2 * sin(u1) * sin(v1)) / (s1 + s2);
-	dPdF(1, 2) = (mew * cos(u1) * cos(v1) * 2.0 + mew * sin(u1) * sin(v1) * 2.0 - mew * s1 * sin(u1) * sin(v1) * 2.0 - mew * s2 * sin(u1) * sin(v1) * 2.0 + lam * s1 * cos(u1) * cos(v1) + lam * s2 * cos(u1) * cos(v1) - lam * s1 * (s2 * s2) * cos(u1) * cos(v1) - lam * (s1 * s1) * s2 * cos(u1) * cos(v1)) / (s1 + s2);
-	dPdF(1, 3) = (mew * cos(u1) * sin(v1) * 2.0 - mew * cos(v1) * sin(u1) * 2.0 + lam * s1 * cos(u1) * sin(v1) + lam * s2 * cos(u1) * sin(v1) + mew * s1 * cos(v1) * sin(u1) * 2.0 + mew * s2 * cos(v1) * sin(u1) * 2.0 - lam * s1 * (s2 * s2) * cos(u1) * sin(v1) - lam * (s1 * s1) * s2 * cos(u1) * sin(v1)) / (s1 + s2);
-	dPdF(2, 0) = -(mew * cos(u1) * sin(v1) * 2.0 - mew * cos(v1) * sin(u1) * 2.0 + lam * s1 * cos(u1) * sin(v1) + lam * s2 * cos(u1) * sin(v1) + mew * s1 * cos(v1) * sin(u1) * 2.0 + mew * s2 * cos(v1) * sin(u1) * 2.0 - lam * s1 * (s2 * s2) * cos(u1) * sin(v1) - lam * (s1 * s1) * s2 * cos(u1) * sin(v1)) / (s1 + s2);
-	dPdF(2, 1) = (mew * cos(u1) * cos(v1) * 2.0 + mew * sin(u1) * sin(v1) * 2.0 - mew * s1 * sin(u1) * sin(v1) * 2.0 - mew * s2 * sin(u1) * sin(v1) * 2.0 + lam * s1 * cos(u1) * cos(v1) + lam * s2 * cos(u1) * cos(v1) - lam * s1 * (s2 * s2) * cos(u1) * cos(v1) - lam * (s1 * s1) * s2 * cos(u1) * cos(v1)) / (s1 + s2);
-	dPdF(2, 2) = -(mew * cos(u1) * cos(v1) * 2.0 + mew * sin(u1) * sin(v1) * 2.0 + lam * s1 * sin(u1) * sin(v1) + lam * s2 * sin(u1) * sin(v1) - mew * s1 * cos(u1) * cos(v1) * 2.0 - mew * s2 * cos(u1) * cos(v1) * 2.0 - lam * s1 * (s2 * s2) * sin(u1) * sin(v1) - lam * (s1 * s1) * s2 * sin(u1) * sin(v1)) / (s1 + s2);
-	dPdF(2, 3) = (mew * cos(u1) * sin(v1) * -2.0 + mew * cos(v1) * sin(u1) * 2.0 + lam * s1 * cos(v1) * sin(u1) + lam * s2 * cos(v1) * sin(u1) + mew * s1 * cos(u1) * sin(v1) * 2.0 + mew * s2 * cos(u1) * sin(v1) * 2.0 - lam * s1 * (s2 * s2) * cos(v1) * sin(u1) - lam * (s1 * s1) * s2 * cos(v1) * sin(u1)) / (s1 + s2);
-	dPdF(3, 0) = -lam * cos(u1) * cos(v1) + mew * sin(u1) * sin(v1) * 2.0 + lam * (s1 * s1) * sin(u1) * sin(v1) + lam * s1 * s2 * cos(u1) * cos(v1) * 2.0;
-	dPdF(3, 1) = -lam * cos(u1) * sin(v1) - mew * cos(v1) * sin(u1) * 2.0 - lam * (s1 * s1) * cos(v1) * sin(u1) + lam * s1 * s2 * cos(u1) * sin(v1) * 2.0;
-	dPdF(3, 2) = -lam * cos(v1) * sin(u1) - mew * cos(u1) * sin(v1) * 2.0 - lam * (s1 * s1) * cos(u1) * sin(v1) + lam * s1 * s2 * cos(v1) * sin(u1) * 2.0;
-	dPdF(3, 3) = mew * cos(u1) * cos(v1) * 2.0 - lam * sin(u1) * sin(v1) + lam * (s1 * s1) * cos(u1) * cos(v1) + lam * s1 * s2 * sin(u1) * sin(v1) * 2.0;
-}
-
-void d2e_dxidxj(Eigen::Matrix2d& d2V,
-				const Eigen::Vector2d& wpgGrad_i, const Eigen::Vector2d& wpgGrad_j,
-				const Eigen::Matrix2d& F,
+void d2e_dxidxj(mat2 &d2e,
+				vec2 wpgGrad_i, vec2 wpgGrad_j,
+				mat2 F,
 				double mew, double lam, const mpm::MaterialPoint& mp) {
 
-	Eigen::Matrix4d dPdF; // really a 2x2x2x2 tensor
-	d2Psi_dF2(dPdF, mew, lam, mp);
+	//Eigen::Matrix4d dPdF; // really a 2x2x2x2 tensor
+	
+	mat4 dPdF;
+	dPdF = mpm::FixedCorotationalElasticity::d2Psi_dF2_Mat4(mew, lam, mp.Fe);
 
 	//F.transpose() * wpgGrad_i;
 
@@ -51,26 +62,38 @@ void d2e_dxidxj(Eigen::Matrix2d& d2V,
 			real value = 0;
 			for (int b = 0; b < 2; b++) {
 				for (int sig = 0; sig < 2; sig++) {
-					real dpdf = dPdF(a + b, tau + sig);
+					real dpdf = dPdF[a + b][tau + sig];
 
 					for (int ome = 0; ome < 2; ome++) {
-						real Fwj = F(ome, sig) * wpgGrad_j(ome);
+						real Fwj = F[ome][sig] * wpgGrad_j[ome];
 						for (int gam = 0; gam < 2; gam++) {
-							real Fwi = F(gam, b) * wpgGrad_i(gam);
+							real Fwi = F[gam][b] * wpgGrad_i[gam];
 							value += dpdf * Fwj * Fwi;
 						}
 					}
 				}
 			}
-			d2V(a, tau) = value;
+			d2e[a][tau] = value;
 		}
 	}
 
-	d2V = mp.vol * d2V;
+	d2e = mp.vol * d2e;
 }
 
 typedef Eigen::SparseMatrix<double> SparseMatrixd;
 typedef Eigen::Triplet<double> Tripletd;
+
+// pair hashing: https://www.techiedelight.com/use-std-pair-key-std-unordered_map-cpp/
+typedef std::pair<int, int> IntPair;
+
+struct PairHash
+{
+	template <class T1, class T2>
+	std::size_t operator() (const std::pair<T1, T2>& pair) const
+	{
+		return std::hash<T1>()(pair.first) ^ std::hash<T2>()(pair.second);
+	}
+};
 
 void EnergyHessian(SparseMatrixd& H, int nodes_x, int nodes_y, const std::map<std::string, std::shared_ptr<mpm::PointCloud>>& pointCloudMap) {
 	using namespace mpm;
@@ -85,12 +108,9 @@ void EnergyHessian(SparseMatrixd& H, int nodes_x, int nodes_y, const std::map<st
 	hessTriplets.reserve(numNodes * 16); // 16 based on cubic b spline basis
 
 
-
-
-	std::vector<Tripletd> massTriplets;
 	//for (int i = 0;)
 
-	//std::unordered_map<IntPair, Eigen::Matrix4d> hessianMap;
+	std::unordered_map<IntPair, mat2, PairHash> hessianMap;
 
 	//SparseMatrixd
 	int x_bound = nodes_x;
@@ -104,8 +124,6 @@ void EnergyHessian(SparseMatrixd& H, int nodes_x, int nodes_y, const std::map<st
 
 			vec2 xp = point.x;
 
-			Eigen::Matrix4d dPdF; // really a 2x2x2x2 tensor
-			d2Psi_dF2(dPdF, pointCloudPair.second->parameters.mew, pointCloudPair.second->parameters.lam, point);
 
 			// gotta do a QUADRA LOOP for this
 			for (int i = 0; i <= 3; i++) {
@@ -149,27 +167,55 @@ void EnergyHessian(SparseMatrixd& H, int nodes_x, int nodes_y, const std::map<st
 
 							size_t index_j = size_t(currNode_j) * size_t(y_bound) + size_t(currNode_jj);
 
-							Eigen::Matrix2d d2V;
-							Eigen::Vector2d wpgGrad_i_eig(wpgGrad_i.x, wpgGrad_i.y);
-							Eigen::Vector2d wpgGrad_j_eig(wpgGrad_j.x, wpgGrad_j.y);
-							Eigen::Matrix2d F;
-							F(0, 0) = point.Fe[0][0];
-							F(0, 1) = point.Fe[1][0]; // glm col major
-							F(1, 0) = point.Fe[0][1];
-							F(1, 1) = point.Fe[1][1];
+							//Eigen::Matrix2d d2V;
+							//Eigen::Vector2d wpgGrad_i_eig(wpgGrad_i.x, wpgGrad_i.y);
+							//Eigen::Vector2d wpgGrad_j_eig(wpgGrad_j.x, wpgGrad_j.y);
+							//Eigen::Matrix2d F;
+							//F(0, 0) = point.Fe[0][0];
+							//F(0, 1) = point.Fe[1][0]; // glm col major
+							//F(1, 0) = point.Fe[0][1];
+							//F(1, 1) = point.Fe[1][1];
+							
+							mat2 d2e;
+							mat2 F;
+							
 
-							d2e_dxidxj(d2V, wpgGrad_i_eig, wpgGrad_j_eig, F, pointCloudPair.second->parameters.mew, pointCloudPair.second->parameters.lam, point);
+							d2e_dxidxj(d2e, wpgGrad_i, wpgGrad_j, F, pointCloudPair.second->parameters.mew, pointCloudPair.second->parameters.lam, point);
 
-							hessTriplets.push_back(Tripletd(int(2 * index_i), int(2 * index_j), d2V(0, 0)));
-							hessTriplets.push_back(Tripletd(int(2 * index_i + 1), int(2 * index_j), d2V(1, 0)));
-							hessTriplets.push_back(Tripletd(int(2 * index_i), int(2 * index_j + 1), d2V(0, 1)));
-							hessTriplets.push_back(Tripletd(int(2 * index_i + 1), int(2 * index_j + 1), d2V(1, 1)));
+
+							
+
+							IntPair index_pair = IntPair(index_i, index_j);
+							if (hessianMap.count(index_pair)) {
+								hessianMap[index_pair] += d2e;
+							}
+							else {
+								hessianMap[index_pair] = d2e;
+							}
 						}
 					}
 				}
 			}
 		}
 	}
+
+
+	
+	for (std::pair<IntPair, mat2> mapPair : hessianMap) {
+		IntPair index_pair = mapPair.first;
+		int index_i = index_pair.first;
+		int index_j = index_pair.second;
+		mat2 d2e = mapPair.second;
+
+		// Note: d2V is a glm column-major matrix, while eigen is also column major, but indexed by row major.
+		// To make it simple, we will just transpose d2e first
+		d2e = glm::transpose(d2e);
+		hessTriplets.push_back(Tripletd(2 * index_i, 2 * index_j, d2e[0][0]));
+		hessTriplets.push_back(Tripletd(2 * index_i + 1, 2 * index_j, d2e[1][0]));
+		hessTriplets.push_back(Tripletd(2 * index_i, 2 * index_j + 1, d2e[0][1]));
+		hessTriplets.push_back(Tripletd(2 * index_i + 1, 2 * index_j + 1, d2e[1][1]));
+	}
+	
 
 	H.setFromTriplets(hessTriplets.begin(), hessTriplets.end());
 

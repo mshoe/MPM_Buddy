@@ -177,6 +177,9 @@
     <ClCompile Include="MpmAlgorithmEngine.cpp">
       <Filter>Source Files\MPM\Algorithm</Filter>
     </ClCompile>
+    <ClCompile Include="EnergyFunctions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainEngine.h">
