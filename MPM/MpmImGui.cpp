@@ -321,31 +321,6 @@ void mpm::MpmEngine::ImGuiMaterialPointViewer()
 	ImGui::End();
 }
 
-void mpm::MpmEngine::ImGuiZoomWindow()
-{
-	if (ImGui::Begin("Zoom Window", &m_imguiZoomWindow)) {
-		ImGui::ColorEdit4("Background color", m_backgroundColor);
-		ImGui::InputReal("Zoom Point x: ", &m_zoomPoint.x, 1.0, 10.0, "%.1f");
-		ImGui::InputReal("Zoom Point y: ", &m_zoomPoint.y, 1.0, 10.0, "%.1f");
-		ImGui::InputReal("Zoom Factor", &m_zoomFactor, 0.5, 2.0, "%.1f");
-		ImGui::Checkbox("Show Zoom Border", &m_showZoomBorder);
-		ImGui::Checkbox("Move Zoom Window", &m_movingZoomWindow);
-
-
-		ImGui::Image(
-			(void*)(intptr_t)m_zoomWindow->texture,
-			ImVec2((float)m_zoomWindow->screen_dimensions.x, (float)m_zoomWindow->screen_dimensions.y),
-			ImVec2(0, 1),
-			ImVec2(1, 0),
-			ImVec4(1, 1, 1, 1),
-			ImVec4(1, 1, 1, 1)
-		);
-	}
-	ImGui::End();
-}
-
-
-
 void mpm::MpmEngine::ImGuiSelectPointCloud(std::string& pointCloudSelectStr)
 {
 	if (ImGui::BeginCombo("Select Point Cloud", pointCloudSelectStr.c_str())) {

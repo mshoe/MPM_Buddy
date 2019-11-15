@@ -24,6 +24,13 @@
 #include <tuple>
 
 namespace mpm {
+
+	// for sparse matrix vis with opengl
+	struct EigenTriplet {
+		glm::ivec2 index;
+		real val;
+	};
+
 	class MpmAlgorithmEngine {
 	public:
 		MpmAlgorithmEngine() { InitShaders(); }
@@ -74,7 +81,7 @@ namespace mpm {
 			CPP = 1
 		};
 
-		MPM_ALGORITHM_CODE m_algo_code = MPM_ALGORITHM_CODE::GLSL;
+		volatile MPM_ALGORITHM_CODE m_algo_code = MPM_ALGORITHM_CODE::GLSL;
 	private:
 
 		// Other Engines
@@ -147,7 +154,33 @@ namespace mpm {
 		std::unique_ptr<ComputeShader> m_gConjugateResidualsStepPart2 = nullptr;
 		std::unique_ptr<ComputeShader> m_gConjugateResidualsConclusion = nullptr;
 
+		// graphics
+
+		// Sparse Matrix visualization
+		std::unique_ptr<StandardShader> m_sparseMatrixVis = nullptr;
+		std::shared_ptr<ImGuiScreen> m_sparseMatrixWindow = nullptr;
 		
+		void InitSparseMatrixWindow();
+		void ImGuiSparseMatrixWindow();
+		bool m_imguiSparseMatrixWindow = false;
+		bool m_visSemiImplicitEulerMatrix = false;
+
+
+		enum class MATRIX_VIEW {
+			INV_MASS_MATRIX = 0,
+			ENERGY_HESSIAN = 1,
+			A = 2
+		};
+		std::vector<std::string> m_matrixViewStrVec = {
+			"Inverse mass matrix",
+			"Energy hessian",
+			"A = I - beta * dt^2 * H"
+		};
+
+		void RenderSparseMatrix(const std::vector<EigenTriplet>& eigenTriplets, std::shared_ptr<ImGuiScreen> imguiScreen, int spMatRows);
+		bool m_semiImplicitMatrixIsSymmetric = true;
+
+
 
 		/******************** CONJUGATE RESIDUALS FOR SEMI-IMPLICT TIME INTEGRATION ********************/
 		bool m_semi_implicit_CR = false;

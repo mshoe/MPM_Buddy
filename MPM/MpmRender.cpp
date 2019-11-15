@@ -5,61 +5,7 @@
 #include "glm_imgui.h"
 
 
-void mpm::MpmEngine::ImGuiMpmRenderWindow()
-{
-	ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar;
-	if (ImGui::Begin("MPM Render Window", &m_imguiMpmRenderWindow, windowFlags)) {
-		ImGui::SetWindowPos(ImVec2(SRC_WIDTH / 2.0, 0.0));
-		ImGui::SetWindowSize(ImVec2(SRC_WIDTH / 2.0, SRC_HEIGHT));
-		//ImGui::Window
-		//ImGui::Window
-		//ImGui::GetStyle().WindowRounding = 0.0f;
-		
-		ImVec2 mouseGlobalScreen = ImVec2((float)m_mouseGlobalScreen.x, (float)m_mouseGlobalScreen.y);
-		std::string mouseGlobalStr = std::to_string(m_mouseGlobalScreen.x) + ", " + std::to_string(m_mouseGlobalScreen.y);
-		
 
-		static ImVec2 windowPos = ImVec2(ImGui::GetCursorScreenPos().x, SRC_HEIGHT - ImGui::GetCursorScreenPos().y);
-		//windowPos.y = SRC_HEIGHT - windowPos.y;
-		static std::string windowPosStr = std::to_string(windowPos.x) + ", " + std::to_string(windowPos.y);
-		
-		static ImVec2 renderScreenBotLeft = ImVec2(windowPos.x, windowPos.y - (float)m_mpmRenderWindow->screen_dimensions.y);
-		static std::string rsblStr = std::to_string(renderScreenBotLeft.x) + ", " + std::to_string(renderScreenBotLeft.y);
-
-		ImVec2 mouseInRenderScreen = ImVec2(mouseGlobalScreen.x - renderScreenBotLeft.x, mouseGlobalScreen.y - renderScreenBotLeft.y);
-		std::string mouseInRenderScreenStr = std::to_string(mouseInRenderScreen.x) + ", " + std::to_string(mouseInRenderScreen.y);
-
-		m_mouseMpmRenderScreen = vec2(mouseInRenderScreen.x, mouseInRenderScreen.y);
-		m_mouseMpmRenderScreenNormalized = m_mouseMpmRenderScreen / m_mpmRenderWindow->screen_dimensions;
-		m_mouseMpmRenderScreenGridSpace = vec2(m_mouseMpmRenderScreenNormalized.x * GRID_SIZE_X, m_mouseMpmRenderScreenNormalized.y * GRID_SIZE_Y);
-		m_mouseMpmRenderScreenGridSpaceFull = vec4(m_mouseMpmRenderScreenGridSpace, real(int(m_leftButtonDown)), real(int(m_rightButtonDown)));
-		
-		//if (!m_paused)
-		//	std::cout << m_mouseMpmRenderScreenGridSpaceFull.x << ", " << m_mouseMpmRenderScreenGridSpaceFull.y << ", " << m_mouseMpmRenderScreenGridSpaceFull.z << ", " << m_mouseMpmRenderScreenGridSpaceFull.w << "\n";
-
-		
-		
-
-		ImGui::Image(
-			(void*)(intptr_t)m_mpmRenderWindow->texture,
-			ImVec2((float)m_mpmRenderWindow->screen_dimensions.x, (float)m_mpmRenderWindow->screen_dimensions.y),
-			ImVec2(0, 1),
-			ImVec2(1, 0),
-			ImVec4(1, 1, 1, 1),
-			ImVec4(1, 1, 1, 1)
-		);
-
-		ImGui::Text("global mouse pos: "); ImGui::SameLine(); ImGui::Text(mouseGlobalStr.c_str());
-		//ImGui::Text("global window pos: "); ImGui::SameLine(); ImGui::Text(windowPosStr.c_str());
-		ImGui::Text("rsbl pos: "); ImGui::SameLine(); ImGui::Text(rsblStr.c_str());
-		ImGui::Text("mouse in render screen: "); ImGui::SameLine(); ImGui::Text(mouseInRenderScreenStr.c_str());
-
-		static glm::highp_fvec4 min_color = glm::highp_fvec4(1.0, 0.0, 0.0, 1.0);
-		static glm::highp_fvec4 max_color = glm::highp_fvec4(0.0, 1.0, 0.0, 1.0);
-		ImGui::DisplayNamedBoolColor("mouse moved", m_mouseMoved, max_color, min_color);
-	}
-	ImGui::End();
-}
 
 void mpm::MpmEngine::MpmRender()
 {
@@ -89,22 +35,6 @@ void mpm::MpmEngine::MpmRender()
 		m_zoomWindow->RenderLineLoop();
 	}
 
-	// Render Shapes
-	//if (m_createCircleState) {
-	//	RenderCircle(m_zoomPoint, 1.0, m_mpmRenderWindow, m_circleShader);
-	//}
-	//if (m_renderPolygonAtMouseState) {
-	//	RenderPolygon(m_mouseMpmRenderScreenGridSpace, false, m_zoomPoint, 1.0, m_mpmRenderWindow, m_polygonShader);
-	//}
-
-	//if (m_renderPolygon) {
-	//	RenderPolygon(m_polygon->center, m_addPolygonVertexState, m_zoomPoint, 1.0, m_mpmRenderWindow, m_polygonShader);
-	//}
-
-	//if (m_renderPWLine) {
-	//	RenderPWLine(m_zoomPoint, 1.0, m_mpmRenderWindow, m_pwLineShader);
-	//}
-
 	m_mpmGeometryEngine->Render(m_zoomPoint, 1.0, m_mpmRenderWindow);
 
 
@@ -132,22 +62,7 @@ void mpm::MpmEngine::ZoomRender()
 	}
 	// Render polygon
 
-	/*if (m_createCircleState) {
-		RenderCircle(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_circleShader);
-	}
-
-	if (m_renderPolygonAtMouseState) {
-		RenderPolygon(m_mouseMpmRenderScreenGridSpace, false, m_zoomPoint, m_zoomFactor, m_zoomWindow, m_polygonShader);
-	}
-
-	if (m_renderPolygon) {
-		RenderPolygon(m_polygon->center, m_addPolygonVertexState, m_zoomPoint, m_zoomFactor, m_zoomWindow, m_polygonShader);
-	}
-
-	if (m_renderPWLine) {
-		RenderPWLine(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_pwLineShader);
-	}*/
-	m_mpmGeometryEngine->Render(m_zoomPoint, m_zoomFactor, m_zoomWindow);
+	//m_mpmGeometryEngine->Render(m_zoomPoint, m_zoomFactor, m_zoomWindow);
 
 	RenderGridBorder(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_borderShader);
 
@@ -164,64 +79,6 @@ void mpm::MpmEngine::Render()
 		MpmRender();
 	if (m_imguiZoomWindow)
 		ZoomRender();
-
-	//// RENDER MOUSE SHADER
-	//RenderScreenShader(m_zoomPoint, 1.0, m_openGLScreen);
-
-	//// Render material point clouds
-	//if (m_viewPointClouds) {
-	//	RenderPointClouds(m_zoomPoint, 1.0, m_openGLScreen, m_pPointCloudShader);
-	//}
-
-	//// Render grid nodes
-	//if (m_viewGrid) {
-	//	RenderGrid(m_zoomPoint, 1.0, m_openGLScreen, m_gridShader);
-	//	if (m_viewGridVector) {
-	//		RenderGrid(m_zoomPoint, 1.0, m_openGLScreen, m_gridShaderVector);
-	//	}
-	//}
-
-	//// Render marching squares
-	//if (m_viewMarchingSquares) {
-	//	RenderMarchingSquares(m_zoomPoint, 1.0, m_openGLScreen, m_gridShaderMarchingSquares);
-	//}
-
-	//// Render Zoom Border
-	//if (m_showZoomBorder) {
-	//	m_zoomWindowShader->Use();
-	//	m_zoomWindowShader->SetVec("iSourceResolution", m_openGLScreen->screen_dimensions);
-	//	m_zoomWindowShader->SetVec("iResolution", m_openGLScreen->sim_dimensions);
-	//	m_zoomWindowShader->SetVec("iCenter", vec2(m_openGLScreen->center.x, m_openGLScreen->screen_dimensions.y - m_openGLScreen->center.y)); // correct y for glsl
-	//	m_zoomWindowShader->SetReal("zoomFactor", m_zoomFactor);
-	//	m_zoomWindowShader->SetVec("zoomPoint", m_zoomPoint);
-
-	//	m_zoomWindow->RenderLineLoop();
-	//}
-
-
-
-	//// Render polygon
-	//if (m_renderPolygon) {
-	//	RenderPolygon(m_zoomPoint, m_zoomFactor, m_openGLScreen, m_polygonShader);
-	//}
-
-	//if (m_renderPWLine) {
-	//	RenderPWLine(m_zoomPoint, m_zoomFactor, m_openGLScreen, m_pwLineShader);
-	//}
-
-	//// Render the grid border
-	//m_borderShader->Use();
-	//m_borderShader->SetVec("iCenter", vec2(m_openGLScreen->center.x, m_openGLScreen->screen_dimensions.y - m_openGLScreen->center.y)); // correct y for glsl
-	//m_borderShader->SetVec("iResolution", m_openGLScreen->sim_dimensions);
-	//m_borderShader->SetVec("iSourceResolution", m_openGLScreen->screen_dimensions);
-	//m_borderShader->SetInt("CHUNKS_X", m_chunks_x);
-	//m_borderShader->SetInt("CHUNKS_Y", m_chunks_y);
-	//glBindVertexArray(VisualizeVAO);
-	//glDrawArrays(GL_POINTS, 0, (GLsizei)1);
-	//glBindVertexArray(0);
-
-	
-
 }
 
 void mpm::MpmEngine::RenderScreenShader(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen)
@@ -327,6 +184,10 @@ void mpm::MpmEngine::RenderGridBorder(vec2 zoomPoint, real zoomFactor, std::shar
 	if (m_mpmAlgorithmEngine->m_algo_code == MpmAlgorithmEngine::MPM_ALGORITHM_CODE::CPP) {
 		borderShader->SetInt("chunk_size_x", m_mpmAlgorithmEngine->m_cppChunkX);
 		borderShader->SetInt("chunk_size_y", m_mpmAlgorithmEngine->m_cppChunkY);
+	}
+	else {
+		borderShader->SetInt("chunk_size_x", 32);
+		borderShader->SetInt("chunk_size_y", 32);
 	}
 	glBindVertexArray(VisualizeVAO);
 	glDrawArrays(GL_POINTS, 0, (GLsizei)1);

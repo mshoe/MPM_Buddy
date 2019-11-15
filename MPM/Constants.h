@@ -47,6 +47,7 @@ namespace ShaderPaths {
 	const std::string graphicsGeometryPath = graphicsPath + "geometryEditor\\";
 	const std::string graphicsGridPath = graphicsPath + "grid\\";
 	const std::string graphicsMPPath = graphicsPath + "materialPoints\\";
+	const std::string graphicsEigenPath = graphicsPath + "eigen\\";
 	const std::string interactivePath = "shaders\\compute\\interactive\\";
 	const std::string implicitPath = "shaders\\compute\\implicit\\";
 }

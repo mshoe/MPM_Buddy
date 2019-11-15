@@ -86,3 +86,18 @@ double mpm::ExtractRotationAngle(mat2 R) {
 
 	return atan2(R[0][1], R[0][0]); // glm is column major
 }
+
+real mpm::InnerProduct(mat2 A, mat2 B)
+{
+	return A[0][0] * B[0][0] + A[1][0] * B[1][0] + A[0][1] * B[0][1] + A[1][1] * B[1][1];
+}
+
+mat2 mpm::CofactorMatrix(mat2 X)
+{
+	mat2 cofmat;
+	cofmat[0][0] = X[1][1];
+	cofmat[0][1] = -X[1][0];
+	cofmat[1][0] = -X[0][1];
+	cofmat[1][1] = X[0][0];
+	return cofmat;
+}

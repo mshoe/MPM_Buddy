@@ -5,6 +5,7 @@ void mpm::MpmAlgorithmEngine::GUI()
 	if (m_imguiTimeIntegrator) ImGuiTimeIntegrator();
 	if (m_imguiMaterialParametersEditor) ImGuiMaterialParametersEditor();
 	if (m_imguiCPUMode) ImGuiCPUMode();
+	if (m_imguiSparseMatrixWindow) ImGuiSparseMatrixWindow();
 }
 
 void mpm::MpmAlgorithmEngine::Menu()
@@ -18,6 +19,9 @@ void mpm::MpmAlgorithmEngine::Menu()
 		}
 		if (ImGui::MenuItem("CPU Mode", "", m_imguiCPUMode)) {
 			m_imguiCPUMode = !m_imguiCPUMode;
+		}
+		if (ImGui::MenuItem("Sparse Matrix Viewer", "", m_imguiSparseMatrixWindow)) {
+			m_imguiSparseMatrixWindow = !m_imguiSparseMatrixWindow;
 		}
 		ImGui::EndMenu();
 	}
@@ -139,6 +143,8 @@ void mpm::MpmAlgorithmEngine::ImGuiTimeIntegrator()
 
 
 
+
+
 void mpm::MpmAlgorithmEngine::ImGuiMaterialParametersEditor()
 {
 	if (ImGui::Begin("Material Parameters Editor", &m_imguiMaterialParametersEditor)) {
@@ -240,6 +246,24 @@ void mpm::MpmAlgorithmEngine::ImGuiCPUMode()
 		}
 
 
+	}
+	ImGui::End();
+}
+
+void mpm::MpmAlgorithmEngine::ImGuiSparseMatrixWindow()
+{
+	if (ImGui::Begin("Sparse Matrix Viewer", &m_imguiSparseMatrixWindow)) {
+
+		ImGui::Checkbox("Visualize Semi-Implicit Euler Matrix", &m_visSemiImplicitEulerMatrix);
+
+		ImGui::Image(
+			(void*)(intptr_t)m_sparseMatrixWindow->texture,
+			ImVec2((float)m_sparseMatrixWindow->screen_dimensions.x, (float)m_sparseMatrixWindow->screen_dimensions.y),
+			ImVec2(0, 1),
+			ImVec2(1, 0),
+			ImVec4(1, 1, 1, 1),
+			ImVec4(1, 1, 1, 1)
+		);
 	}
 	ImGui::End();
 }

@@ -43,17 +43,19 @@
 //}
 
 void d2e_dxidxj(mat2 &d2e,
-				vec2 wpgGrad_i, vec2 wpgGrad_j,
-				mat2 F,
-				double mew, double lam, const mpm::MaterialPoint& mp) {
+				//vec2 wpgGrad_i, vec2 wpgGrad_j,
+				real wxixp, real wxjxp,
+				vec2 dxixp, vec2 dxjxp,
+				const mpm::MaterialPoint& mp) {
 
 	//Eigen::Matrix4d dPdF; // really a 2x2x2x2 tensor
 	
 	mat4 dPdF;
-	dPdF = mpm::FixedCorotationalElasticity::d2Psi_dF2_Mat4(mew, lam, mp.Fe);
+	dPdF = mpm::FixedCorotationalElasticity::d2Psi_dF2_Mat4_trick(mp.Fe, mp.lam, mp.mew);
 
 	//F.transpose() * wpgGrad_i;
 
+	//std::cout << glm::to_string(F) << std::endl << std::endl;
 
 	// Instead of figuring out how to flatten F and wpg_grad, just use dPdF as a 2x2x2x2 tensor
 
@@ -65,9 +67,9 @@ void d2e_dxidxj(mat2 &d2e,
 					real dpdf = dPdF[a + b][tau + sig];
 
 					for (int ome = 0; ome < 2; ome++) {
-						real Fwj = F[ome][sig] * wpgGrad_j[ome];
+						real Fwj = mp.Fe[ome][sig] * dxjxp[ome];
 						for (int gam = 0; gam < 2; gam++) {
-							real Fwi = F[gam][b] * wpgGrad_i[gam];
+							real Fwi = mp.Fe[gam][b] * dxixp[gam];
 							value += dpdf * Fwj * Fwi;
 						}
 					}
@@ -77,7 +79,8 @@ void d2e_dxidxj(mat2 &d2e,
 		}
 	}
 
-	d2e = mp.vol * d2e;
+	//d2e = mp.vol * d2e;
+	d2e = mp.vol * wxixp * wxjxp * mpm::Dp_inv * mpm::Dp_inv * d2e;
 }
 
 typedef Eigen::SparseMatrix<double> SparseMatrixd;
@@ -141,7 +144,7 @@ void EnergyHessian(SparseMatrixd& H, int nodes_x, int nodes_y, const std::map<st
 					real dx_i = -dpg_i.x; // sign matters for gradient
 					real dy_i = -dpg_i.y;
 					real wpg_i = CubicBSpline(dx_i) * CubicBSpline(dy_i);
-					vec2 wpgGrad_i = vec2(CubicBSplineSlope(dx_i) * CubicBSpline(dy_i), CubicBSpline(dx_i) * CubicBSplineSlope(dy_i));
+					//vec2 wpgGrad_i = vec2(CubicBSplineSlope(dx_i) * CubicBSpline(dy_i), CubicBSpline(dx_i) * CubicBSplineSlope(dy_i));
 
 
 					size_t index_i = size_t(currNode_i) * size_t(y_bound) + size_t(currNode_ii); // this index is not indexing m_grid.nodes, it is just for the hessian H
@@ -162,7 +165,7 @@ void EnergyHessian(SparseMatrixd& H, int nodes_x, int nodes_y, const std::map<st
 							real dx_j = -dpg_j.x; // sign matters for gradient
 							real dy_j = -dpg_j.y;
 							real wpg_j = CubicBSpline(dx_j) * CubicBSpline(dy_j);
-							vec2 wpgGrad_j = vec2(CubicBSplineSlope(dx_j) * CubicBSpline(dy_j), CubicBSpline(dx_j) * CubicBSplineSlope(dy_j));
+							//vec2 wpgGrad_j = vec2(CubicBSplineSlope(dx_j) * CubicBSpline(dy_j), CubicBSpline(dx_j) * CubicBSplineSlope(dy_j));
 
 
 							size_t index_j = size_t(currNode_j) * size_t(y_bound) + size_t(currNode_jj);
@@ -177,12 +180,10 @@ void EnergyHessian(SparseMatrixd& H, int nodes_x, int nodes_y, const std::map<st
 							//F(1, 1) = point.Fe[1][1];
 							
 							mat2 d2e;
-							mat2 F;
-							
 
-							d2e_dxidxj(d2e, wpgGrad_i, wpgGrad_j, F, pointCloudPair.second->parameters.mew, pointCloudPair.second->parameters.lam, point);
+							//d2e_dxidxj(d2e, wpgGrad_i, wpgGrad_j, F, pointCloudPair.second->parameters.mew, pointCloudPair.second->parameters.lam, point);
 
-
+							d2e_dxidxj(d2e, wpg_i, wpg_j, dpg_i, dpg_j, point);
 							
 
 							IntPair index_pair = IntPair(index_i, index_j);
@@ -209,7 +210,11 @@ void EnergyHessian(SparseMatrixd& H, int nodes_x, int nodes_y, const std::map<st
 
 		// Note: d2V is a glm column-major matrix, while eigen is also column major, but indexed by row major.
 		// To make it simple, we will just transpose d2e first
-		d2e = glm::transpose(d2e);
+		// actually technically, d2e should be symmetric so this should not matter, instead do an errror check to see if d2e is asymmetric
+
+		/*if (d2e != glm::transpose(d2e)) {
+			std::cout << "NOT SYMMETRIC: " << glm::to_string(d2e) << std::endl << std::endl;
+		}*/
 		hessTriplets.push_back(Tripletd(2 * index_i, 2 * index_j, d2e[0][0]));
 		hessTriplets.push_back(Tripletd(2 * index_i + 1, 2 * index_j, d2e[1][0]));
 		hessTriplets.push_back(Tripletd(2 * index_i, 2 * index_j + 1, d2e[0][1]));
@@ -292,6 +297,8 @@ void VectorToGridVelocity(mpm::Grid& grid, const Eigen::VectorXd& v_semi_implici
 	}
 }
 
+
+
 void mpm::MpmAlgorithmEngine::MpmTimeStepSemiImplicitGridUpdate_CPP(real dt, real beta)
 {
 
@@ -324,6 +331,35 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepSemiImplicitGridUpdate_CPP(real dt, rea
 	A += beta * dt * dt * SelectedH;
 	//SparseMatrixd A = Id + beta * dt * dt * M_inv * P * H * P.transpose();
 
+	if (m_visSemiImplicitEulerMatrix) {
+
+		std::vector<EigenTriplet> eigenTriplets;
+
+		for (int k = 0; k < A.outerSize(); ++k)
+		{
+			for (SparseMatrixd::InnerIterator it(A, k); it; ++it)
+			{
+				//cout << 1 + it.row() << "\t"; // row index
+				//cout << 1 + it.col() << "\t"; // col index (here it is equal to k)
+				//cout << it.value() << endl;
+				EigenTriplet triplet;
+				triplet.index = glm::ivec2(it.row(), it.col());
+				triplet.val = it.value();
+				eigenTriplets.push_back(triplet);
+			}
+		}
+
+
+		// MAP MEMORY TO OPENGL BUFFER
+
+		RenderSparseMatrix(eigenTriplets, m_sparseMatrixWindow, A.outerSize());
+		
+	}
+
+	//Eigen::MatrixXd(A).isSy
+
+	//std::cout << A.diagonal() << std::endl;
+	//std::cout << Eigen::MatrixXd(A) << std::endl << std::endl;
 
 	//Eigen::SimplicialLDLT<SparseMatrixd> chol(A);
 	//Eigen::VectorXd V_semi_implict_euler = chol.solve(V_symplectic_euler);
@@ -338,13 +374,15 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepSemiImplicitGridUpdate_CPP(real dt, rea
 
 	//std::cout << A << std::endl;
 
-	Eigen::SparseLU<SparseMatrixd, Eigen::COLAMDOrdering<int>> solver(A);
+	
+
+	Eigen::SparseLU<SparseMatrixd, Eigen::COLAMDOrdering<int>> solver;
 	solver.compute(A);
-	if (solver.info() != Eigen::Success) {
-		std::cout << "solver failed." << std::endl;
-		m_paused = true;
-		return;
-	}
+
+	
+
+	//std::cout << "A determinant: " << solver.determinant() << std::endl;
+	
 
 	/*Eigen::SimplicialLDLT<SparseMatrixd> solver(A);
 	solver.compute(A);
@@ -355,6 +393,16 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepSemiImplicitGridUpdate_CPP(real dt, rea
 	}*/
 
 	Eigen::VectorXd V_semi_implict_euler = solver.solve(V_symplectic_euler);
+
+	if (solver.info() != Eigen::Success || V_semi_implict_euler.hasNaN() || V_symplectic_euler.hasNaN()) {
+		std::cout << "solver failed." << std::endl;
+		m_paused = true;
+
+		std::cout << "A:"<< A << std::endl << std::endl;
+		std::cout << "V semi-implicit:" << V_semi_implict_euler << std::endl << std::endl;
+		std::cout << "V symplectic: " << V_symplectic_euler << std::endl << std::endl;
+		return;
+	}
 
 	VectorToGridVelocity(m_mpmEngine->m_grid, V_semi_implict_euler, gridDegreesOfFreedom);
 

@@ -1,4 +1,5 @@
 #include "EnergyFunctions.h"
+#include <iostream>
 
 namespace mpm {
 	mat2 NeoHookeanPKTensor(mat2 Fe, real lam, real mew) {
@@ -57,7 +58,7 @@ mat2 mpm::FixedCorotationalElasticity::PKTensor(mat2 Fe, real lam, real mew)
 	return P;
 }
 
-mat4 mpm::FixedCorotationalElasticity::d2Psi_dF2_Mat4(double mew, double lam, mat2 Fe)
+mat4 mpm::FixedCorotationalElasticity::d2Psi_dF2_Mat4(mat2 Fe, real lam, real mew)
 {
 	mat2 R, S, U, V;
 	real s1, s2;
@@ -94,4 +95,113 @@ mat4 mpm::FixedCorotationalElasticity::d2Psi_dF2_Mat4(double mew, double lam, ma
 	dPdF[3][3] = mew * cosu1 * cosv1 * 2.0 - lam * sinu1 * sinv1 + lam * (s1 * s1) * cosu1 * cosv1 + lam * s1 * s2 * sinu1 * sinv1 * 2.0;
 
 	return dPdF; // NOTE: glm is column-major. Accessing from this matrix will be the same, but multiplication will need to be done using the transpose of this
+}
+
+mat2 mpm::FixedCorotationalElasticity::d2Psi_dF2_multbydF(mat2 Fe, real mew, real lam, mat2 dF)
+{
+	mat2 R, S;
+	PolarDecomp(Fe, R, S);
+	real J = glm::determinant(Fe);
+	mat2 Fit = glm::transpose(glm::inverse(Fe));
+
+	mat2 A = mat2(0.0);
+
+	A += lam * J * Fit * InnerProduct(J * Fit, dF);
+
+	A += lam * (J - 1.0) * CofactorMatrix(dF);
+
+	A += 2.0 * mew * dF;
+
+	real b = R[1][0] * dF[0][0] + R[1][1] * dF[0][1] - (dF[1][0] * R[0][0] + dF[1][1] * R[0][1]);
+	real a = b / (S[0][0] + S[1][1]);
+	mat2 dR = R * mat2(0, a, -a, 0); // column major
+
+	A -= 2.0 * mew * dR;
+
+	return A;
+}
+
+mat4 mpm::FixedCorotationalElasticity::d2Psi_dF2_Mat4_trick(mat2 Fe, real mew, real lam)
+{
+	mat4 dPdF;
+
+	// using column-major notation to make life easier
+
+	static const mat2 m00(1.0, 0.0, 0.0, 0.0);
+	static const mat2 m01(0.0, 1.0, 0.0, 0.0);
+
+	//std::cout << glm::to_string(m01) << std::endl;
+	//std::cout << m01[0][1] << std::endl;
+	static const mat2 m10(0.0, 0.0, 1.0, 0.0);
+	static const mat2 m11(0.0, 0.0, 0.0, 1.0);
+
+	// |1, 0|
+	// |0, 0|
+	mat2 dPdF00 = d2Psi_dF2_multbydF(Fe, mew, lam, m00);
+
+	// NOTE: My math says these are the correct matrices, but when I run the code, the other way is correct
+	//// |0, 0|
+	//// |1, 0|
+	//mat2 dPdF01 = d2Psi_dF2_multbydF(Fe, mew, lam, m01);
+
+	//// |0, 1|
+	//// |0, 0|
+	//mat2 dPdF10 = d2Psi_dF2_multbydF(Fe, mew, lam, m10);
+
+
+	// swap these around??? did I make a mistake somewhere
+	// |0, 0|
+	// |1, 0|
+	mat2 dPdF10 = d2Psi_dF2_multbydF(Fe, mew, lam, m01);
+
+	// |0, 1|
+	// |0, 0|
+	mat2 dPdF01 = d2Psi_dF2_multbydF(Fe, mew, lam, m10);
+
+	// |0, 0|
+	// |0, 1|
+	mat2 dPdF11 = d2Psi_dF2_multbydF(Fe, mew, lam, m11);
+
+	/*dPdF[0][0] = dPdF00[0][0];
+	dPdF[0][1] = dPdF00[0][1];
+	dPdF[1][0] = dPdF00[1][0];
+	dPdF[1][1] = dPdF00[1][1];
+
+	dPdF[2 + 0][0] = dPdF10[0][0];
+	dPdF[2 + 0][1] = dPdF10[0][1];
+	dPdF[2 + 1][0] = dPdF10[1][0];
+	dPdF[2 + 1][1] = dPdF10[1][1];
+
+	dPdF[0][2 + 0] = dPdF01[0][0];
+	dPdF[0][2 + 1] = dPdF01[0][1];
+	dPdF[1][2 + 0] = dPdF01[1][0];
+	dPdF[1][2 + 1] = dPdF01[1][1];
+
+	dPdF[2 + 0][2 + 0] = dPdF11[0][0];
+	dPdF[2 + 0][2 + 1] = dPdF11[0][1];
+	dPdF[2 + 1][2 + 0] = dPdF11[1][0];
+	dPdF[2 + 1][2 + 1] = dPdF11[1][1];*/
+
+	// assume column-major flattening (shouldn't matter since this should be symmetric)
+	dPdF[0][0] = dPdF00[0][0];
+	dPdF[0][1] = dPdF00[1][0];
+	dPdF[0][2] = dPdF00[0][1];
+	dPdF[0][3] = dPdF00[1][1];
+
+	dPdF[1][0] = dPdF01[0][0];
+	dPdF[1][1] = dPdF01[1][0];
+	dPdF[1][2] = dPdF01[0][1];
+	dPdF[1][3] = dPdF01[1][1];
+
+	dPdF[2][0] = dPdF10[0][0];
+	dPdF[2][1] = dPdF10[1][0];
+	dPdF[2][2] = dPdF10[0][1];
+	dPdF[2][3] = dPdF10[1][1];
+
+	dPdF[3][0] = dPdF11[0][0];
+	dPdF[3][1] = dPdF11[1][0];
+	dPdF[3][2] = dPdF11[0][1];
+	dPdF[3][3] = dPdF11[1][1];
+
+	return dPdF;
 }

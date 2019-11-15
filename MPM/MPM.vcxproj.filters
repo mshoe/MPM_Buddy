@@ -180,6 +180,12 @@
     <ClCompile Include="EnergyFunctions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MpmRenderImgui.cpp">
+      <Filter>Source Files\MPM\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmEigenRender.cpp">
+      <Filter>Source Files\MPM\Algorithm</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainEngine.h">

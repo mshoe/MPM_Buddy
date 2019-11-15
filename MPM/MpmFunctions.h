@@ -15,4 +15,7 @@ namespace mpm {
 
 	double ExtractRotationAngle(mat2 R);
 
+	real InnerProduct(mat2 A, mat2 B);
+
+	mat2 CofactorMatrix(mat2 X);
 }

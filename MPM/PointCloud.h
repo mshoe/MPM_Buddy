@@ -148,8 +148,11 @@ namespace mpm {
 
 			if (calcdPdF) {
 				mat4 dPdF;
-				dPdF = FixedCorotationalElasticity::d2Psi_dF2_Mat4(mew, lam, Fe);
-				ImGui::DisplayNamedGlmMatrixMixColor("dPdF", dPdF, min_color, max_color);
+				dPdF = FixedCorotationalElasticity::d2Psi_dF2_Mat4(Fe, lam, mew);
+				ImGui::DisplayNamedGlmMatrixMixColor("dPdF try 1", dPdF, min_color, max_color);
+
+				dPdF = FixedCorotationalElasticity::d2Psi_dF2_Mat4_trick(Fe, lam, mew);
+				ImGui::DisplayNamedGlmMatrixMixColor("dPdF try 2", dPdF, min_color, max_color);
 			}
 
 			if (calcVolumeRatio) {

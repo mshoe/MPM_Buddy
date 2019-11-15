@@ -53,6 +53,14 @@ void mpm::MpmAlgorithmEngine::InitShaders()
 		std::vector<std::string>{implicitPath + "gCR_Conclusion.comp"},
 		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
 
+	m_sparseMatrixVis = std::make_unique<StandardShader>(
+		std::vector<std::string>{graphicsEigenPath + "sparseMatrix.vs"},
+		std::vector<std::string>{},
+		std::vector<std::string>{graphicsEigenPath + "sparseMatrix.fs"},
+		std::vector<std::string>{});
+
+	InitSparseMatrixWindow();
+
 	// initialize material parameters here for now
 	m_energyModels[size_t(ENERGY_MODEL::NEO_HOOKEAN_ELASTICITY)].youngMod = 90000.0;
 	m_energyModels[size_t(ENERGY_MODEL::NEO_HOOKEAN_ELASTICITY)].poisson = 0.3;
@@ -75,3 +83,13 @@ void mpm::MpmAlgorithmEngine::InitShaders()
 void mpm::MpmAlgorithmEngine::CleanupShaders()
 {
 }
+
+
+void mpm::MpmAlgorithmEngine::InitSparseMatrixWindow()
+{
+	m_sparseMatrixWindow = std::make_shared<ImGuiScreen>(vec2(450.0, 450.0));
+	m_sparseMatrixWindow->center = vec2(225.0, 225.0);
+	m_sparseMatrixWindow->sim_dimensions = vec2(450.0, 450.0);
+}
+
+

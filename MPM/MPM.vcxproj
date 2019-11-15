@@ -144,6 +144,7 @@
     <ClCompile Include="MpmAlgorithmSemiImplicit_CPP.cpp" />
     <ClCompile Include="MpmControlImGui.cpp" />
     <ClCompile Include="MpmControlEngineInit.cpp" />
+    <ClCompile Include="MpmEigenRender.cpp" />
     <ClCompile Include="MpmEngineInit.cpp" />
     <ClCompile Include="MpmFunctions.cpp" />
     <ClCompile Include="MpmGeometryEngine.cpp" />
@@ -158,6 +159,7 @@
     <ClCompile Include="MpmGeometryRender.cpp" />
     <ClCompile Include="MpmGeometrySelection.cpp" />
     <ClCompile Include="MpmRender.cpp" />
+    <ClCompile Include="MpmRenderImgui.cpp" />
     <ClCompile Include="OpenGLScreen.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainEngine.cpp" />
