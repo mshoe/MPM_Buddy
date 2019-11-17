@@ -1,5 +1,5 @@
 #pragma once
-
+#include "Structures.h"
 #include "Constants.h"
 #include "glm_imgui.h"
 #include "MpmFunctions.h"
@@ -173,8 +173,38 @@ namespace mpm {
 	struct PointCloud {
 		PointCloud() {};
 		~PointCloud() {
+			points.clear();
 			glDeleteBuffers(1, &ssbo);
 		};
+
+		PointCloud(const PointCloud& a) {
+			parameters = a.parameters;
+			points = a.points;
+			comodel = a.comodel;
+			GenPointCloudSSBO();
+		}
+		PointCloud(std::shared_ptr<const PointCloud> a) {
+			parameters = a->parameters;
+			points = a->points;
+			N = points.size();
+			color = a->color;
+			comodel = a->comodel;
+			GenPointCloudSSBO();
+		}
+
+		void GenPointCloudSSBO() {
+			GLuint pointCloudSSBO;
+			glCreateBuffers(1, &pointCloudSSBO);
+			ssbo = pointCloudSSBO;
+			glNamedBufferStorage(
+				ssbo,
+				sizeof(MaterialPoint) * points.size(),
+				&(points.front().x.x),
+				GL_MAP_READ_BIT | GL_MAP_WRITE_BIT // add write bit for cpu mode
+			);
+		}
+
+		
 
 		size_t N = 0;
 		std::vector<MaterialPoint> points;

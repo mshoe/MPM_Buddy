@@ -260,7 +260,7 @@ void mpm::MpmEngine::ImGuiMaterialPointViewer()
 		ImGui::InputText("Check point cloud", m_pointCloudSelect.data(), 30);*/
 		//static std::string pointCloudSelectStr;// = std::string(m_pointCloudSelect.data());
 
-		ImGuiSelectPointCloud(m_pointCloudViewSelectStr);
+		ImGuiSelectPointCloud(m_pointCloudViewSelectStr, "Select Point Cloud");
 
 		if (ImGui::Button("Update point cloud data")) {
 			UpdatePointCloudData(m_pointCloudViewSelectStr);
@@ -321,9 +321,9 @@ void mpm::MpmEngine::ImGuiMaterialPointViewer()
 	ImGui::End();
 }
 
-void mpm::MpmEngine::ImGuiSelectPointCloud(std::string& pointCloudSelectStr)
+void mpm::MpmEngine::ImGuiSelectPointCloud(std::string& pointCloudSelectStr, const std::string& selectMsg)
 {
-	if (ImGui::BeginCombo("Select Point Cloud", pointCloudSelectStr.c_str())) {
+	if (ImGui::BeginCombo(selectMsg.c_str(), pointCloudSelectStr.c_str())) {
 		for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
 			bool is_selected = pointCloudPair.first == pointCloudSelectStr;
 			if (ImGui::Selectable(pointCloudPair.first.c_str(), is_selected)) {

@@ -11,6 +11,10 @@
 #include "OpenGLScreen.h"
 
 #include "MpmEngine.h"
+#include "MpmAlgorithmEngine.h"
+#include "EnergyFunctions.h"
+
+#include "MpmSpaceTimeControl.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -34,16 +38,25 @@ namespace mpm {
 		// for ImGui menu bar
 		void Menu();
 
+		void Render(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen);
+
+
 		// for mpm engine
 		/*void ProcessMouseInput();
 		void ProcessKeyboardInput(GLFWwindow* window, real lag);*/
 		void SetMpmEngine(MpmEngine* mpmEngine) {
 			m_mpmEngine = mpmEngine;
 		}
+		void SetAlgorithmEngine(std::shared_ptr<MpmAlgorithmEngine> mpmAlgorithmEngine) {
+			m_mpmAlgorithmEngine = mpmAlgorithmEngine;
+		}
+
+		
 	private:
 
 		// Other Engines
 		MpmEngine* m_mpmEngine = nullptr;
+		std::shared_ptr<MpmAlgorithmEngine> m_mpmAlgorithmEngine = nullptr;
 
 		void InitShaders();
 		void CleanupShaders();
@@ -62,6 +75,11 @@ namespace mpm {
 		std::unique_ptr<ComputeShader> m_pMultDeformationGradients = nullptr;
 		std::unique_ptr<ComputeShader> m_pSetLameParamters = nullptr;
 
+		// GRAPHICS
+		std::unique_ptr<StandardShader> m_pRenderControlPointCloud = nullptr;
+
+		void RenderControlPointCloud(vec2 zoomPoint, real zoomFactor, std::shared_ptr<control::ControlPointCloud> pointCloud);
+
 		/******************** EXTERNAL FORCE CONTROLLER ********************/
 	public:
 		real m_drag = 0.5;
@@ -71,9 +89,38 @@ namespace mpm {
 
 
 		/******************** INTERNAL FORCE CONTROLLER ********************/
-		void SetDeformationGradients(std::string pointCloudID, mat2 Fe, mat2 Fp, bool multSelected);
-		void MultiplyDeformationGradients(std::string pointCloudID, mat2 multFe, mat2 multFp, bool setSelected);
-		void SetLameParameters(std::string pointCloudID, real lam, real mew, bool setSelected);
+		void SetDeformationGradientsGLSL(std::string pointCloudID, mat2 Fe, mat2 Fp, bool setSelected);
+		void SetDeformationGradientsGLSL(std::shared_ptr<PointCloud> pointCloud, mat2 Fe, mat2 Fp, bool setSelected);
+		void MultiplyDeformationGradientsGLSL(std::string pointCloudID, mat2 multFe, mat2 multFp, bool setSelected);
+		void SetLameParametersGLSL(std::string pointCloudID, real lam, real mew, bool setSelected);
+
+
+
+		/******************** DEFORMATION GRADIENT SPACETIME CONTROL ********************/
+		/*
+		
+
+		std::vector<MaterialPoint> m_controlPointCloudOriginalPoints;
+		
+		void SaveControlPointCloudOriginalPoints(std::shared_ptr<PointCloud> pointCloud);
+		void ResetControlPointCloudPointsToSaved(std::shared_ptr<PointCloud> pointCloud);
+		*/
+		
+		
+
+
+		bool m_renderTargetPointCloud = false;
+
+
+		void ImGuiDeformationGradientSpaceTimeController();
+		bool m_imguiDeformationGradientSpaceTimeController = false;
+
+
+		// Using new control framework:
+		//void CreateControlPointCloud(std::shared_ptr<control::ControlPointCloud> controlPointCloud, std::shared_ptr<const PointCloud> pointCloud);
+		std::shared_ptr<control::ControlPointCloud> m_targetPointCloud = nullptr;
+		std::shared_ptr<control::ControlPointCloud> m_controlPointCloud = nullptr;
+		std::shared_ptr<control::ControlGrid> m_controlGrid = nullptr;
 	};
 
 }

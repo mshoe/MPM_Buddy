@@ -1,5 +1,5 @@
 #pragma once
-
+#include "Structures.h"
 #include "Constants.h"
 #include "glm_imgui.h"
 
@@ -83,8 +83,7 @@ namespace mpm {
 		}
 	};
 
-	class Grid {
-	public:
+	struct Grid {
 		Grid() {
 			nodes = std::vector<GridNode>(GRID_SIZE_X * GRID_SIZE_Y, GridNode());
 		}

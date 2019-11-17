@@ -231,14 +231,14 @@ void mpm::MpmAlgorithmEngine::ImGuiCPUMode()
 
 		ImGui::Checkbox("Paused", &m_paused);
 
-		ImGui::Checkbox("Semi Implict Time Integration (NOT WORKING)", &m_semiImplicitCPP);
+		ImGui::Checkbox("Semi Implict Time Integration", &m_semiImplicitCPP);
 		ImGui::InputDouble("Implicit Ratio (beta)", &m_beta, 0.05, 0.1);
 		m_beta = glm::max(glm::min(1.0, m_beta), 0.0);
 
 		if (ImGui::Button("Advance") && m_paused) {
 			MpmTimeStep_CPP(m_dt);
-			MapCPUPointCloudsToGPU();
-			MapCPUGridToGPU();
+			m_mpmEngine->MapCPUPointCloudsToGPU();
+			m_mpmEngine->MapCPUGridToGPU();
 		}
 
 		if (ImGui::Button("Reset")) {

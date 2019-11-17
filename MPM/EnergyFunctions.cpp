@@ -140,23 +140,23 @@ mat4 mpm::FixedCorotationalElasticity::d2Psi_dF2_Mat4_trick(mat2 Fe, real mew, r
 	mat2 dPdF00 = d2Psi_dF2_multbydF(Fe, mew, lam, m00);
 
 	// NOTE: My math says these are the correct matrices, but when I run the code, the other way is correct
-	//// |0, 0|
-	//// |1, 0|
-	//mat2 dPdF01 = d2Psi_dF2_multbydF(Fe, mew, lam, m01);
-
-	//// |0, 1|
-	//// |0, 0|
-	//mat2 dPdF10 = d2Psi_dF2_multbydF(Fe, mew, lam, m10);
-
-
-	// swap these around??? did I make a mistake somewhere
 	// |0, 0|
 	// |1, 0|
-	mat2 dPdF10 = d2Psi_dF2_multbydF(Fe, mew, lam, m01);
+	mat2 dPdF01 = d2Psi_dF2_multbydF(Fe, mew, lam, m01);
 
 	// |0, 1|
 	// |0, 0|
-	mat2 dPdF01 = d2Psi_dF2_multbydF(Fe, mew, lam, m10);
+	mat2 dPdF10 = d2Psi_dF2_multbydF(Fe, mew, lam, m10);
+
+
+	// swap these around??? did I make a mistake somewhere
+	//// |0, 0|
+	//// |1, 0|
+	//mat2 dPdF10 = d2Psi_dF2_multbydF(Fe, mew, lam, m01);
+
+	//// |0, 1|
+	//// |0, 0|
+	//mat2 dPdF01 = d2Psi_dF2_multbydF(Fe, mew, lam, m10);
 
 	// |0, 0|
 	// |0, 1|
@@ -184,23 +184,23 @@ mat4 mpm::FixedCorotationalElasticity::d2Psi_dF2_Mat4_trick(mat2 Fe, real mew, r
 
 	// assume column-major flattening (shouldn't matter since this should be symmetric)
 	dPdF[0][0] = dPdF00[0][0];
-	dPdF[0][1] = dPdF00[1][0];
-	dPdF[0][2] = dPdF00[0][1];
+	dPdF[0][1] = dPdF00[0][1];
+	dPdF[0][2] = dPdF00[1][0];
 	dPdF[0][3] = dPdF00[1][1];
 
 	dPdF[1][0] = dPdF01[0][0];
-	dPdF[1][1] = dPdF01[1][0];
-	dPdF[1][2] = dPdF01[0][1];
+	dPdF[1][1] = dPdF01[0][1];
+	dPdF[1][2] = dPdF01[1][0];
 	dPdF[1][3] = dPdF01[1][1];
 
 	dPdF[2][0] = dPdF10[0][0];
-	dPdF[2][1] = dPdF10[1][0];
-	dPdF[2][2] = dPdF10[0][1];
+	dPdF[2][1] = dPdF10[0][1];
+	dPdF[2][2] = dPdF10[1][0];
 	dPdF[2][3] = dPdF10[1][1];
 
 	dPdF[3][0] = dPdF11[0][0];
-	dPdF[3][1] = dPdF11[1][0];
-	dPdF[3][2] = dPdF11[0][1];
+	dPdF[3][1] = dPdF11[0][1];
+	dPdF[3][2] = dPdF11[1][0];
 	dPdF[3][3] = dPdF11[1][1];
 
 	return dPdF;

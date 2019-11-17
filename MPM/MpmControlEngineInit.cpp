@@ -14,6 +14,12 @@ void mpm::MpmControlEngine::InitShaders()
 	m_pSetLameParamters = std::make_unique<ComputeShader>(
 		std::vector<std::string>{interactivePath + "pSetLameParameters.comp"},
 		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
+
+	m_pRenderControlPointCloud = std::make_unique<StandardShader>(
+		std::vector<std::string>{controlPath + "ControlPointCloud.vs"},
+		std::vector<std::string>{},
+		std::vector<std::string>{controlPath + "ControlPointCloud.fs"},
+		std::vector<std::string>{controlPath + "mpmControlStructs.comp"});
 }
 
 void mpm::MpmControlEngine::CleanupShaders()

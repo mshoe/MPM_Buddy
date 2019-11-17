@@ -3,6 +3,21 @@
 #include "MpmFunctions.h"
 #include "EnergyFunctions.h"
 
+
+
+void mpm::MpmAlgorithmEngine::RunMPMSimulationCPP(real dt, size_t num_steps, bool debugOutput, bool renderAfter)
+{
+	if (debugOutput)
+		std::cout << "Starting MPM Simulation, CPP mode, number of time steps = " << num_steps << std::endl;
+	for (size_t k = 0; k < num_steps; k++) {
+		if (debugOutput)
+			std::cout << "Time step: " << k << std::endl;
+		MpmTimeStep_CPP(dt);
+	}
+	if (renderAfter)
+		m_mpmEngine->MapCPUPointCloudsToGPU();
+}
+
 void mpm::MpmAlgorithmEngine::MpmReset_CPP()
 {
 	m_mpmEngine->m_pointCloudMap.clear();

@@ -42,6 +42,7 @@ const int G2P_WORKGROUP_SIZE = 1024;
 
 namespace ShaderPaths {
 	const std::string computePath = "shaders\\compute\\";
+	const std::string controlPath = computePath + "control\\";
 	const std::string mpmHeadersPath = "shaders\\compute\\mpmHeaders\\";
 	const std::string graphicsPath = "shaders\\graphics\\";
 	const std::string graphicsGeometryPath = graphicsPath + "geometryEditor\\";

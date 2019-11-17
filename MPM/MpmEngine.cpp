@@ -127,3 +127,54 @@ void mpm::MpmEngine::UpdateNodeData()
 
 
 
+void mpm::MpmEngine::MapCPUPointCloudsToGPU()
+{
+	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+		void* ptr = glMapNamedBuffer(pointCloudPair.second->ssbo, GL_WRITE_ONLY);
+		MaterialPoint* data = static_cast<MaterialPoint*>(ptr);
+		memcpy(data, pointCloudPair.second->points.data(), pointCloudPair.second->points.size() * sizeof(MaterialPoint));
+		glUnmapNamedBuffer(pointCloudPair.second->ssbo);
+	}
+}
+
+void mpm::MpmEngine::MapCPUPointCloudToGPU(std::shared_ptr<PointCloud> pointCloud)
+{
+	void* ptr = glMapNamedBuffer(pointCloud->ssbo, GL_WRITE_ONLY);
+	MaterialPoint* data = static_cast<MaterialPoint*>(ptr);
+	memcpy(data, pointCloud->points.data(), pointCloud->points.size() * sizeof(MaterialPoint));
+	glUnmapNamedBuffer(pointCloud->ssbo);
+}
+
+void mpm::MpmEngine::MapCPUGridToGPU()
+{
+	void* ptr = glMapNamedBuffer(gridSSBO, GL_WRITE_ONLY);
+	GridNode* data = static_cast<GridNode*>(ptr);
+	memcpy(data, m_grid.nodes.data(), m_grid.nodes.size() * sizeof(GridNode));
+	glUnmapNamedBuffer(gridSSBO);
+}
+
+void mpm::MpmEngine::MapGPUPointCloudsToCPU()
+{
+	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+		void* ptr = glMapNamedBuffer(pointCloudPair.second->ssbo, GL_WRITE_ONLY);
+		MaterialPoint* data = static_cast<MaterialPoint*>(ptr);
+		memcpy(pointCloudPair.second->points.data(), data, pointCloudPair.second->points.size() * sizeof(MaterialPoint));
+		glUnmapNamedBuffer(pointCloudPair.second->ssbo);
+	}
+}
+
+void mpm::MpmEngine::MapGPUPointCloudToCPU(std::shared_ptr<PointCloud> pointCloud)
+{
+	void* ptr = glMapNamedBuffer(pointCloud->ssbo, GL_WRITE_ONLY);
+	MaterialPoint* data = static_cast<MaterialPoint*>(ptr);
+	memcpy(pointCloud->points.data(), data, pointCloud->points.size() * sizeof(MaterialPoint));
+	glUnmapNamedBuffer(pointCloud->ssbo);
+}
+
+void mpm::MpmEngine::MapGPUGridToCPU()
+{
+	void* ptr = glMapNamedBuffer(gridSSBO, GL_READ_ONLY);
+	GridNode* data = static_cast<GridNode*>(ptr);
+	memcpy(m_grid.nodes.data(), data, m_grid.nodes.size() * sizeof(GridNode));
+	glUnmapNamedBuffer(gridSSBO);
+}

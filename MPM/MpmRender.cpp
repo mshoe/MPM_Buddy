@@ -36,6 +36,7 @@ void mpm::MpmEngine::MpmRender()
 	}
 
 	m_mpmGeometryEngine->Render(m_zoomPoint, 1.0, m_mpmRenderWindow);
+	m_mpmControlEngine->Render(m_zoomPoint, 1.0, m_mpmRenderWindow);
 
 
 	RenderGridBorder(m_zoomPoint, 1.0, m_mpmRenderWindow, m_borderShader);
@@ -63,6 +64,7 @@ void mpm::MpmEngine::ZoomRender()
 	// Render polygon
 
 	//m_mpmGeometryEngine->Render(m_zoomPoint, m_zoomFactor, m_zoomWindow);
+	m_mpmControlEngine->Render(m_zoomPoint, m_zoomFactor, m_zoomWindow);
 
 	RenderGridBorder(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_borderShader);
 
@@ -94,6 +96,32 @@ void mpm::MpmEngine::RenderScreenShader(vec2 zoomPoint, real zoomFactor, std::sh
 	m_mouseShader->SetReal("zoomFactor", zoomFactor);
 	m_mouseShader->SetVec("zoomPoint", zoomPoint);
 	openGLScreen->Render();
+}
+
+void mpm::MpmEngine::RenderPointCloud(std::shared_ptr<PointCloud> pointCloud, vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> pointShader)
+{
+	// RENDER POINT CLOUD
+	pointShader->Use();
+	pointShader->SetReal("maxSpeedClamp", m_maxSpeedClamp);
+	pointShader->SetReal("minSpeedClamp", m_minSpeedClamp);
+	pointShader->SetBool("visualizeSpeed", m_visualizeSpeed);
+	pointShader->SetReal("maxEnergyClamp", m_maxEnergyClamp);
+	pointShader->SetReal("minEnergyClamp", m_minEnergyClamp);
+	pointShader->SetBool("visualizeEnergy", m_visualizeEnergy);
+	m_mpmGeometryEngine->SetSelectionUniforms(pointShader);
+	pointShader->SetReal("zoomFactor", zoomFactor);
+	pointShader->SetVec("zoomPoint", zoomPoint);
+	// iResolution and iSourceResolution should be same for the zoom window we make, and iCenter should be the actual center
+	//m_pPointCloudShader->SetVec("iResolution", openGLScreen->sim_dimensions);
+	//m_pPointCloudShader->SetVec("iSourceResolution", openGLScreen->screen_dimensions);
+	//m_pPointCloudShader->SetVec("iCenter", vec2(openGLScreen->center.x, openGLScreen->screen_dimensions.y - openGLScreen->center.y)); // correct y for glsl
+	//m_pPointCloudShader->SetVec("iCenter", m_openGLScreen->center);
+	glBindVertexArray(VisualizeVAO);
+	pointShader->SetVec("pointCloudColor", pointCloud->color);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloud->ssbo);
+	glDrawArrays(GL_POINTS, 0, (GLsizei)pointCloud->N);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
+	glBindVertexArray(0);
 }
 
 void mpm::MpmEngine::RenderPointClouds(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> pointShader)

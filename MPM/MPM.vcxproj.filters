@@ -70,6 +70,21 @@
     <Filter Include="Header Files\MPM">
       <UniqueIdentifier>{4d452e6f-e999-4a81-9d88-99c88ac9890b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\MPM\Data Structures">
+      <UniqueIdentifier>{03cb8468-937f-4f89-b853-5a6531db47b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\MPM\Math">
+      <UniqueIdentifier>{0964733a-5426-4984-ac53-3a3a019f1c68}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\MPM\Control">
+      <UniqueIdentifier>{12d8abe6-2339-4205-9b25-1759ec6ae706}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\MPM\SpaceTime Control">
+      <UniqueIdentifier>{c844db4b-7afd-47d5-bf69-96851c0955dd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\MPM\Control\SpaceTime">
+      <UniqueIdentifier>{8eecdf49-62b9-4320-8a25-0ebf69bc2835}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -186,6 +201,18 @@
     <ClCompile Include="MpmEigenRender.cpp">
       <Filter>Source Files\MPM\Algorithm</Filter>
     </ClCompile>
+    <ClCompile Include="MpmDeformationGradientSpaceTimeControl.cpp">
+      <Filter>Source Files\MPM\Control</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmControlRender.cpp">
+      <Filter>Source Files\MPM\Control</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmSpaceTimeControl.cpp">
+      <Filter>Source Files\MPM\SpaceTime Control</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmSpaceTimeControlStructs.cpp">
+      <Filter>Source Files\MPM\SpaceTime Control</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainEngine.h">
@@ -196,9 +223,6 @@
     </ClInclude>
     <ClInclude Include="Camera.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PointCloud.h">
-      <Filter>Header Files\Math</Filter>
     </ClInclude>
     <ClInclude Include="Shader.h">
       <Filter>Header Files\Math</Filter>
@@ -217,9 +241,6 @@
     </ClInclude>
     <ClInclude Include="MpmEngine.h">
       <Filter>Header Files\MPM</Filter>
-    </ClInclude>
-    <ClInclude Include="Grid.h">
-      <Filter>Header Files\Math</Filter>
     </ClInclude>
     <ClInclude Include="OpenGLScreen.h">
       <Filter>Header Files\Utility\include</Filter>
@@ -257,17 +278,29 @@
     <ClInclude Include="EngineHeader.h">
       <Filter>Header Files\apps</Filter>
     </ClInclude>
-    <ClInclude Include="MpmControlEngine.h">
-      <Filter>Header Files\MPM</Filter>
-    </ClInclude>
-    <ClInclude Include="MpmFunctions.h">
-      <Filter>Header Files\Math</Filter>
-    </ClInclude>
     <ClInclude Include="MpmAlgorithmEngine.h">
       <Filter>Header Files\MPM</Filter>
     </ClInclude>
+    <ClInclude Include="PointCloud.h">
+      <Filter>Header Files\MPM\Data Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="Grid.h">
+      <Filter>Header Files\MPM\Data Structures</Filter>
+    </ClInclude>
     <ClInclude Include="EnergyFunctions.h">
-      <Filter>Header Files\Math</Filter>
+      <Filter>Header Files\MPM\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="MpmFunctions.h">
+      <Filter>Header Files\MPM\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="MpmControlEngine.h">
+      <Filter>Header Files\MPM\Control</Filter>
+    </ClInclude>
+    <ClInclude Include="MpmSpaceTimeControl.h">
+      <Filter>Header Files\MPM\Control\SpaceTime</Filter>
+    </ClInclude>
+    <ClInclude Include="Structures.h">
+      <Filter>Header Files\MPM\Data Structures</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

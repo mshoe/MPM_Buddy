@@ -352,7 +352,7 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepSemiImplicitGridUpdate_CPP(real dt, rea
 
 		// MAP MEMORY TO OPENGL BUFFER
 
-		RenderSparseMatrix(eigenTriplets, m_sparseMatrixWindow, A.outerSize());
+		RenderSparseMatrix(eigenTriplets, m_sparseMatrixWindow, (int)A.outerSize());
 		
 	}
 

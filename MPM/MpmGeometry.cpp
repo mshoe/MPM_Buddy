@@ -133,20 +133,23 @@ std::shared_ptr<mpm::PointCloud> mpm::MpmGeometryEngine::GenPointCloud(const std
 	if (pointCloud->N > 0) {
 
 		// Create the SSBO for the point cloud, so it is stored on the GPU
-		GLuint pointCloudSSBO;
-		glCreateBuffers(1, &pointCloudSSBO);
-		pointCloud->ssbo = pointCloudSSBO;
-		glNamedBufferStorage(
-			pointCloud->ssbo,
-			sizeof(MaterialPoint) * pointCloud->points.size(),
-			&(pointCloud->points.front().x.x),
-			GL_MAP_READ_BIT | GL_MAP_WRITE_BIT // add write bit for cpu mode
-		);
+		//GLuint pointCloudSSBO;
+		//glCreateBuffers(1, &pointCloudSSBO);
+		//pointCloud->ssbo = pointCloudSSBO;
+		//glNamedBufferStorage(
+		//	pointCloud->ssbo,
+		//	sizeof(MaterialPoint) * pointCloud->points.size(),
+		//	&(pointCloud->points.front().x.x),
+		//	GL_MAP_READ_BIT | GL_MAP_WRITE_BIT // add write bit for cpu mode
+		//);
+		pointCloud->GenPointCloudSSBO();
 
 		m_mpmAlgorithmEngine->CalculatePointCloudVolumes(pointCloudID, pointCloud);
 
 		m_mpmEngine->m_pointCloudMap[pointCloudID] = pointCloud;
 	}
+
+	std::cout << "PointCloud size = " << pointCloud->points.size() * sizeof(MaterialPoint) << " bytes." << std::endl;
 
 	return pointCloud;
 }

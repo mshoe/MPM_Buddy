@@ -7,9 +7,6 @@ uniform double minSpeedClamp = 0.0;
 uniform double maxSpeedClamp = 25.0;
 uniform double maxEnergyClamp = 100.0;
 uniform double minEnergyClamp = 0.0;
-uniform dvec2 iSourceResolution; // should be vec2(1800, 900)
-uniform dvec2 iResolution; // e.g. vec2(900, 900)
-uniform dvec2 iCenter; // e.g. vec(900, 450)
 uniform double zoomFactor;
 uniform dvec2 zoomPoint;
 /*** HEADER ***/

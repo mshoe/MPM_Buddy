@@ -9,6 +9,7 @@ bool mpm::MpmEngine::InitEngines()
 	m_mpmGeometryEngine->SetMpmEngine(this);
 	m_mpmGeometryEngine->SetAlgorithmEngine(m_mpmAlgorithmEngine);
 	m_mpmControlEngine->SetMpmEngine(this);
+	m_mpmControlEngine->SetAlgorithmEngine(m_mpmAlgorithmEngine);
 	m_mpmAlgorithmEngine->SetMpmEngine(this);
 	m_mpmAlgorithmEngine->SetMpmControlEngine(m_mpmControlEngine);
 	m_mpmAlgorithmEngine->SetMpmGeometryEngine(m_mpmGeometryEngine);

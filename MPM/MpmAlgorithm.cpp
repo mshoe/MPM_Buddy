@@ -21,8 +21,8 @@ void mpm::MpmAlgorithmEngine::Update()
 		case MPM_ALGORITHM_CODE::CPP:
 			if (!m_rt) {
 				MpmTimeStep_CPP(m_dt);
-				MapCPUPointCloudsToGPU();
-				MapCPUGridToGPU();
+				m_mpmEngine->MapCPUPointCloudsToGPU();
+				m_mpmEngine->MapCPUGridToGPU();
 			}
 			else {
 				real curr_dt = 0.0;
@@ -31,8 +31,8 @@ void mpm::MpmAlgorithmEngine::Update()
 					MpmTimeStep_CPP(m_dt);
 					curr_dt += m_dt;
 				}
-				MapCPUPointCloudsToGPU();
-				MapCPUGridToGPU();
+				m_mpmEngine->MapCPUPointCloudsToGPU();
+				m_mpmEngine->MapCPUGridToGPU();
 			}
 			break;
 		default:

@@ -77,6 +77,13 @@ namespace mpm {
 		void UpdatePointCloudData(std::string pointCloudStr);
 		void UpdateNodeData();
 
+		void MapCPUPointCloudsToGPU();
+		void MapCPUPointCloudToGPU(std::shared_ptr<PointCloud> pointCloud);
+		void MapCPUGridToGPU();
+		void MapGPUPointCloudsToCPU();
+		void MapGPUPointCloudToCPU(std::shared_ptr<PointCloud> pointCloud);
+		void MapGPUGridToCPU();
+
 
 
 		// counters for naming things in m_pointCloudMap
@@ -104,8 +111,11 @@ namespace mpm {
 		void Render();
 		void RenderGUI();
 		// re-used helper functions for imgui
-		void ImGuiSelectPointCloud(std::string& pointCloudSelectStr);
+		void ImGuiSelectPointCloud(std::string& pointCloudSelectStr, const std::string& selectMsg);
 		void ImGuiDropDown(const std::string& combo_name, size_t& index, const std::vector<std::string>& string_vec);
+
+
+		void RenderPointCloud(std::shared_ptr<PointCloud> pointCloud, vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> pointShader);
 
 	private:
 		void RenderScreenShader(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen);
@@ -158,7 +168,9 @@ namespace mpm {
 		
 
 		// RENDERING
+	public:
 		std::shared_ptr<StandardShader> m_pPointCloudShader = nullptr;
+	private:
 		std::shared_ptr<StandardShader> m_pPointCloudVectorShader = nullptr;
 		std::shared_ptr<StandardShader> m_mouseShader = nullptr;
 		std::shared_ptr<StandardShader> m_zoomWindowShader = nullptr;
