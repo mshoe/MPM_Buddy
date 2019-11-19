@@ -163,6 +163,8 @@
     <ClCompile Include="MpmRender.cpp" />
     <ClCompile Include="MpmRenderImgui.cpp" />
     <ClCompile Include="MpmSpaceTimeControl.cpp" />
+    <ClCompile Include="MpmSpaceTimeControlBackPropogation.cpp" />
+    <ClCompile Include="MpmSpaceTimeControlForwardSimulation.cpp" />
     <ClCompile Include="MpmSpaceTimeControlStructs.cpp" />
     <ClCompile Include="OpenGLScreen.cpp" />
     <ClCompile Include="main.cpp" />

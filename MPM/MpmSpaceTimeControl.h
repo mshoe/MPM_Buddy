@@ -43,10 +43,20 @@ namespace control {
 			mp.x = x;
 			mp.v = v;
 			mp.B = C;
+			mp.Fe = F;
+			mp.P = P;
 			mp.m = m;
 			mp.vol = vol;
 			mp.lam = lam;
 			mp.mew = mew;
+		}
+
+		void ResetGradients() {
+			dLdF = mat2(0.0);
+			dLdP = mat2(0.0);
+			dLdC = mat2(0.0);
+			dLdx = vec2(0.0);
+			dLdv = vec2(0.0);
 		}
 		
 		mat2 F = mat2(1.0);
@@ -77,6 +87,12 @@ namespace control {
 			p = vec2(0.0);
 			m = 0.0;
 		}
+		void ResetGradients() {
+			dLdv = vec2(0.0);
+			dLdp = vec2(0.0);
+			dLdm = 0.0;
+		}
+
 		vec2 x = vec2(0.0); // this will never change, but storing cuz I can afford it
 
 		vec2 v = vec2(0.0);
@@ -89,18 +105,7 @@ namespace control {
 		real dLdm = 0.0;
 	};
 
-	struct MPMSpaceComputationGraph {
-		// use an adjacency list
-
-		// first index is grid node, second is list of particles that node was connected to
-		std::vector<std::vector<ControlPoint*>> g2pConnections;
-	};
-
-	struct MPMSpaceTimeComputationGraph {
-
-		//std::vector<SparseMatrixd> p2gNetwork;
-		std::vector<std::shared_ptr<MPMSpaceComputationGraph>> simStates;
-	};
+	
 
 	struct ControlPointCloud {
 
@@ -108,16 +113,18 @@ namespace control {
 		ControlPointCloud(std::shared_ptr<const ControlPointCloud> pointCloud);
 		~ControlPointCloud() {
 			controlPoints.clear();
-			glDeleteBuffers(1, &ssbo);
 		}
 
+		void SetFromControlPointCloud(std::shared_ptr<const ControlPointCloud> pointCloud);
 		void SetRegularPointCloud(std::shared_ptr<PointCloud> pointCloud);
-
-		void GenControlPointCloudSSBO();
-		void MapToGPU();
+		void SetF(mat2 F);
+		void ResetGradients() {
+			for (size_t p = 0; p < controlPoints.size(); p++) {
+				controlPoints[p].ResetGradients();
+			}
+		}
 
 		glm::highp_fvec4 color = glm::highp_fvec4(0.f, 1.f, 0.f, 1.f);
-		GLuint ssbo = 0;
 		std::vector<ControlPoint> controlPoints;
 	};
 
@@ -127,13 +134,89 @@ namespace control {
 		~ControlGrid() {
 			nodes.clear(); // vector clears recursively
 		}
+
+		void ResetGradients() {
+			for (size_t i = 0; i < size_t(grid_size_x); i++) {
+				for (size_t j = 0; j < size_t(grid_size_y); j++) {
+					nodes[i][j].ResetGradients();
+				}
+			}
+		}
+
 		int grid_size_x;
 		int grid_size_y;
 		std::vector<std::vector<ControlGridNode>> nodes;
 	};
 
-	void MPMForwardSimulation(std::shared_ptr<ControlPointCloud> pointCloud, std::shared_ptr<ControlGrid> grid, const vec2 f_ext, const size_t timeSteps, const real dt, bool debugOutput);
-	void MPMForwardTimeStep(std::shared_ptr<ControlPointCloud> pointCloud, std::shared_ptr<ControlGrid> grid, const vec2 f_ext, const real dt);
+	typedef std::vector<std::vector<std::vector<size_t>>> G2PNetwork;
+
+	struct MPMSpaceComputationGraph {
+		MPMSpaceComputationGraph(std::shared_ptr<ControlPointCloud> _pointCloud, std::shared_ptr<ControlGrid> _grid) {
+			pointCloud = _pointCloud;
+			grid = _grid;
+
+			g2pnetwork.resize(
+				grid->grid_size_x,
+				std::vector<std::vector<size_t>>(
+					grid->grid_size_y,
+					std::vector<size_t>{}
+			));
+		}
+
+		std::shared_ptr<ControlPointCloud> pointCloud = nullptr;
+		std::shared_ptr<ControlGrid> grid = nullptr;
+
+		// use an adjacency list
+
+		// [i][j] is grid node, [k] is list of particles that node was connected to
+		G2PNetwork g2pnetwork;
+	};
+
+	struct MPMSpaceTimeComputationGraph {
+
+		~MPMSpaceTimeComputationGraph() {
+			glDeleteBuffers(1, &controlSsbo);
+			glDeleteBuffers(1, &targetSsbo);
+		}
+
+		void InitSTCG();
+		void SetGridSize(int _grid_size_x, int _grid_size_y) {
+			grid_size_x = _grid_size_x;
+			grid_size_y = _grid_size_y;
+		}
+
+		std::shared_ptr<ControlPointCloud> originalPointCloud = nullptr;
+		std::shared_ptr<ControlPointCloud> controlPointCloud = nullptr;
+		std::shared_ptr<ControlPointCloud> targetPointCloud = nullptr;
+		std::shared_ptr<ControlPointCloud> outputPointCloud = nullptr;
+
+		mat2 controlF = mat2(1.0);
+
+		//std::vector<SparseMatrixd> p2gNetwork;
+		int timeSteps = 120;
+		int iters = 10;
+		int grid_size_x = 32;
+		int grid_size_y = 32;
+		std::vector<std::shared_ptr<MPMSpaceComputationGraph>> simStates;
+
+		//void OptimizeControlF();
+
+		void InitControlPointCloud(std::shared_ptr<PointCloud> pointCloud);
+		void InitTargetPointCloud(std::shared_ptr<ControlPointCloud> pointCloud);
+
+		
+		//void MapToGPU(std::shared_ptr<ControlPointCloud> pointCloud, GLuint ssbo);
+
+		//GLuint originalSsbo = 0;
+		GLuint controlSsbo = 0;
+		GLuint targetSsbo = 0;
+	};
+
+	// FORWARD SIMULATION
+	void MPMForwardSimulation(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg, const vec2 f_ext, const real dt, bool debugOutput);
+	void MPMForwardTimeStep(std::shared_ptr<MPMSpaceComputationGraph> scg_n, 
+							std::shared_ptr<MPMSpaceComputationGraph> scg_nplus1,
+							const vec2 f_ext, const real dt);
 	void P2G(std::shared_ptr<ControlPointCloud> pointCloud, std::shared_ptr<ControlGrid> grid, const real dt);
 	void G_Update(std::shared_ptr<ControlGrid> grid, const vec2 f_ext, const real dt);
 	void G2P(std::shared_ptr<ControlPointCloud> pointCloud, std::shared_ptr<ControlGrid> grid, const real dt);
@@ -142,15 +225,36 @@ namespace control {
 	void ProjectGridNodeToParticle(const ControlGridNode& node, ControlPoint& mp, const real dt);
 	void UpdateParticle(ControlPoint& mp, const real dt);
 
-	void BackPropGridNodeToParticle(const ControlGridNode& node, ControlPoint& mp, const real dt);
+
+	// BACKPROPOGATION
+	void MPMBackPropogation(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg, const real dt, bool debugOutput);
+	void BackPropParticleInit(ControlPoint& mp, const ControlPoint& mp_target, const real dt);
+
+	void MPMBackPropogationTimeStep(std::shared_ptr<MPMSpaceComputationGraph> scg_nplus1,
+									std::shared_ptr<MPMSpaceComputationGraph> scg_n,
+									const real dt);
+	
+	void BackG2P(std::shared_ptr<const ControlPointCloud> pointCloud_nplus1, 
+				 std::shared_ptr<const ControlPointCloud> pointCloud_n,
+				 std::shared_ptr<ControlGrid> grid, const real dt);
+	void BackG_Update(std::shared_ptr<ControlGrid> grid);
+	void BackP2G(std::shared_ptr<const ControlPointCloud> pointCloud_nplus1,
+				 std::shared_ptr<ControlPointCloud> pointCloud_n,
+				 std::shared_ptr<const ControlGrid> grid, const real dt);
+	void BackPropParticleToGridNode(const ControlPoint& mp, const ControlPoint& mp_prev, ControlGridNode& node, const real dt);
+	void BackPropGridNode(ControlGridNode& node);
+	void BackPropGridNodeToParticle(const ControlGridNode& node, ControlPoint& mp_prev, const real dt);
+	void BackPropParticleToParticle(const ControlPoint& mp, ControlPoint& mp_prev, const real dt);
 
 	void ExpandPointCloud(std::shared_ptr<ControlPointCloud> pointCloud, real expansionFactor);
 
 	real PositionLossFunction(std::shared_ptr<const ControlPointCloud> controlPointCloud, std::shared_ptr<const ControlPointCloud> targetPointCloud);
-	void OptimizeSetDeformationGradient(std::shared_ptr<ControlPointCloud> controlPointCloud, std::shared_ptr<const ControlPointCloud> targetPointCloud,
-										mat2 initialFe, size_t numTimeSteps, size_t max_iters);
+	void OptimizeSetDeformationGradient(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg,
+										const vec2 f_ext, const real dt,
+										mat2 initialFe, int numTimeSteps, int max_iters,
+										real initialAlpha, bool debugOutput);
 
-
-	void MapCPUControlPointCloudToGPU(std::shared_ptr<ControlPointCloud> pointCloud);
+	void GenControlPointCloudSSBO(std::shared_ptr<ControlPointCloud> pointCloud, GLuint& ssbo);
+	void MapCPUControlPointCloudToGPU(std::shared_ptr<ControlPointCloud> pointCloud, GLuint ssbo);
 }
 }

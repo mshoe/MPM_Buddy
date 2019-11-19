@@ -7,7 +7,6 @@ mpm::control::ControlPointCloud::ControlPointCloud(std::shared_ptr<const PointCl
 	for (size_t i = 0; i < pointCloud->points.size(); i++) {
 		controlPoints[i] = ControlPoint(pointCloud->points[i]);
 	}
-	GenControlPointCloudSSBO();
 }
 
 mpm::control::ControlPointCloud::ControlPointCloud(std::shared_ptr<const ControlPointCloud> pointCloud)
@@ -17,7 +16,18 @@ mpm::control::ControlPointCloud::ControlPointCloud(std::shared_ptr<const Control
 	for (size_t i = 0; i < pointCloud->controlPoints.size(); i++) {
 		controlPoints[i] = pointCloud->controlPoints[i];
 	}
-	GenControlPointCloudSSBO();
+}
+
+void mpm::control::ControlPointCloud::SetFromControlPointCloud(std::shared_ptr<const ControlPointCloud> pointCloud)
+{
+	if (controlPoints.size() != pointCloud->controlPoints.size()) {
+		std::cout << "Error, point clouds not same size.\n";
+		return;
+	}
+
+	for (size_t i = 0; i < pointCloud->controlPoints.size(); i++) {
+		controlPoints[i] = pointCloud->controlPoints[i];
+	}
 }
 
 void mpm::control::ControlPointCloud::SetRegularPointCloud(std::shared_ptr<PointCloud> pointCloud)
@@ -29,33 +39,21 @@ void mpm::control::ControlPointCloud::SetRegularPointCloud(std::shared_ptr<Point
 		return;
 	}
 
+	std::cout << "Setting point cloud from control point cloud..." << std::endl;
+
 	for (size_t i = 0; i < pointCloud->points.size(); i++) {
 		controlPoints[i].SetRegularMaterialPoint(pointCloud->points[i]);
 	}
 }
 
-void mpm::control::ControlPointCloud::GenControlPointCloudSSBO()
+void mpm::control::ControlPointCloud::SetF(mat2 F)
 {
-	GLuint pointCloudSSBO;
-	glCreateBuffers(1, &pointCloudSSBO);
-	ssbo = pointCloudSSBO;
-	glNamedBufferStorage(
-		ssbo,
-		sizeof(ControlPoint) * controlPoints.size(),
-		controlPoints.data(),
-		GL_MAP_READ_BIT | GL_MAP_WRITE_BIT // add write bit for cpu mode
-	);
-
-	//MapToGPU();
+	for (size_t i = 0; i < controlPoints.size(); i++) {
+		controlPoints[i].F = F;
+	}
 }
 
-void mpm::control::ControlPointCloud::MapToGPU()
-{
-	void* ptr = glMapNamedBuffer(ssbo, GL_WRITE_ONLY);
-	ControlPoint* data = static_cast<ControlPoint*>(ptr);
-	memcpy(data, controlPoints.data(), controlPoints.size() * sizeof(ControlPoint));
-	glUnmapNamedBuffer(ssbo);
-}
+
 
 mpm::control::ControlGrid::ControlGrid(int _xSize, int _ySize)
 {
@@ -70,3 +68,31 @@ mpm::control::ControlGrid::ControlGrid(int _xSize, int _ySize)
 	}
 }
 
+void mpm::control::MPMSpaceTimeComputationGraph::InitSTCG()
+{
+	originalPointCloud = std::make_shared<ControlPointCloud>(controlPointCloud);
+
+	simStates.clear();
+
+	// First initialize the spacetime computation graph
+	for (int i = 0; i < timeSteps; i++) {
+		simStates.push_back(
+			std::make_shared<MPMSpaceComputationGraph>(
+				std::make_shared<ControlPointCloud>(originalPointCloud),
+				std::make_shared<ControlGrid>(grid_size_x, grid_size_y))
+		);
+	}
+}
+
+void mpm::control::MPMSpaceTimeComputationGraph::InitControlPointCloud(std::shared_ptr<PointCloud> pointCloud)
+{
+	controlPointCloud = std::make_shared<ControlPointCloud>(pointCloud);
+	GenControlPointCloudSSBO(controlPointCloud, controlSsbo);
+}
+
+void mpm::control::MPMSpaceTimeComputationGraph::InitTargetPointCloud(std::shared_ptr<ControlPointCloud> pointCloud)
+{
+	targetPointCloud = std::make_shared<control::ControlPointCloud>(pointCloud);
+	targetPointCloud->color = glm::highp_fvec4(1.f, 1.f, 0.f, 1.f);
+	GenControlPointCloudSSBO(targetPointCloud, targetSsbo);
+}

@@ -101,3 +101,17 @@ mat2 mpm::CofactorMatrix(mat2 X)
 	cofmat[1][1] = X[0][0];
 	return cofmat;
 }
+
+mat2 mpm::NormalizedMatrix(mat2 X)
+{
+	real X_len = X[0][0] * X[0][0] +
+		X[1][0] * X[1][0] +
+		X[0][1] * X[0][1] +
+		X[1][1] * X[1][1];
+	X_len = sqrt(X_len);
+
+	if (X_len == 0.0)
+		return mat2(0.0);
+	else
+		return X / X_len;
+}

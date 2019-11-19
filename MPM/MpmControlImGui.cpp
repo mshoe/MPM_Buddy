@@ -194,13 +194,12 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 		// USING NEW SPACETIME CONTROL FUNCTIONS
 		if (ImGui::Button("Create mpm::control::ControlPointCloud from selected")) {
 			if (m_mpmEngine->m_pointCloudMap.count(controlPointCloudSelectStr)) {
-				m_controlPointCloud = std::make_shared<control::ControlPointCloud>(m_mpmEngine->m_pointCloudMap[controlPointCloudSelectStr]);
+				m_stcg->InitControlPointCloud(m_mpmEngine->m_pointCloudMap[controlPointCloudSelectStr]);
 			}
 		}
 		if (ImGui::Button("Create target point cloud from control point cloud")) {
-			if (m_controlPointCloud != nullptr) {
-				m_targetPointCloud = std::make_shared<control::ControlPointCloud>(m_controlPointCloud);
-				m_targetPointCloud->color = glm::highp_fvec4(1.f, 1.f, 0.f, 1.f);
+			if (m_stcg->controlPointCloud != nullptr) {
+				m_stcg->InitTargetPointCloud(m_stcg->controlPointCloud);
 			}
 		}
 
@@ -216,41 +215,69 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 
 		ImGui::NewLine(); ImGui::NewLine();
 
-		if (ImGui::Button("Create control grid")) {
-			m_controlGrid = std::make_shared<control::ControlGrid>(
-				m_mpmEngine->m_chunks_x * m_mpmAlgorithmEngine->m_cppChunkX,
-				m_mpmEngine->m_chunks_y * m_mpmAlgorithmEngine->m_cppChunkY);
+		static bool controlGridSizeChosen = false;
+
+		if (ImGui::Button("Choose control grid size")) {
+			m_stcg->SetGridSize(m_mpmEngine->m_chunks_x * m_mpmAlgorithmEngine->m_cppChunkX,
+								m_mpmEngine->m_chunks_y * m_mpmAlgorithmEngine->m_cppChunkY);
+			controlGridSizeChosen = true;
 		}
 
-		if (m_controlGrid == nullptr) {
+		if (controlGridSizeChosen == false) {
 			ImGui::Text("No control grid set up");
 		}
 		else {
-			std::string controlGridSizeStr = "Control grid size: " + std::to_string(m_controlGrid->grid_size_x) + "x" + std::to_string(m_controlGrid->grid_size_y);
+			std::string controlGridSizeStr = "Control grid size: " + std::to_string(m_stcg->grid_size_x) + "x" + std::to_string(m_stcg->grid_size_y);
 			ImGui::Text(controlGridSizeStr.c_str());
 		}
 
 		ImGui::NewLine(); ImGui::NewLine();
 
-		if (m_controlPointCloud != nullptr) {
-			std::string controlPointCloudNStr = "Control point cloud N: " + std::to_string(m_controlPointCloud->controlPoints.size());
+		static int num_steps = 120;
+		ImGui::InputInt("Num time steps", &num_steps);
+		num_steps = glm::max(0, num_steps);
+		m_stcg->timeSteps = num_steps;
+
+		static bool debugOutput = false;
+		ImGui::Checkbox("debugOutput", &debugOutput);
+
+		static int max_iters = 10;
+		ImGui::InputInt("Max gradient descent iterations", &max_iters);
+
+		static real initialAlpha = 0.1;
+		ImGui::InputReal("initialAlpha", &initialAlpha, 0.01, 0.05);
+
+		static mat2 initialControlFe = mat2(1.0);
+		ImGui::InputReal("Fe[0][0]: ", &initialControlFe[0][0], 0.1, 1.0, "%.6f");
+		ImGui::InputReal("Fe[0][1]: ", &initialControlFe[0][1], 0.1, 1.0, "%.6f");
+		ImGui::InputReal("Fe[1][0]: ", &initialControlFe[1][0], 0.1, 1.0, "%.6f");
+		ImGui::InputReal("Fe[1][1]: ", &initialControlFe[1][1], 0.1, 1.0, "%.6f");
+		ImGui::DisplayNamedGlmMatrixMixColor("Initial Control Set Fe: ", initialControlFe, glm::highp_fvec4(1.0f, 0.0f, 0.0f, 1.0f), glm::highp_fvec4(0.0f, 1.0f, 0.0f, 1.0f));
+
+		ImGui::NewLine(); ImGui::NewLine();
+
+		if (m_stcg->controlPointCloud != nullptr) {
+			std::string controlPointCloudNStr = "Control point cloud N: " + std::to_string(m_stcg->controlPointCloud->controlPoints.size());
 			ImGui::Text(controlPointCloudNStr.c_str());
 
-			static int num_steps = 120;
-			ImGui::InputInt("Num time steps", &num_steps);
-			num_steps = glm::max(0, num_steps);
+			ImGui::Checkbox("Render control point cloud", &m_renderControlPointCloud);
 
-			if (m_controlGrid != nullptr && ImGui::Button("Run Forward Simulation")) {
-				control::MPMForwardSimulation(m_controlPointCloud, m_controlGrid, m_globalForce, num_steps, m_mpmAlgorithmEngine->m_dt, true);
+			if (controlGridSizeChosen && ImGui::Button("Run Forward Simulation")) {
+				m_stcg->InitSTCG();
+				control::MPMForwardSimulation(m_stcg, m_globalForce, m_mpmAlgorithmEngine->m_dt, true);
 			}
+
+			
+			
 		}
 		else {
 			ImGui::Text("No control point cloud");
+			ImGui::NewLine();
 		}
 
 
-		if (m_targetPointCloud != nullptr) {
-			std::string targetPointCloudNStr = "Target point cloud N: " + std::to_string(m_targetPointCloud->controlPoints.size());
+		if (m_stcg->targetPointCloud != nullptr) {
+			std::string targetPointCloudNStr = "Target point cloud N: " + std::to_string(m_stcg->targetPointCloud->controlPoints.size());
 			ImGui::Text(targetPointCloudNStr.c_str());
 
 			ImGui::Checkbox("Render target point cloud", &m_renderTargetPointCloud);
@@ -258,17 +285,31 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 			static real expansionFactor = 1.0;
 			ImGui::InputReal("Expansion factor", &expansionFactor, 0.1, 0.5);
 			if (ImGui::Button("Expand target point cloud")) {
-				control::ExpandPointCloud(m_targetPointCloud, expansionFactor);
-				m_targetPointCloud->MapToGPU();
+				control::ExpandPointCloud(m_stcg->targetPointCloud, expansionFactor);
+				control::MapCPUControlPointCloudToGPU(m_stcg->targetPointCloud, m_stcg->targetSsbo);
 			}
 		}
 		else {
 			ImGui::Text("No target point cloud");
 		}
 
-		
-
 		ImGui::NewLine(); ImGui::NewLine();
+
+		if (m_stcg->controlPointCloud != nullptr && m_stcg->targetPointCloud != nullptr) {
+			if (ImGui::Button("Optimize L(F)")) {
+				control::OptimizeSetDeformationGradient(m_stcg, m_globalForce, m_mpmAlgorithmEngine->m_dt, initialControlFe, num_steps, max_iters, initialAlpha, debugOutput);
+			}
+		}
+
+		if (m_stcg->outputPointCloud != nullptr) {
+			if (ImGui::Button("Set selected from output point cloud")) {
+				if (m_mpmEngine->m_pointCloudMap.count(controlPointCloudSelectStr)) {
+					m_stcg->outputPointCloud->SetRegularPointCloud(m_mpmEngine->m_pointCloudMap[controlPointCloudSelectStr]);
+					m_mpmEngine->MapCPUPointCloudToGPU(m_mpmEngine->m_pointCloudMap[controlPointCloudSelectStr]);
+				}
+			}
+		}
+
 
 		//if (m_targetPointCloud != nullptr) {
 		//	ImGui::Checkbox("Render target point cloud", &m_renderTargetPointCloud);
@@ -334,8 +375,7 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 
 		if (controlPointCloud != nullptr && m_targetPointCloud != nullptr && controlPointCloud->N == m_targetPointCloud->N) {
 
-			static int max_iters = 10;
-			ImGui::InputInt("Max gradient descent iterations", &max_iters);
+			
 
 			static int num_steps = 120;
 			ImGui::InputInt("Num time steps", &num_steps);

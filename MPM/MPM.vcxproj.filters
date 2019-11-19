@@ -213,6 +213,12 @@
     <ClCompile Include="MpmSpaceTimeControlStructs.cpp">
       <Filter>Source Files\MPM\SpaceTime Control</Filter>
     </ClCompile>
+    <ClCompile Include="MpmSpaceTimeControlForwardSimulation.cpp">
+      <Filter>Source Files\MPM\SpaceTime Control</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmSpaceTimeControlBackPropogation.cpp">
+      <Filter>Source Files\MPM\SpaceTime Control</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainEngine.h">

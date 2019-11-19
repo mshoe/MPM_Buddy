@@ -29,7 +29,10 @@
 namespace mpm {
 	class MpmControlEngine {
 	public:
-		MpmControlEngine() { InitShaders(); }
+		MpmControlEngine() {
+			InitShaders(); 
+			InitSTCG(); 
+		}
 		~MpmControlEngine() { CleanupShaders(); }
 
 		//void Render(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen);
@@ -78,7 +81,7 @@ namespace mpm {
 		// GRAPHICS
 		std::unique_ptr<StandardShader> m_pRenderControlPointCloud = nullptr;
 
-		void RenderControlPointCloud(vec2 zoomPoint, real zoomFactor, std::shared_ptr<control::ControlPointCloud> pointCloud);
+		void RenderControlPointCloud(vec2 zoomPoint, real zoomFactor, std::shared_ptr<control::ControlPointCloud> pointCloud, GLuint ssbo);
 
 		/******************** EXTERNAL FORCE CONTROLLER ********************/
 	public:
@@ -108,7 +111,8 @@ namespace mpm {
 		
 		
 
-
+		bool m_renderOutputPointCloud = true;
+		bool m_renderControlPointCloud = true;
 		bool m_renderTargetPointCloud = false;
 
 
@@ -118,9 +122,11 @@ namespace mpm {
 
 		// Using new control framework:
 		//void CreateControlPointCloud(std::shared_ptr<control::ControlPointCloud> controlPointCloud, std::shared_ptr<const PointCloud> pointCloud);
-		std::shared_ptr<control::ControlPointCloud> m_targetPointCloud = nullptr;
+		/*std::shared_ptr<control::ControlPointCloud> m_targetPointCloud = nullptr;
 		std::shared_ptr<control::ControlPointCloud> m_controlPointCloud = nullptr;
-		std::shared_ptr<control::ControlGrid> m_controlGrid = nullptr;
+		std::shared_ptr<control::ControlGrid> m_controlGrid = nullptr;*/
+		std::shared_ptr<control::MPMSpaceTimeComputationGraph> m_stcg = nullptr;
+		void InitSTCG();
 	};
 
 }

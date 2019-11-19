@@ -18,4 +18,6 @@ namespace mpm {
 	real InnerProduct(mat2 A, mat2 B);
 
 	mat2 CofactorMatrix(mat2 X);
+
+	mat2 NormalizedMatrix(mat2 X);
 }

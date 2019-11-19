@@ -8,16 +8,16 @@ void mpm::MpmControlEngine::Render(vec2 zoomPoint, real zoomFactor, std::shared_
 	}*/
 
 
-	if (m_targetPointCloud != nullptr && m_renderTargetPointCloud) {
-		RenderControlPointCloud(zoomPoint, zoomFactor, m_targetPointCloud);
+	if (m_stcg->targetPointCloud != nullptr && m_renderTargetPointCloud) {
+		RenderControlPointCloud(zoomPoint, zoomFactor, m_stcg->targetPointCloud, m_stcg->targetSsbo);
 	}
 
-	if (m_controlPointCloud != nullptr) {
-		RenderControlPointCloud(zoomPoint, zoomFactor, m_controlPointCloud);
+	if (m_stcg->controlPointCloud != nullptr && m_renderControlPointCloud) {
+		RenderControlPointCloud(zoomPoint, zoomFactor, m_stcg->controlPointCloud, m_stcg->controlSsbo);
 	}
 }
 
-void mpm::MpmControlEngine::RenderControlPointCloud(vec2 zoomPoint, real zoomFactor, std::shared_ptr<control::ControlPointCloud> pointCloud)
+void mpm::MpmControlEngine::RenderControlPointCloud(vec2 zoomPoint, real zoomFactor, std::shared_ptr<control::ControlPointCloud> pointCloud, GLuint ssbo)
 {
 	m_pRenderControlPointCloud->Use();
 	m_pRenderControlPointCloud->SetReal("zoomFactor", zoomFactor);
@@ -30,7 +30,7 @@ void mpm::MpmControlEngine::RenderControlPointCloud(vec2 zoomPoint, real zoomFac
 	//m_pPointCloudShader->SetVec("iCenter", m_openGLScreen->center);
 	glBindVertexArray(m_mpmEngine->VisualizeVAO);
 	m_pRenderControlPointCloud->SetVec("pointCloudColor", pointCloud->color);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, pointCloud->ssbo);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, ssbo);
 	glDrawArrays(GL_POINTS, 0, (GLsizei)pointCloud->controlPoints.size());
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, 0);
 	glBindVertexArray(0);

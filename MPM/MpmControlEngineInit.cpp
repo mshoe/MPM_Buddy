@@ -25,3 +25,8 @@ void mpm::MpmControlEngine::InitShaders()
 void mpm::MpmControlEngine::CleanupShaders()
 {
 }
+
+void mpm::MpmControlEngine::InitSTCG()
+{
+	m_stcg = std::make_shared<control::MPMSpaceTimeComputationGraph>();
+}
