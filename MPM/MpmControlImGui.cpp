@@ -6,6 +6,7 @@ void mpm::MpmControlEngine::GUI()
 	if (m_imguiDeformationGradientController) ImGuiDeformationGradientController();
 	if (m_imguiMaterialParameterController) ImGuiMaterialParameterController();
 	if (m_imguiDeformationGradientSpaceTimeController) ImGuiDeformationGradientSpaceTimeController();
+	if (m_imguiControlPointViewer) ImGuiControlPointViewer();
 }
 
 void mpm::MpmControlEngine::Menu()
@@ -23,6 +24,9 @@ void mpm::MpmControlEngine::Menu()
 		}
 		if (ImGui::MenuItem("SpaceTime Deformation Gradient Controller", "", m_imguiDeformationGradientSpaceTimeController)) {
 			m_imguiDeformationGradientSpaceTimeController = !m_imguiDeformationGradientSpaceTimeController;
+		}
+		if (ImGui::MenuItem("Control Point Viewer", "", m_imguiControlPointViewer)) {
+			m_imguiControlPointViewer = !m_imguiControlPointViewer;
 		}
 		ImGui::EndMenu();
 	}
@@ -215,6 +219,17 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 
 		ImGui::NewLine(); ImGui::NewLine();
 
+		if (ImGui::Button("Small Circle")) {
+			m_mpmGeometryEngine->SmallCircle();
+		}
+
+		if (ImGui::Button("32 x 32 grid")) {
+			m_mpmEngine->m_chunks_x = 1;
+			m_mpmEngine->m_chunks_y = 1;
+			m_mpmAlgorithmEngine->m_cppChunkX = 32;
+			m_mpmAlgorithmEngine->m_cppChunkY = 32;
+		}
+
 		static bool controlGridSizeChosen = false;
 
 		if (ImGui::Button("Choose control grid size")) {
@@ -244,6 +259,9 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 		static int max_iters = 10;
 		ImGui::InputInt("Max gradient descent iterations", &max_iters);
 
+		static int max_lineSearchIters = 5;
+		ImGui::InputInt("Max backtracking line search iterations", &max_lineSearchIters);
+
 		static real initialAlpha = 0.1;
 		ImGui::InputReal("initialAlpha", &initialAlpha, 0.01, 0.05);
 
@@ -254,13 +272,20 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 		ImGui::InputReal("Fe[1][1]: ", &initialControlFe[1][1], 0.1, 1.0, "%.6f");
 		ImGui::DisplayNamedGlmMatrixMixColor("Initial Control Set Fe: ", initialControlFe, glm::highp_fvec4(1.0f, 0.0f, 0.0f, 1.0f), glm::highp_fvec4(0.0f, 1.0f, 0.0f, 1.0f));
 
+		static bool optimizeOnlyInitialF = true;
+		ImGui::Checkbox("Optimize only initial F", &optimizeOnlyInitialF);
+
+		static int optFrameOffset = 50;
+		ImGui::InputInt("Optimization timestep offset (only optimize every .. frames)", &optFrameOffset);
+		optFrameOffset = glm::max(optFrameOffset, 0);
+
 		ImGui::NewLine(); ImGui::NewLine();
 
 		if (m_stcg->controlPointCloud != nullptr) {
 			std::string controlPointCloudNStr = "Control point cloud N: " + std::to_string(m_stcg->controlPointCloud->controlPoints.size());
 			ImGui::Text(controlPointCloudNStr.c_str());
 
-			ImGui::Checkbox("Render control point cloud", &m_renderControlPointCloud);
+			
 
 			if (controlGridSizeChosen && ImGui::Button("Run Forward Simulation")) {
 				m_stcg->InitSTCG();
@@ -280,12 +305,32 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 			std::string targetPointCloudNStr = "Target point cloud N: " + std::to_string(m_stcg->targetPointCloud->controlPoints.size());
 			ImGui::Text(targetPointCloudNStr.c_str());
 
-			ImGui::Checkbox("Render target point cloud", &m_renderTargetPointCloud);
+			
 
 			static real expansionFactor = 1.0;
 			ImGui::InputReal("Expansion factor", &expansionFactor, 0.1, 0.5);
 			if (ImGui::Button("Expand target point cloud")) {
 				control::ExpandPointCloud(m_stcg->targetPointCloud, expansionFactor);
+				control::MapCPUControlPointCloudToGPU(m_stcg->targetPointCloud, m_stcg->targetSsbo);
+			}
+
+			static vec2 translation = vec2(0.0);
+			ImGui::InputReal("translation.x", &translation.x, 0.1, 1.0);
+			ImGui::InputReal("translation.y", &translation.y, 0.1, 1.0);
+			ImGui::DisplayNamedGlmVecMixColor("translation", translation, glm::highp_fvec4(1.0f, 0.0f, 0.0f, 1.0f), glm::highp_fvec4(0.0f, 1.0f, 0.0f, 1.0f));
+			if (ImGui::Button("Translate target point cloud")) {
+				control::TranslatePointCloud(m_stcg->targetPointCloud, translation);
+				control::MapCPUControlPointCloudToGPU(m_stcg->targetPointCloud, m_stcg->targetSsbo);
+			}
+
+			static mat2 transformMat = mat2(1.0);
+			ImGui::InputReal("transform[0][0]: ", &transformMat[0][0], 0.1, 1.0, "%.6f");
+			ImGui::InputReal("transform[0][1]: ", &transformMat[0][1], 0.1, 1.0, "%.6f");
+			ImGui::InputReal("transform[1][0]: ", &transformMat[1][0], 0.1, 1.0, "%.6f");
+			ImGui::InputReal("transform[1][1]: ", &transformMat[1][1], 0.1, 1.0, "%.6f");
+			ImGui::DisplayNamedGlmMatrixMixColor("Transform: ", transformMat, glm::highp_fvec4(1.0f, 0.0f, 0.0f, 1.0f), glm::highp_fvec4(0.0f, 1.0f, 0.0f, 1.0f));
+			if (ImGui::Button("Transform target point cloud")) {
+				control::TransformPointCloud(m_stcg->targetPointCloud, transformMat);
 				control::MapCPUControlPointCloudToGPU(m_stcg->targetPointCloud, m_stcg->targetSsbo);
 			}
 		}
@@ -297,7 +342,10 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 
 		if (m_stcg->controlPointCloud != nullptr && m_stcg->targetPointCloud != nullptr) {
 			if (ImGui::Button("Optimize L(F)")) {
-				control::OptimizeSetDeformationGradient(m_stcg, m_globalForce, m_mpmAlgorithmEngine->m_dt, initialControlFe, num_steps, max_iters, initialAlpha, debugOutput);
+				control::OptimizeSetDeformationGradient(m_stcg, m_globalForce, m_mpmAlgorithmEngine->m_dt, 
+														initialControlFe, optFrameOffset,
+														num_steps, max_iters, max_lineSearchIters,
+														initialAlpha, optimizeOnlyInitialF, debugOutput);
 			}
 		}
 
@@ -309,92 +357,80 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 				}
 			}
 		}
-
-
-		//if (m_targetPointCloud != nullptr) {
-		//	ImGui::Checkbox("Render target point cloud", &m_renderTargetPointCloud);
-
-
-		//	static float targetPointCloudColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-		//	targetPointCloudColor[0] = m_targetPointCloud->color.x;
-		//	targetPointCloudColor[1] = m_targetPointCloud->color.y;
-		//	targetPointCloudColor[2] = m_targetPointCloud->color.z;
-		//	targetPointCloudColor[3] = m_targetPointCloud->color.w;
-
-		//	ImGui::ColorEdit4("Target point cloud color", targetPointCloudColor);
-		//	m_targetPointCloud->color.x = targetPointCloudColor[0];
-		//	m_targetPointCloud->color.y = targetPointCloudColor[1];
-		//	m_targetPointCloud->color.z = targetPointCloudColor[2];
-		//	m_targetPointCloud->color.w = targetPointCloudColor[3];
-
-
-		//	ImGui::NewLine();
-
-		///*	static real expansionFactor = 1.0;
-		//	ImGui::InputReal("Expansion factor", &expansionFactor, 0.1, 0.5);
-		//	if (ImGui::Button("Expand target point cloud")) {
-		//		ExpandPointCloud(m_targetPointCloud, expansionFactor);
-		//	}*/
-
-
-		//	/*static real loss = -1.0;
-		//	if (controlPointCloud != nullptr && ImGui::Button("Compute Position Loss")) {
-		//		loss = PositionLossFunction(controlPointCloud, m_targetPointCloud);
-		//	}
-		//	std::string lossStr = "Position loss function eval = " + std::to_string(loss);
-		//	ImGui::Text(lossStr.c_str());*/
-
-		//}
-
+	
 		ImGui::NewLine(); ImGui::NewLine();
+		
+	}
+	ImGui::End();
+}
 
-		/*if (controlPointCloud != nullptr) {
-			if (ImGui::Button("Save control point cloud points")) {
-				SaveControlPointCloudOriginalPoints(controlPointCloud);
-			}
-			if (ImGui::Button("Reset control point cloud points")) {
-				ResetControlPointCloudPointsToSaved(controlPointCloud);
-			}
+void mpm::MpmControlEngine::ImGuiControlPointViewer()
+{
+	if (ImGui::Begin("Material Point Viewer", &m_imguiControlPointViewer)) {
+		ImGui::Checkbox("Render control point cloud", &m_renderControlPointCloud);
+		ImGui::Checkbox("Render target point cloud", &m_renderTargetPointCloud);
 
-			ImGui::NewLine();
+
+		static int numPoints = 0;
+
+		if (m_stcg->controlPointCloud != nullptr) {
+			numPoints = int(m_stcg->controlPointCloud->controlPoints.size());
+		}
+		else {
+			numPoints = 0;
+		}
+
+		std::string numPointsStr = "N: " + std::to_string(numPoints);
+		ImGui::Text(numPointsStr.c_str());
+
+		static int numTimeSteps = 0;
+		numTimeSteps = m_stcg->timeSteps;
+		std::string numTimeStepsStr = "time steps: " + std::to_string(numTimeSteps);
+		ImGui::Text(numTimeStepsStr.c_str());
+
+		static control::ControlPoint mp;
+
+		static int simStatesIndex = 0;
+		if (ImGui::InputInt("Time step", &simStatesIndex)) {
+			simStatesIndex = glm::min(glm::max(simStatesIndex, 0), numTimeSteps - 1);
+			if (int(m_stcg->simStates.size()) - simStatesIndex > 0 &&
+				m_stcg->simStates[simStatesIndex]->pointCloud != nullptr)
+			{
+				control::MapCPUControlPointCloudToGPU(m_stcg->simStates[simStatesIndex]->pointCloud, m_stcg->controlSsbo);
+			}
+		}
+
+		static int pointIndex = 0;
+		if (ImGui::InputInt("Point Index", &pointIndex)) {
 			
-			
-
-			static int num_steps = 120;
-			ImGui::InputInt("Num time steps", &num_steps);
-			num_steps = glm::max(0, num_steps);
-
-			if (ImGui::Button("Run simulation")) {
-				m_mpmAlgorithmEngine->RunMPMSimulationCPP(m_mpmAlgorithmEngine->m_dt, num_steps, true, true);
-			}
 
 			
 		}
 
-		ImGui::NewLine();
+		pointIndex = glm::min(glm::max(pointIndex, 0), numPoints - 1); // keep point index in bounds
 
-		if (controlPointCloud != nullptr && m_targetPointCloud != nullptr && controlPointCloud->N == m_targetPointCloud->N) {
+		if (int(m_stcg->simStates.size()) - simStatesIndex > 0 &&
+			m_stcg->simStates[simStatesIndex]->pointCloud != nullptr &&
+			int(m_stcg->simStates[simStatesIndex]->pointCloud->controlPoints.size()) - pointIndex > 0)
+		{
 
-			
 
-			static int num_steps = 120;
-			ImGui::InputInt("Num time steps", &num_steps);
+			mp = m_stcg->simStates[simStatesIndex]->pointCloud->controlPoints[pointIndex];
+		}
 
-			static mat2 initialControlFe = mat2(1.0);
-			ImGui::InputReal("Fe[0][0]: ", &initialControlFe[0][0], 0.1, 1.0, "%.6f");
-			ImGui::InputReal("Fe[0][1]: ", &initialControlFe[0][1], 0.1, 1.0, "%.6f");
-			ImGui::InputReal("Fe[1][0]: ", &initialControlFe[1][0], 0.1, 1.0, "%.6f");
-			ImGui::InputReal("Fe[1][1]: ", &initialControlFe[1][1], 0.1, 1.0, "%.6f");
-			ImGui::DisplayNamedGlmMatrixMixColor("Initial Control Set Fe: ", initialControlFe, glm::highp_fvec4(1.0f, 0.0f, 0.0f, 1.0f), glm::highp_fvec4(0.0f, 1.0f, 0.0f, 1.0f));
+		ImGui::InputInt("Animation frames per displayed frame", &m_simStateFramesPerFrame);
+		m_simStateFramesPerFrame = glm::min(glm::max(m_simStateFramesPerFrame, 0), numTimeSteps - 1);
 
-			
+		ImGui::Text(std::string("Current time step: " + std::to_string(m_currSimState)).c_str());
+		ImGui::Text(std::string("time: " + std::to_string(0.0 + m_currSimState * m_mpmAlgorithmEngine->m_dt)).c_str());
+		ImGui::Checkbox("View animation", &m_animateSimStates);
+		ImGui::Checkbox("Loop", &m_animateLoop);
 
-			if (ImGui::Button("Optimize deformation gradient")) {
-				OptimizeSetDeformationGradient(controlPointCloud, m_targetPointCloud, initialControlFe, num_steps, max_iters);
-			}
+		if (ImGui::CollapsingHeader("Control Point")) {
+			mp.ImGuiDisplay();
+		}
 
-		}*/
-		
+
 	}
 	ImGui::End();
 }

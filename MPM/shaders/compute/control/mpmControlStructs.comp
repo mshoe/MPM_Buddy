@@ -6,6 +6,7 @@ uniform int CHUNKS_Y = 4;
 
 struct ControlPoint {
     dmat2 F;
+    dmat2 dFc;
     dmat2 dLdF;
 
     dmat2 P;

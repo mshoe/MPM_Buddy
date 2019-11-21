@@ -326,7 +326,7 @@ void mpm::MpmGeometryEngine::HandleGeometryStates()
 void mpm::MpmGeometryEngine::SmallCircle()
 {
 	m_circle_r = 2;
-	m_particleSpacing = 0.5;
+	m_particleSpacing = 0.25;
 }
 
 

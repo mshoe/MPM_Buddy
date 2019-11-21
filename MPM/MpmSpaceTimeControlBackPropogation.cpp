@@ -50,7 +50,7 @@ void mpm::control::BackPropParticleInit(ControlPoint& mp, const ControlPoint& mp
 	mp.dLdv = dt * mp.dLdx;
 
 	// dL / dC
-	mp.dLdC = mat2(0.0); // mp.dLdC = dt * mp.dLdF * glm::transpose(mp_prev.F);
+	mp.dLdC = mat2(0.0);
 }
 
 void mpm::control::MPMBackPropogationTimeStep(std::shared_ptr<MPMSpaceComputationGraph> scg_nplus1,
@@ -163,7 +163,7 @@ void mpm::control::BackPropGridNodeToParticle(const ControlGridNode& node, Contr
 	mp_prev.dLdv += wgp * mp_prev.m * node.dLdp;
 
 	// dL / dP
-	mp_prev.dLdP -= wgp * Dp_inv * dt * mp_prev.vol * glm::outerProduct(node.dLdp, glm::transpose(mp_prev.F) * dgp);
+	mp_prev.dLdP -= wgp * Dp_inv * dt * mp_prev.vol * glm::outerProduct(node.dLdp, glm::transpose(mp_prev.F + mp_prev.dFc) * dgp);
 
 	// dL / dF
 	// Note: this gradient also gets particle contributions, which will be added later
@@ -181,6 +181,6 @@ void mpm::control::BackPropGridNodeToParticle(const ControlGridNode& node, Contr
 void mpm::control::BackPropParticleToParticle(const ControlPoint& mp, ControlPoint& mp_prev, const real dt)
 {
 	mp_prev.dLdF += glm::transpose(mat2(1.0) + dt * mp.dLdC) * mp.dLdF;
-	mp_prev.dLdF += FixedCorotationalElasticity::d2Psi_dF2_multbydF(mp_prev.F, mp_prev.lam, mp_prev.mew, mp_prev.dLdP);
+	mp_prev.dLdF += FixedCorotationalElasticity::d2Psi_dF2_multbydF(mp_prev.F + mp_prev.dFc, mp_prev.lam, mp_prev.mew, mp_prev.dLdP);
 
 }

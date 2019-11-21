@@ -43,12 +43,24 @@ namespace control {
 			mp.x = x;
 			mp.v = v;
 			mp.B = C;
-			mp.Fe = F;
+			mp.Fe = F + dFc;
 			mp.P = P;
 			mp.m = m;
 			mp.vol = vol;
 			mp.lam = lam;
 			mp.mew = mew;
+		}
+
+		void SetFromPreviousTimeStepControlPoint(const ControlPoint& mp) {
+			F = mp.F;
+			P = mp.P;
+			C = mp.C;
+			x = mp.x;
+			v = mp.v;
+			m = mp.m;
+			vol = mp.vol;
+			lam = mp.lam;
+			mew = mp.mew;
 		}
 
 		void ResetGradients() {
@@ -60,6 +72,7 @@ namespace control {
 		}
 		
 		mat2 F = mat2(1.0);
+		mat2 dFc = mat2(0.0);
 		mat2 dLdF = mat2(0.0);
 
 		mat2 P = mat2(0.0);
@@ -78,6 +91,27 @@ namespace control {
 		real vol = 0.0;
 		real lam = 0.0;
 		real mew = 0.0;
+
+		void ImGuiDisplay() {
+			glm::highp_fvec4 min_color = glm::highp_fvec4(1.0, 0.0, 0.0, 1.0);
+			glm::highp_fvec4 max_color = glm::highp_fvec4(0.0, 1.0, 0.0, 1.0);
+
+			ImGui::DisplayNamedGlmVecMixColor("x", x, min_color, max_color);
+			ImGui::DisplayNamedGlmVecMixColor("dLdx", dLdx, min_color, max_color);
+			ImGui::DisplayNamedGlmVecMixColor("v", v, min_color, max_color);
+			ImGui::DisplayNamedGlmVecMixColor("dLdc", dLdv, min_color, max_color);
+			ImGui::DisplayNamedGlmRealColor("m", m, max_color);
+			ImGui::DisplayNamedGlmRealColor("vol", vol, max_color);
+			ImGui::DisplayNamedGlmRealColor("lam", lam, max_color);
+			ImGui::DisplayNamedGlmRealColor("mew", mew, max_color);
+			ImGui::DisplayNamedGlmMatrixMixColor("F", F, min_color, max_color);
+			ImGui::DisplayNamedGlmMatrixMixColor("dFc", dFc, min_color, max_color);
+			ImGui::DisplayNamedGlmMatrixMixColor("dLdF", dLdF, min_color, max_color);
+			ImGui::DisplayNamedGlmMatrixMixColor("P", P, min_color, max_color);
+			ImGui::DisplayNamedGlmMatrixMixColor("dLdP", dLdP, min_color, max_color);
+			ImGui::DisplayNamedGlmMatrixMixColor("C", C, min_color, max_color);
+			ImGui::DisplayNamedGlmMatrixMixColor("dLdC", dLdC, min_color, max_color);
+		}
 	};
 
 	struct ControlGridNode {
@@ -116,11 +150,25 @@ namespace control {
 		}
 
 		void SetFromControlPointCloud(std::shared_ptr<const ControlPointCloud> pointCloud);
+		void SetFromPreviousTimeStepControlPointCloud(std::shared_ptr<const ControlPointCloud> pointCloud);
 		void SetRegularPointCloud(std::shared_ptr<PointCloud> pointCloud);
 		void SetF(mat2 F);
 		void ResetGradients() {
 			for (size_t p = 0; p < controlPoints.size(); p++) {
 				controlPoints[p].ResetGradients();
+			}
+		}
+		void ResetdFc() {
+			for (size_t p = 0; p < controlPoints.size(); p++) {
+				controlPoints[p].dFc = mat2(0.0);
+			}
+		}
+		void DescendFGradients(real alpha) {
+			for (ControlPoint& mp : controlPoints) {
+				// view this dLdF matrix as a vector
+				// descend in the direction of the vector
+				mat2 dLdF_dir = NormalizedMatrix(mp.dLdF);
+				mp.dFc -= alpha * dLdF_dir;
 			}
 		}
 
@@ -219,11 +267,13 @@ namespace control {
 							const vec2 f_ext, const real dt);
 	void P2G(std::shared_ptr<ControlPointCloud> pointCloud, std::shared_ptr<ControlGrid> grid, const real dt);
 	void G_Update(std::shared_ptr<ControlGrid> grid, const vec2 f_ext, const real dt);
-	void G2P(std::shared_ptr<ControlPointCloud> pointCloud, std::shared_ptr<ControlGrid> grid, const real dt);
+	void G2P(std::shared_ptr<const ControlPointCloud> pointCloud_n,
+			 std::shared_ptr<ControlPointCloud> pointCloud_nplus1,
+			 std::shared_ptr<ControlGrid> grid, const real dt);
 	void ProjectParticleToGridNode(const ControlPoint& mp, ControlGridNode& node, const real dt);
 	void UpdateGridNode(ControlGridNode& node, const vec2 f_ext, const real dt);
 	void ProjectGridNodeToParticle(const ControlGridNode& node, ControlPoint& mp, const real dt);
-	void UpdateParticle(ControlPoint& mp, const real dt);
+	void UpdateParticle(ControlPoint& mp, const ControlPoint& mp_prev, const real dt);
 
 
 	// BACKPROPOGATION
@@ -247,12 +297,15 @@ namespace control {
 	void BackPropParticleToParticle(const ControlPoint& mp, ControlPoint& mp_prev, const real dt);
 
 	void ExpandPointCloud(std::shared_ptr<ControlPointCloud> pointCloud, real expansionFactor);
-
+	void TranslatePointCloud(std::shared_ptr<ControlPointCloud> pointCloud, vec2 translation);
+	void TransformPointCloud(std::shared_ptr<ControlPointCloud> pointCloud, mat2 transformMat);
+	
 	real PositionLossFunction(std::shared_ptr<const ControlPointCloud> controlPointCloud, std::shared_ptr<const ControlPointCloud> targetPointCloud);
 	void OptimizeSetDeformationGradient(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg,
 										const vec2 f_ext, const real dt,
-										mat2 initialFe, int numTimeSteps, int max_iters,
-										real initialAlpha, bool debugOutput);
+										mat2 initialFe, int optFrameOffset,
+										int numTimeSteps, int max_iters, int maxLineSearchIters,
+										real initialAlpha, bool optimizeOnlyInitialF, bool debugOutput);
 
 	void GenControlPointCloudSSBO(std::shared_ptr<ControlPointCloud> pointCloud, GLuint& ssbo);
 	void MapCPUControlPointCloudToGPU(std::shared_ptr<ControlPointCloud> pointCloud, GLuint ssbo);

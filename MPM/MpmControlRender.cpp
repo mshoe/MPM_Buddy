@@ -12,6 +12,21 @@ void mpm::MpmControlEngine::Render(vec2 zoomPoint, real zoomFactor, std::shared_
 		RenderControlPointCloud(zoomPoint, zoomFactor, m_stcg->targetPointCloud, m_stcg->targetSsbo);
 	}
 
+	if (m_animateSimStates && 
+		!m_stcg->simStates.empty() &&
+		int(m_stcg->simStates.size()) > m_currSimState &&
+		m_stcg->simStates[m_currSimState]->pointCloud != nullptr)
+	{
+		control::MapCPUControlPointCloudToGPU(m_stcg->simStates[m_currSimState]->pointCloud, m_stcg->controlSsbo);
+		m_currSimState += m_simStateFramesPerFrame;
+		if (m_currSimState > int(m_stcg->simStates.size()) - 1) {
+			m_currSimState = 0;
+			if (!m_animateLoop) {
+				m_animateSimStates = false;
+			}
+		}
+	}
+
 	if (m_stcg->controlPointCloud != nullptr && m_renderControlPointCloud) {
 		RenderControlPointCloud(zoomPoint, zoomFactor, m_stcg->controlPointCloud, m_stcg->controlSsbo);
 	}

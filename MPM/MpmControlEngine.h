@@ -53,13 +53,16 @@ namespace mpm {
 		void SetAlgorithmEngine(std::shared_ptr<MpmAlgorithmEngine> mpmAlgorithmEngine) {
 			m_mpmAlgorithmEngine = mpmAlgorithmEngine;
 		}
-
+		void SetMpmGeometryEngine(std::shared_ptr<MpmGeometryEngine> mpmGeometryEngine) {
+			m_mpmGeometryEngine = mpmGeometryEngine;
+		}
 		
 	private:
 
 		// Other Engines
 		MpmEngine* m_mpmEngine = nullptr;
 		std::shared_ptr<MpmAlgorithmEngine> m_mpmAlgorithmEngine = nullptr;
+		std::shared_ptr<MpmGeometryEngine> m_mpmGeometryEngine = nullptr;
 
 		void InitShaders();
 		void CleanupShaders();
@@ -67,11 +70,18 @@ namespace mpm {
 		void ImGuiExternalForceController();
 		void ImGuiDeformationGradientController();
 		void ImGuiMaterialParameterController();
+		void ImGuiControlPointViewer();
 
 		// control
 		bool m_imguiExternalForceController = false;
 		bool m_imguiDeformationGradientController = false;
 		bool m_imguiMaterialParameterController = false;
+		bool m_imguiControlPointViewer = false;
+
+		bool m_animateSimStates = false;
+		bool m_animateLoop = false;
+		int m_currSimState = 0;
+		int m_simStateFramesPerFrame = 2;
 
 		// INTERACTIONS
 		std::unique_ptr<ComputeShader> m_pSetDeformationGradients = nullptr;

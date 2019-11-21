@@ -30,6 +30,18 @@ void mpm::control::ControlPointCloud::SetFromControlPointCloud(std::shared_ptr<c
 	}
 }
 
+void mpm::control::ControlPointCloud::SetFromPreviousTimeStepControlPointCloud(std::shared_ptr<const ControlPointCloud> pointCloud)
+{
+	if (controlPoints.size() != pointCloud->controlPoints.size()) {
+		std::cout << "Error, point clouds not same size.\n";
+		return;
+	}
+
+	for (size_t i = 0; i < pointCloud->controlPoints.size(); i++) {
+		controlPoints[i].SetFromPreviousTimeStepControlPoint(pointCloud->controlPoints[i]);
+	}
+}
+
 void mpm::control::ControlPointCloud::SetRegularPointCloud(std::shared_ptr<PointCloud> pointCloud)
 {
 	//controlPoints.resize(pointCloud->points.size());
