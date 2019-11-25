@@ -20,4 +20,6 @@ namespace mpm {
 	mat2 CofactorMatrix(mat2 X);
 
 	mat2 NormalizedMatrix(mat2 X);
+
+	real MatrixNorm(mat2 X);
 }

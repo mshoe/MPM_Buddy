@@ -137,6 +137,22 @@ namespace control {
 
 		real m = 0.0;
 		real dLdm = 0.0;
+
+		void ImGuiDisplay() {
+			glm::highp_fvec4 min_color = glm::highp_fvec4(1.0, 0.0, 0.0, 1.0);
+			glm::highp_fvec4 max_color = glm::highp_fvec4(0.0, 1.0, 0.0, 1.0);
+			ImGui::DisplayNamedGlmRealColor("m", m, max_color);
+			ImGui::DisplayNamedGlmRealColor("dLdm", dLdm, max_color);
+
+			ImGui::DisplayNamedGlmVecMixColor("x", x, min_color, max_color);
+
+			ImGui::DisplayNamedGlmVecMixColor("p", p, min_color, max_color);
+			ImGui::DisplayNamedGlmVecMixColor("dLdp", dLdp, min_color, max_color);
+
+			ImGui::DisplayNamedGlmVecMixColor("v", v, min_color, max_color);
+			ImGui::DisplayNamedGlmVecMixColor("dLdv", dLdv, min_color, max_color);
+
+		}
 	};
 
 	
@@ -171,7 +187,17 @@ namespace control {
 				mp.dFc -= alpha * dLdF_dir;
 			}
 		}
+		void ComputeTotalMass() {
+			std::cout << "computing total mass..." << std::endl;
+			real mass = 0.0;
+			for (const ControlPoint& mp : controlPoints) {
+				mass += mp.m;
+			}
+			totalMass = mass;
+		}
+		void SetPointCloudMassEqualToGiven(std::shared_ptr<const ControlPointCloud> pointCloud);
 
+		real totalMass = 0.0;
 		glm::highp_fvec4 color = glm::highp_fvec4(0.f, 1.f, 0.f, 1.f);
 		std::vector<ControlPoint> controlPoints;
 	};
@@ -189,6 +215,15 @@ namespace control {
 					nodes[i][j].ResetGradients();
 				}
 			}
+		}
+		real GetTotalMass() {
+			real totalMass = 0.0;
+			for (size_t i = 0; i < size_t(grid_size_x); i++) {
+				for (size_t j = 0; j < size_t(grid_size_y); j++) {
+					totalMass += nodes[i][j].m;
+				}
+			}
+			return totalMass;
 		}
 
 		int grid_size_x;
@@ -238,8 +273,13 @@ namespace control {
 		std::shared_ptr<ControlPointCloud> targetPointCloud = nullptr;
 		std::shared_ptr<ControlPointCloud> outputPointCloud = nullptr;
 
+		std::shared_ptr<ControlGrid> targetGrid = nullptr;
+
 		mat2 controlF = mat2(1.0);
 
+		bool bounded_dFc = false;
+		real max_dFc_norm = 1.0;
+		
 		//std::vector<SparseMatrixd> p2gNetwork;
 		int timeSteps = 120;
 		int iters = 10;
@@ -250,7 +290,17 @@ namespace control {
 		//void OptimizeControlF();
 
 		void InitControlPointCloud(std::shared_ptr<PointCloud> pointCloud);
+		void InitTargetPointCloud(std::shared_ptr<PointCloud> pointCloud);
 		void InitTargetPointCloud(std::shared_ptr<ControlPointCloud> pointCloud);
+
+		void SetTargetPointCloudMassToControl() {
+			if (targetPointCloud != nullptr && controlPointCloud != nullptr) {
+				targetPointCloud->SetPointCloudMassEqualToGiven(controlPointCloud);
+			}
+			else {
+				std::cout << "error" << std::endl;
+			}
+		}
 
 		
 		//void MapToGPU(std::shared_ptr<ControlPointCloud> pointCloud, GLuint ssbo);
@@ -261,7 +311,10 @@ namespace control {
 	};
 
 	// FORWARD SIMULATION
-	void MPMForwardSimulation(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg, const vec2 f_ext, const real dt, bool debugOutput);
+	void MPMForwardSimulation(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg, 
+							  const vec2 f_ext, const real dt, 
+							  int controlTimeStep,
+							  bool debugOutput);
 	void MPMForwardTimeStep(std::shared_ptr<MPMSpaceComputationGraph> scg_n, 
 							std::shared_ptr<MPMSpaceComputationGraph> scg_nplus1,
 							const vec2 f_ext, const real dt);
@@ -275,10 +328,30 @@ namespace control {
 	void ProjectGridNodeToParticle(const ControlGridNode& node, ControlPoint& mp, const real dt);
 	void UpdateParticle(ControlPoint& mp, const ControlPoint& mp_prev, const real dt);
 
-
+	const std::vector<std::string> lossFunctionStrVec = {
+		"Particle positions",
+		"Grid node masses"
+	};
+	enum class LOSS_FUNCTION {
+		PARTICLE_POSITIONS = 0,
+		GRID_NODE_MASSES = 1
+	};
 	// BACKPROPOGATION
-	void MPMBackPropogation(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg, const real dt, bool debugOutput);
-	void BackPropParticleInit(ControlPoint& mp, const ControlPoint& mp_target, const real dt);
+	void MPMBackPropogation(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg, 
+							const real dt, 
+							LOSS_FUNCTION lossFunction,
+							int controlTimeStep,
+							bool debugOutput);
+	void BackPropPointCloudPositionLossFunctionInit(std::shared_ptr<ControlPointCloud> controlPointCloud,
+													std::shared_ptr<const ControlPointCloud> targetPointCloud,
+													const real dt);
+	void BackPropParticlePositionLossFunctionInit(ControlPoint& mp, const ControlPoint& mp_target, const real dt);
+
+	void BackPropGridMassLossFunctionInit(std::shared_ptr<ControlPointCloud> controlPointCloud,
+										  std::shared_ptr<ControlGrid> controlGrid,
+										  std::shared_ptr<const ControlGrid> targetGrid,
+										  const real dt);
+
 
 	void MPMBackPropogationTimeStep(std::shared_ptr<MPMSpaceComputationGraph> scg_nplus1,
 									std::shared_ptr<MPMSpaceComputationGraph> scg_n,
@@ -300,12 +373,32 @@ namespace control {
 	void TranslatePointCloud(std::shared_ptr<ControlPointCloud> pointCloud, vec2 translation);
 	void TransformPointCloud(std::shared_ptr<ControlPointCloud> pointCloud, mat2 transformMat);
 	
-	real PositionLossFunction(std::shared_ptr<const ControlPointCloud> controlPointCloud, std::shared_ptr<const ControlPointCloud> targetPointCloud);
+	real ComputeLoss(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg,
+					 LOSS_FUNCTION lossFunction,
+					 const real dt);
+
+	real ParticlePositionLossFunction(std::shared_ptr<const ControlPointCloud> controlPointCloud, 
+									  std::shared_ptr<const ControlPointCloud> targetPointCloud);
+
+	real GridMassLossFunction(std::shared_ptr<ControlPointCloud> controlPointCloud,
+							  std::shared_ptr<ControlGrid> controlGrid,
+							  std::shared_ptr<const ControlGrid> targetGrid,
+							  const real dt);
+
 	void OptimizeSetDeformationGradient(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg,
 										const vec2 f_ext, const real dt,
 										mat2 initialFe, int optFrameOffset,
 										int numTimeSteps, int max_iters, int maxLineSearchIters,
+										LOSS_FUNCTION lossFunction, bool forceDescent,
 										real initialAlpha, bool optimizeOnlyInitialF, bool debugOutput);
+
+	void OptimizeSetDeformationGradient_InTemporalOrder(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg,
+														const vec2 f_ext, const real dt,
+														mat2 initialFe, int optFrameOffset,
+														int numTimeSteps, int max_iters, int maxLineSearchIters,
+														LOSS_FUNCTION lossFunction, bool forceDescent,
+														real initialAlpha, bool optimizeOnlyInitialF, bool debugOutput);
+
 
 	void GenControlPointCloudSSBO(std::shared_ptr<ControlPointCloud> pointCloud, GLuint& ssbo);
 	void MapCPUControlPointCloudToGPU(std::shared_ptr<ControlPointCloud> pointCloud, GLuint ssbo);

@@ -266,6 +266,26 @@ void mpm::MpmEngine::ImGuiMaterialPointViewer()
 			UpdatePointCloudData(m_pointCloudViewSelectStr);
 		}
 
+
+		static std::string otherPointCloudStr = "";
+		ImGuiSelectPointCloud(otherPointCloudStr, "Select other point cloud");
+
+		if (ImGui::Button("Merge other point cloud to selected")) {
+			if (m_pointCloudMap.count(m_pointCloudViewSelectStr) && m_pointCloudMap.count(otherPointCloudStr)) {
+				m_pointCloudMap[m_pointCloudViewSelectStr]->points.reserve(m_pointCloudMap[m_pointCloudViewSelectStr]->points.size() +
+																		   m_pointCloudMap[otherPointCloudStr]->points.size());
+				m_pointCloudMap[m_pointCloudViewSelectStr]->N = m_pointCloudMap[m_pointCloudViewSelectStr]->points.size() +
+					m_pointCloudMap[otherPointCloudStr]->points.size();
+				m_pointCloudMap[m_pointCloudViewSelectStr]->points.insert(m_pointCloudMap[m_pointCloudViewSelectStr]->points.end(),
+																		  m_pointCloudMap[otherPointCloudStr]->points.begin(),
+																		  m_pointCloudMap[otherPointCloudStr]->points.end());
+				
+
+				glDeleteBuffers(1, &m_pointCloudMap[m_pointCloudViewSelectStr]->ssbo);
+				m_pointCloudMap[m_pointCloudViewSelectStr]->GenPointCloudSSBO();
+			}
+		}
+
 		static int numPoints = 0;
 
 		if (m_pointCloudMap.count(m_pointCloudViewSelectStr)) {

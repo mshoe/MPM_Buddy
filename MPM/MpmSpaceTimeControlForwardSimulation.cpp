@@ -1,10 +1,13 @@
 #include "MpmSpaceTimeControl.h"
 
-void mpm::control::MPMForwardSimulation(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg, const vec2 f_ext, const real dt, bool debugOutput)
+void mpm::control::MPMForwardSimulation(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg, 
+										const vec2 f_ext, const real dt, 
+										int controlTimeStep, 
+										bool debugOutput)
 {
 	// stcg: spacetime computation graph
 
-	for (size_t i = 0; i < stcg->simStates.size() - 1; i++) {
+	for (size_t i = controlTimeStep; i < stcg->simStates.size() - 1; i++) {
 		if (debugOutput) {
 			std::cout << "Time step: " << i << std::endl;
 		}

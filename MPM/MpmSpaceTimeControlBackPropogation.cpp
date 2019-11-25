@@ -1,20 +1,29 @@
 #include "MpmSpaceTimeControl.h"
 
-void mpm::control::MPMBackPropogation(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg, const real dt, bool debugOutput)
+void mpm::control::MPMBackPropogation(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg, 
+									  const real dt, 
+									  LOSS_FUNCTION lossFunction, 
+									  int controlTimeStep,
+									  bool debugOutput)
 {
-
-	if (stcg->targetPointCloud->controlPoints.size()
-		!= stcg->simStates[stcg->simStates.size() - 1]->pointCloud->controlPoints.size()) {
-		std::cout << "error, point cloud sizes don't match\n";
+	switch (lossFunction) {
+	case LOSS_FUNCTION::PARTICLE_POSITIONS:
+		BackPropPointCloudPositionLossFunctionInit(stcg->simStates.back()->pointCloud,
+												   stcg->targetPointCloud,
+												   dt);
+		break;
+	case LOSS_FUNCTION::GRID_NODE_MASSES:
+		BackPropGridMassLossFunctionInit(stcg->simStates.back()->pointCloud,
+										 stcg->simStates.back()->grid,
+										 stcg->targetGrid,
+										 dt);
+		break;
+	default:
+		std::cout << "error" << std::endl;
 		return;
 	}
 
-	// Initialize back prop
-	for (size_t p = 0; p < stcg->targetPointCloud->controlPoints.size(); p++) {
-		BackPropParticleInit(stcg->simStates[stcg->simStates.size() - 1]->pointCloud->controlPoints[p],
-							 stcg->targetPointCloud->controlPoints[p],
-							 dt);
-	}
+	
 
 	if (stcg->simStates.empty()) {
 
@@ -22,7 +31,8 @@ void mpm::control::MPMBackPropogation(std::shared_ptr<MPMSpaceTimeComputationGra
 		return;
 	}
 
-	for (int i = stcg->simStates.size() - 2; i >= 0; i--) {
+	// Only back-propogate to the time step we want
+	for (int i = stcg->simStates.size() - 2; i >= controlTimeStep; i--) {
 
 		if (debugOutput) {
 			std::cout << "Time step: " << i << std::endl;
@@ -34,7 +44,25 @@ void mpm::control::MPMBackPropogation(std::shared_ptr<MPMSpaceTimeComputationGra
 	}
 }
 
-void mpm::control::BackPropParticleInit(ControlPoint& mp, const ControlPoint& mp_target, const real dt)
+void mpm::control::BackPropPointCloudPositionLossFunctionInit(std::shared_ptr<ControlPointCloud> controlPointCloud, std::shared_ptr<const ControlPointCloud> targetPointCloud, const real dt)
+{
+
+	if (targetPointCloud->controlPoints.size() !=
+		controlPointCloud->controlPoints.size()) 
+	{
+		std::cout << "error, point cloud sizes don't match\n";
+		return;
+	}
+
+	// Initialize back prop
+	for (size_t p = 0; p < targetPointCloud->controlPoints.size(); p++) {
+		BackPropParticlePositionLossFunctionInit(controlPointCloud->controlPoints[p],
+												 targetPointCloud->controlPoints[p],
+												 dt);
+	}
+}
+
+void mpm::control::BackPropParticlePositionLossFunctionInit(ControlPoint& mp, const ControlPoint& mp_target, const real dt)
 {
 	// this assumes mp is the final position of the particle
 
@@ -51,6 +79,83 @@ void mpm::control::BackPropParticleInit(ControlPoint& mp, const ControlPoint& mp
 
 	// dL / dC
 	mp.dLdC = mat2(0.0);
+}
+
+void mpm::control::BackPropGridMassLossFunctionInit(std::shared_ptr<ControlPointCloud> controlPointCloud, 
+													std::shared_ptr<ControlGrid> controlGrid, 
+													std::shared_ptr<const ControlGrid> targetGrid, 
+													const real dt)
+{
+	if (controlGrid->grid_size_x != targetGrid->grid_size_x ||
+		controlGrid->grid_size_y != targetGrid->grid_size_y) {
+		std::cout << "error: grids not same size" << std::endl;
+	}
+
+	// first get masses onto grid
+	P2G(controlPointCloud, controlGrid, dt);
+
+	// compute dL / dm per each node
+	for (int i = 0; i < controlGrid->grid_size_x; i++) {
+		for (int j = 0; j < controlGrid->grid_size_y; j++) {
+			controlGrid->nodes[i][j].dLdm = controlGrid->nodes[i][j].m - targetGrid->nodes[i][j].m;
+			//std::cout << i << ", " << j << ": " << controlGrid->nodes[i][j].dLdm << "| ";
+		}
+		//std::cout << std::endl;
+	}
+	
+	// then compute initial dL / dx_p per particle
+	for (size_t p = 0; p < controlPointCloud->controlPoints.size(); p++) {
+		ControlPoint& mp = controlPointCloud->controlPoints[p];
+		
+		// Make sure this is initialized to 0
+		mp.dLdx = vec2(0.0);
+
+		int botLeftNode_i = int(glm::floor(mp.x.x)) - 1;
+		int botLeftNode_j = int(glm::floor(mp.x.y)) - 1;
+
+		for (int i = 0; i <= 3; i++) {
+			for (int j = 0; j <= 3; j++) {
+
+				int currNode_i = botLeftNode_i + i;
+				int currNode_j = botLeftNode_j + j;
+
+				if (!InBounds(currNode_i, currNode_j, controlGrid->grid_size_x, controlGrid->grid_size_y)) {
+					continue;
+				}
+
+				const ControlGridNode& gn = controlGrid->nodes[currNode_i][currNode_j];
+
+				vec2 xg = gn.x;
+				vec2 xp = mp.x;
+				vec2 dgp = xg - xp;
+				real wgp = CubicBSpline(dgp.x) * CubicBSpline(dgp.y);
+				vec2 wpg_Grad = -vec2(CubicBSplineSlope(dgp.x) * CubicBSpline(dgp.y),
+									 CubicBSpline(dgp.x) * CubicBSplineSlope(dgp.y));
+
+				mp.dLdx += mp.m * gn.dLdm * wpg_Grad;
+				// compute initial dL / dx_p. 
+				// This only has a contribution from dL / dm at this time step
+			}
+		}
+	}
+
+
+	// then compute other initial gradients
+	for (size_t p = 0; p < controlPointCloud->controlPoints.size(); p++) {
+		ControlPoint& mp = controlPointCloud->controlPoints[p];
+
+		// dLdF is 0, since this mp's F will not affect its current position in this time step,
+		// it can only affect the next position
+		mp.dLdF = mat2(0.0);
+
+		// These 2 gradients are enough to start off the backpropogation:
+		// dL / dv
+		mp.dLdv = dt * mp.dLdx;
+
+		// dL / dC
+		mp.dLdC = mat2(0.0);
+	}
+	
 }
 
 void mpm::control::MPMBackPropogationTimeStep(std::shared_ptr<MPMSpaceComputationGraph> scg_nplus1,

@@ -71,12 +71,14 @@ namespace mpm {
 		void ImGuiDeformationGradientController();
 		void ImGuiMaterialParameterController();
 		void ImGuiControlPointViewer();
+		void ImGuiControlGridViewer();
 
 		// control
 		bool m_imguiExternalForceController = false;
 		bool m_imguiDeformationGradientController = false;
 		bool m_imguiMaterialParameterController = false;
 		bool m_imguiControlPointViewer = false;
+		bool m_imguiControlGridViewer = false;
 
 		bool m_animateSimStates = false;
 		bool m_animateLoop = false;

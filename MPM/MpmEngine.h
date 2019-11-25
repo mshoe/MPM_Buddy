@@ -236,6 +236,7 @@ namespace mpm {
 		double m_isoMass = 5.0;
 		glm::highp_fvec4 m_marchingSquaresColor = glm::highp_fvec4(1.0f);
 
+
 		// grid node control
 		GridNode m_gn; // selecting grid node
 		bool m_selectNodeState = false;

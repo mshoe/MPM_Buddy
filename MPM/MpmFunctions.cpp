@@ -7,7 +7,7 @@ bool mpm::InBounds(int node_i, int node_j, int x_bound, int y_bound) {
 real mpm::CubicBSpline(real x) {
 	using glm::step;
 	x = abs(x);
-	if (0.0 < x && x < 1.0) {
+	if (0.0 <= x && x < 1.0) {
 		return 0.5 * x * x * x - x * x + 2.0 / 3.0;
 	}
 	else if (1.0 <= x && x < 2.0) {
@@ -20,6 +20,8 @@ real mpm::CubicBSpline(real x) {
 
 real mpm::CubicBSplineSlope(real x) {
 	using glm::step;
+	// step(x) is 0 <= x means 1.0
+
 	real absx = abs(x);
 	return (absx < 1.0) ? step(0.0, absx) * (1.5 * x * absx - 2 * x) :
 		step(absx, 2.0) * (-x * absx / 2 + 2 * x - 2 * x / absx);
@@ -114,4 +116,12 @@ mat2 mpm::NormalizedMatrix(mat2 X)
 		return mat2(0.0);
 	else
 		return X / X_len;
+}
+
+real mpm::MatrixNorm(mat2 X)
+{
+	return sqrt(X[0][0] * X[0][0] +
+		X[1][0] * X[1][0] +
+		X[0][1] * X[0][1] +
+		X[1][1] * X[1][1]);
 }
