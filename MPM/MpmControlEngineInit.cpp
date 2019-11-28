@@ -20,6 +20,18 @@ void mpm::MpmControlEngine::InitShaders()
 		std::vector<std::string>{},
 		std::vector<std::string>{controlPath + "ControlPointCloud.fs"},
 		std::vector<std::string>{controlPath + "mpmControlStructs.comp"});
+
+	m_pRenderControlPointCloudCircles = std::make_unique<StandardShader>(
+		std::vector<std::string>{controlPath + "ControlPointCloud.vs"},
+		std::vector<std::string>{controlPath + "ControlPointCloud.gs"},
+		std::vector<std::string>{controlPath + "ControlPointCloud.fs"},
+		std::vector<std::string>{controlPath + "mpmControlStructs.comp"});
+
+	m_gridDensityShader = std::make_shared<StandardShader>(
+		std::vector<std::string>{graphicsGridPath + "densityField.vs"},
+		std::vector<std::string>{},
+		std::vector<std::string>{graphicsGridPath + "densityField.fs"},
+		std::vector<std::string>{controlPath + "mpmControlStructs.comp", mpmHeadersPath + "shapeFunctions.comp"});
 }
 
 void mpm::MpmControlEngine::CleanupShaders()

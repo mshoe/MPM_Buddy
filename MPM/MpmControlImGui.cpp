@@ -404,6 +404,21 @@ void mpm::MpmControlEngine::ImGuiControlPointViewer()
 		ImGui::Checkbox("Render control point cloud", &m_renderControlPointCloud);
 		ImGui::Checkbox("Render target point cloud", &m_renderTargetPointCloud);
 
+		ImGui::InputReal("Point circle radius", &m_pointCircleRadius, 0.01, 0.05);
+
+		static float pointColor[4] = { 1.0, 0.0, 0.0, 1.0 };
+		ImGui::ColorEdit4("point color", pointColor);
+		if (ImGui::Button("Set control point cloud color") && m_stcg->controlPointCloud != nullptr) {
+			m_stcg->controlPointCloud->color = glm::highp_fvec4(pointColor[0], pointColor[1], pointColor[2], pointColor[3]);
+		}
+		if (ImGui::Button("Set target point cloud color") && m_stcg->targetPointCloud != nullptr) {
+			m_stcg->targetPointCloud->color = glm::highp_fvec4(pointColor[0], pointColor[1], pointColor[2], pointColor[3]);
+		}
+
+		ImGui::Checkbox("Render points", &m_renderPoints);
+		ImGui::Checkbox("Render circles", &m_renderCircles);
+		ImGui::Checkbox("Render deformation gradients", &m_renderDeformationGradients);
+		ImGui::Checkbox("Render control deformation gradients", &m_renderControlDeformationGradients);
 
 		static int numPoints = 0;
 
@@ -431,6 +446,7 @@ void mpm::MpmControlEngine::ImGuiControlPointViewer()
 				m_stcg->simStates[simStatesIndex]->pointCloud != nullptr)
 			{
 				control::MapCPUControlPointCloudToGPU(m_stcg->simStates[simStatesIndex]->pointCloud, m_stcg->controlSsbo);
+				control::MapCPUControlGridToGPU(m_stcg->simStates[simStatesIndex]->grid, m_stcg->gridSsbo);
 			}
 		}
 
@@ -538,7 +554,7 @@ void mpm::MpmControlEngine::ImGuiControlGridViewer()
 			m_stcg->grid_size_x > 0 &&
 			m_stcg->grid_size_y > 0)
 		{
-			gn = grid->nodes[node[0]][node[1]];
+			gn = grid->Node(node[0], node[1]);
 		}
 		//gn = 
 

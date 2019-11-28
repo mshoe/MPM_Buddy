@@ -115,11 +115,13 @@ void mpm::MpmEngine::ImGuiGridOptions()
 
 		
 		if (ImGui::CollapsingHeader("Grid Viewing Options")) {
+			ImGui::ColorEdit4("Background color", m_backgroundColor);
 			ImGui::Checkbox("Node Selection Graphics", &m_nodeGraphicsActive);
 			ImGui::Checkbox("View grid", &m_viewGrid);
 			ImGui::Checkbox("View grid mass", &m_viewGridMass);
 			ImGui::Checkbox("View grid vector", &m_viewGridVector);
 			ImGui::Checkbox("Marching squares", &m_viewMarchingSquares);
+			ImGui::Checkbox("Density field", &m_viewGridDensity);
 			if (ImGui::TreeNode("View grid mass options")) {
 				ImGui::InputReal("max node mass clamp", &m_maxNodeMassClamp, 1.0, 10.0, "%.1f");
 				ImGui::InputReal("min node mass clamp", &m_minNodeMassClamp, 1.0, 10.0, "%.1f");
@@ -153,6 +155,13 @@ void mpm::MpmEngine::ImGuiGridOptions()
 				m_marchingSquaresColor.y = mscolor[1];
 				m_marchingSquaresColor.z = mscolor[2];
 				m_marchingSquaresColor.w = mscolor[3];
+				ImGui::TreePop();
+			}
+
+			if (ImGui::TreeNode("Density Field Options")) {
+
+				ImGui::ColorEdit4("Density color", m_densityColor);
+				ImGui::InputReal("Max grid mass", &m_gridMaxMass);
 				ImGui::TreePop();
 			}
 		}

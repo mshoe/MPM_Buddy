@@ -97,7 +97,7 @@ real mpm::control::GridMassLossFunction(std::shared_ptr<ControlPointCloud> contr
 	real loss = 0.0;
 	for (int i = 0; i < controlGrid->grid_size_x; i++) {
 		for (int j = 0; j < controlGrid->grid_size_y; j++) {
-			real dm = controlGrid->nodes[i][j].m - targetGrid->nodes[i][j].m;
+			real dm = controlGrid->Node(i, j).m - targetGrid->ConstNode(i, j).m;
 			loss += 0.5 * dm * dm;
 		}
 	}
@@ -124,6 +124,7 @@ void mpm::control::OptimizeSetDeformationGradient(std::shared_ptr<MPMSpaceTimeCo
 		// create the target grid from the target point cloud
 		stcg->targetGrid = std::make_shared<ControlGrid>(stcg->grid_size_x, stcg->grid_size_y);
 		P2G(stcg->targetPointCloud, stcg->targetGrid, dt);
+		MapCPUControlGridToGPU(stcg->targetGrid, stcg->targetGridSsbo);
 		break;
 	default:
 		std::cout << "error" << std::endl;
@@ -265,6 +266,7 @@ void mpm::control::OptimizeSetDeformationGradient_InTemporalOrder(std::shared_pt
 		// create the target grid from the target point cloud
 		stcg->targetGrid = std::make_shared<ControlGrid>(stcg->grid_size_x, stcg->grid_size_y);
 		P2G(stcg->targetPointCloud, stcg->targetGrid, dt);
+		MapCPUControlGridToGPU(stcg->targetGrid, stcg->targetGridSsbo);
 		break;
 	default:
 		std::cout << "error" << std::endl;
@@ -354,11 +356,36 @@ void mpm::control::GenControlPointCloudSSBO(std::shared_ptr<ControlPointCloud> p
 	);
 }
 
+void mpm::control::GenControlGridSSBO(std::shared_ptr<ControlGrid> grid, GLuint& ssbo)
+{
+	glCreateBuffers(1, &ssbo);
+
+	glNamedBufferStorage(
+		ssbo,
+		sizeof(ControlGridNode) * grid->grid_size_x * grid->grid_size_y,
+		grid->nodes.data(),
+		GL_MAP_READ_BIT | GL_MAP_WRITE_BIT // add write bit for cpu mode
+	);
+}
+
 void mpm::control::MapCPUControlPointCloudToGPU(std::shared_ptr<ControlPointCloud> pointCloud, GLuint ssbo)
 {
 	void* ptr = glMapNamedBuffer(ssbo, GL_WRITE_ONLY);
 	ControlPoint* data = static_cast<ControlPoint*>(ptr);
 	memcpy(data, pointCloud->controlPoints.data(), pointCloud->controlPoints.size() * sizeof(ControlPoint));
+	glUnmapNamedBuffer(ssbo);
+}
+
+void mpm::control::MapCPUControlGridToGPU(std::shared_ptr<ControlGrid> grid, GLuint ssbo)
+{
+	void* ptr = glMapNamedBuffer(ssbo, GL_WRITE_ONLY);
+	ControlGridNode* data = static_cast<ControlGridNode*>(ptr);
+	
+	for (size_t i = 0; i < grid->grid_size_x; i++) {
+
+		// grid ssbo is always gonna be GRID_SIZE_X * GRID_SIZE_Y
+		memcpy(data + i * GRID_SIZE_Y, &grid->nodes[0] + i * grid->grid_size_y, grid->grid_size_y * sizeof(ControlGridNode));
+	}
 	glUnmapNamedBuffer(ssbo);
 }
 

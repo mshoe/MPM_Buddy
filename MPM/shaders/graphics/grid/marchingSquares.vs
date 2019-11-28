@@ -4,9 +4,6 @@ out vec4 vs_nodeColor;
 out int gridNodeI;
 out int gridNodeJ;
 
-uniform dvec2 iSourceResolution; // should be vec2(1800, 900)
-uniform dvec2 iResolution; // e.g. vec2(900, 900)
-uniform dvec2 iCenter; // e.g. vec(900, 450)
 uniform double zoomFactor;
 uniform dvec2 zoomPoint;
 

@@ -59,7 +59,7 @@ void mpm::MpmEngine::ImGuiMpmRenderWindow()
 void mpm::MpmEngine::ImGuiZoomWindow()
 {
 	if (ImGui::Begin("Zoom Window", &m_imguiZoomWindow)) {
-		ImGui::ColorEdit4("Background color", m_backgroundColor);
+		
 		ImGui::InputReal("Zoom Point x: ", &m_zoomPoint.x, 1.0, 10.0, "%.1f");
 		ImGui::InputReal("Zoom Point y: ", &m_zoomPoint.y, 1.0, 10.0, "%.1f");
 		ImGui::InputReal("Zoom Factor", &m_zoomFactor, 0.5, 2.0, "%.1f");

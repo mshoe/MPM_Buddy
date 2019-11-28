@@ -97,7 +97,7 @@ void mpm::control::BackPropGridMassLossFunctionInit(std::shared_ptr<ControlPoint
 	// compute dL / dm per each node
 	for (int i = 0; i < controlGrid->grid_size_x; i++) {
 		for (int j = 0; j < controlGrid->grid_size_y; j++) {
-			controlGrid->nodes[i][j].dLdm = controlGrid->nodes[i][j].m - targetGrid->nodes[i][j].m;
+			controlGrid->Node(i, j).dLdm = controlGrid->Node(i, j).m - targetGrid->ConstNode(i, j).m;
 			//std::cout << i << ", " << j << ": " << controlGrid->nodes[i][j].dLdm << "| ";
 		}
 		//std::cout << std::endl;
@@ -123,7 +123,7 @@ void mpm::control::BackPropGridMassLossFunctionInit(std::shared_ptr<ControlPoint
 					continue;
 				}
 
-				const ControlGridNode& gn = controlGrid->nodes[currNode_i][currNode_j];
+				const ControlGridNode& gn = controlGrid->ConstNode(currNode_i, currNode_j);
 
 				vec2 xg = gn.x;
 				vec2 xp = mp.x;
@@ -193,7 +193,7 @@ void mpm::control::BackG2P(std::shared_ptr<const ControlPointCloud> pointCloud_n
 					continue;
 				}
 
-				BackPropParticleToGridNode(mp_nplus1, mp_n, grid->nodes[currNode_i][currNode_j], dt);
+				BackPropParticleToGridNode(mp_nplus1, mp_n, grid->Node(currNode_i, currNode_j), dt);
 			}
 		}
 	}
@@ -205,8 +205,8 @@ void mpm::control::BackG_Update(std::shared_ptr<ControlGrid> grid)
 
 	for (size_t i = 0; i < size_t(grid->grid_size_x); i++) {
 		for (size_t j = 0; j < size_t(grid->grid_size_y); j++) {
-			if (grid->nodes[i][j].m != 0.0) {
-				BackPropGridNode(grid->nodes[i][j]);
+			if (grid->Node(i, j).m != 0.0) {
+				BackPropGridNode(grid->Node(i, j));
 			}
 		}
 	}
@@ -232,7 +232,7 @@ void mpm::control::BackP2G(std::shared_ptr<const ControlPointCloud> pointCloud_n
 					continue;
 				}
 
-				BackPropGridNodeToParticle(grid->nodes[currNode_i][currNode_j], mp_n, dt);
+				BackPropGridNodeToParticle(grid->ConstNode(currNode_i, currNode_j), mp_n, dt);
 			}
 		}
 

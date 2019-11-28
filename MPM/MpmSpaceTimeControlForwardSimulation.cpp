@@ -41,7 +41,7 @@ void mpm::control::P2G(std::shared_ptr<ControlPointCloud> pointCloud, std::share
 	// reset the grid
 	for (size_t i = 0; i < size_t(grid->grid_size_x); i++) {
 		for (size_t j = 0; j < size_t(grid->grid_size_y); j++) {
-			grid->nodes[i][j].Reset_vpm();
+			grid->Node(i, j).Reset_vpm();
 		}
 	}
 
@@ -63,7 +63,7 @@ void mpm::control::P2G(std::shared_ptr<ControlPointCloud> pointCloud, std::share
 					continue;
 				}
 
-				ProjectParticleToGridNode(mp, grid->nodes[currNode_i][currNode_j], dt);
+				ProjectParticleToGridNode(mp, grid->Node(currNode_i, currNode_j), dt);
 			}
 		}
 	}
@@ -73,8 +73,8 @@ void mpm::control::G_Update(std::shared_ptr<ControlGrid> grid, const vec2 f_ext,
 {
 	for (size_t i = 0; i < size_t(grid->grid_size_x); i++) {
 		for (size_t j = 0; j < size_t(grid->grid_size_y); j++) {
-			if (grid->nodes[i][j].m != 0.0) {
-				UpdateGridNode(grid->nodes[i][j], f_ext, dt);
+			if (grid->Node(i, j).m != 0.0) {
+				UpdateGridNode(grid->Node(i, j), f_ext, dt);
 			}
 		}
 	}
@@ -82,7 +82,7 @@ void mpm::control::G_Update(std::shared_ptr<ControlGrid> grid, const vec2 f_ext,
 
 void mpm::control::G2P(std::shared_ptr<const ControlPointCloud> pointCloud_n, 
 					   std::shared_ptr<ControlPointCloud> pointCloud_nplus1, 
-					   std::shared_ptr<ControlGrid> grid, const real dt)
+					   std::shared_ptr<const ControlGrid> grid, const real dt)
 {
 	for (size_t p = 0; p < pointCloud_n->controlPoints.size(); p++) {
 		ControlPoint& mp_nplus1 = pointCloud_nplus1->controlPoints[p];
@@ -105,7 +105,7 @@ void mpm::control::G2P(std::shared_ptr<const ControlPointCloud> pointCloud_n,
 					continue;
 				}
 
-				ProjectGridNodeToParticle(grid->nodes[currNode_i][currNode_j], mp_nplus1, dt);
+				ProjectGridNodeToParticle(grid->ConstNode(currNode_i, currNode_j), mp_nplus1, dt);
 			}
 		}
 

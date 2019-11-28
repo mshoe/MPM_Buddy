@@ -14,6 +14,8 @@ uniform int selectedNodeJ;
 uniform dvec2 zoomPoint;
 uniform double zoomFactor;
 
+uniform vec4 backgroundColor;
+
 out vec4 fragColor;
 
 /*** HEADER ***/
@@ -32,7 +34,15 @@ void main() {
 	double dist_to_mouse = abs(length(pixel_grid_space - mouse_grid_space));
 	double intensity = mouse.w * step(-radius, -dist_to_mouse) * (radius - dist_to_mouse) / radius ;
 
-	vec3 color = vec3(float(intensity), float(intensity), 0.0);
-	
+	float intensity_f = float(intensity);
+
+	vec3 mouseActiveColor = vec3(1.0, 1.0, 0.0);
+
+	float color_x = mix(backgroundColor.x, mouseActiveColor.x, intensity_f);
+	float color_y = mix(backgroundColor.y, mouseActiveColor.y, intensity_f);
+	float color_z = mix(backgroundColor.z, mouseActiveColor.z, intensity_f);
+
+
+	vec3 color = vec3(color_x, color_y, color_z);	
 	fragColor = vec4(color, 1.0);
 }

@@ -31,8 +31,8 @@ namespace mpm {
 	class MpmEngine {
 	public:
 		MpmEngine() { 
+			InitComputeShaderPipeline();
 			InitEngines();
-			InitComputeShaderPipeline(); 
 		}
 		~MpmEngine() { CleanupComputeShaderPipeline(); }
 
@@ -94,6 +94,7 @@ namespace mpm {
 		int m_polygonCount = 0;
 
 		float m_backgroundColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		float m_densityColor[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
 
 	private:
 
@@ -123,7 +124,10 @@ namespace mpm {
 		void RenderGrid(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> gridShader);
 		void RenderMarchingSquares(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> gridShader);
 		void RenderGridBorder(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> borderShader);
-		
+
+	public:
+		void RenderDensityField(vec2 zoomPoint, real zoomFactor, int binding, GLuint ssbo, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> densityShader);
+	private:
 		//*** GUI FUNCTIONS ***//
 		void ImGuiGridOptions();
 		void ImGuiGridNodeViewer();
@@ -170,6 +174,8 @@ namespace mpm {
 		// RENDERING
 	public:
 		std::shared_ptr<StandardShader> m_pPointCloudShader = nullptr;
+
+		bool m_viewGridDensity = false; // for gridDensityShader
 	private:
 		std::shared_ptr<StandardShader> m_pPointCloudVectorShader = nullptr;
 		std::shared_ptr<StandardShader> m_mouseShader = nullptr;
@@ -177,6 +183,9 @@ namespace mpm {
 		std::shared_ptr<StandardShader> m_gridShader = nullptr;
 		std::shared_ptr<StandardShader> m_gridShaderVector = nullptr;
 		std::shared_ptr<StandardShader> m_gridShaderMarchingSquares = nullptr;
+		std::shared_ptr<StandardShader> m_gridDensityShader = nullptr;
+		
+		real m_gridMaxMass = 1.0;
 
 		std::shared_ptr<StandardShader> m_borderShader = nullptr;
 

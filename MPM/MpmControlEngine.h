@@ -89,12 +89,19 @@ namespace mpm {
 		std::unique_ptr<ComputeShader> m_pSetDeformationGradients = nullptr;
 		std::unique_ptr<ComputeShader> m_pMultDeformationGradients = nullptr;
 		std::unique_ptr<ComputeShader> m_pSetLameParamters = nullptr;
+		std::shared_ptr<StandardShader> m_gridDensityShader = nullptr;
 
 		// GRAPHICS
 		std::unique_ptr<StandardShader> m_pRenderControlPointCloud = nullptr;
+		std::unique_ptr<StandardShader> m_pRenderControlPointCloudCircles = nullptr;
+		bool m_renderPoints = true;
+		bool m_renderCircles = false;
+		bool m_renderDeformationGradients = false;
+		bool m_renderControlDeformationGradients = false;
+		real m_pointCircleRadius = 0.075;
 
 		void RenderControlPointCloud(vec2 zoomPoint, real zoomFactor, std::shared_ptr<control::ControlPointCloud> pointCloud, GLuint ssbo);
-
+		void RenderControlPointCloudCircles(vec2 zoomPoint, real zoomFactor, std::shared_ptr<control::ControlPointCloud> pointCloud, GLuint ssbo);
 		/******************** EXTERNAL FORCE CONTROLLER ********************/
 	public:
 		real m_drag = 0.5;

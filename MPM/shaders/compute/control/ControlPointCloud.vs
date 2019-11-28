@@ -2,6 +2,7 @@
 
 uniform double zoomFactor;
 uniform dvec2 zoomPoint;
+out uint vs_pointID;
 
 /*** HEADER ***/
 
@@ -10,6 +11,7 @@ void main() {
 	// calculate radius
 	gl_PointSize = 2.0;
 	uint pointID = gl_VertexID;
+	vs_pointID = pointID;
 
 	// map position to (-1.0, 1.0)
 	dvec2 pos = points[pointID].x - zoomPoint;

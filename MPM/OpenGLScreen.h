@@ -13,12 +13,14 @@ public:
 	vec2 screen_dimensions = vec2(1800.0, 900.0);
 	vec2 sim_dimensions = vec2(900.0, 900.0);
 
+	// For drawing the screen
+	GLuint VAO, VBO, EBO;
+
 protected:
 	void InitOpenGLScreen();
 	void CleanupOpenGLScreen();
 
-	// For drawing the screen
-	GLuint VAO, VBO, EBO;
+	
 };
 
 class ImGuiScreen : public OpenGLScreen {

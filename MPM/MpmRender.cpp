@@ -15,6 +15,11 @@ void mpm::MpmEngine::MpmRender()
 	glClearColor(m_backgroundColor[0], m_backgroundColor[1], m_backgroundColor[2], m_backgroundColor[3]);
 	glClear(GL_COLOR_BUFFER_BIT);
 	RenderScreenShader(m_zoomPoint, 1.0, m_mpmRenderWindow);
+
+	if (m_viewGridDensity) {
+		RenderDensityField(m_zoomPoint, 1.0, 2, gridSSBO, m_mpmRenderWindow, m_gridDensityShader);
+	}
+
 	if (m_viewPointClouds) {
 		RenderPointClouds(m_zoomPoint, 1.0, m_mpmRenderWindow, m_pPointCloudShader);
 	}
@@ -52,6 +57,11 @@ void mpm::MpmEngine::ZoomRender()
 	glClearColor(m_backgroundColor[0], m_backgroundColor[1], m_backgroundColor[2], m_backgroundColor[3]);
 	glClear(GL_COLOR_BUFFER_BIT);
 	//RenderScreenShader(m_zoomPoint, m_zoomFactor, m_zoomWindow);
+
+	if (m_viewGridDensity) {
+		RenderDensityField(m_zoomPoint, m_zoomFactor, 2, gridSSBO, m_zoomWindow, m_gridDensityShader);
+	}
+
 	if (m_viewPointClouds) {
 		RenderPointClouds(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_pPointCloudShader);
 	}
@@ -95,6 +105,9 @@ void mpm::MpmEngine::RenderScreenShader(vec2 zoomPoint, real zoomFactor, std::sh
 	m_mouseShader->SetInt("selectedNodeJ", m_node[1]);
 	m_mouseShader->SetReal("zoomFactor", zoomFactor);
 	m_mouseShader->SetVec("zoomPoint", zoomPoint);
+
+	glm::highp_fvec4 backgroundColor = glm::highp_fvec4(m_backgroundColor[0], m_backgroundColor[1], m_backgroundColor[2], m_backgroundColor[3]);
+	m_mouseShader->SetVec("backgroundColor", backgroundColor);
 	openGLScreen->Render();
 }
 
@@ -219,6 +232,36 @@ void mpm::MpmEngine::RenderGridBorder(vec2 zoomPoint, real zoomFactor, std::shar
 	}
 	glBindVertexArray(VisualizeVAO);
 	glDrawArrays(GL_POINTS, 0, (GLsizei)1);
+	glBindVertexArray(0);
+}
+
+void mpm::MpmEngine::RenderDensityField(vec2 zoomPoint, real zoomFactor, int binding, GLuint ssbo, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> densityShader)
+{
+	densityShader->Use();
+	//m_mouseShader->SetVec("iCenter", vec2(openGLScreen->center.x, openGLScreen->screen_dimensions.y - openGLScreen->center.y)); // correct y for glsl
+	//m_mouseShader->SetVec("iResolution", openGLScreen->sim_dimensions);
+	densityShader->SetReal("zoomFactor", zoomFactor);
+	densityShader->SetVec("zoomPoint", zoomPoint);
+	densityShader->SetVec("screenResolution", openGLScreen->screen_dimensions);
+	glm::highp_fvec4 backgroundColor = glm::highp_fvec4(m_backgroundColor[0], m_backgroundColor[1], m_backgroundColor[2], m_backgroundColor[3]);
+	densityShader->SetVec("backgroundColor", backgroundColor);
+	glm::highp_fvec4 densityColor = glm::highp_fvec4(m_densityColor[0], m_densityColor[1], m_densityColor[2], m_densityColor[3]);
+	densityShader->SetVec("densityColor", densityColor);
+	densityShader->SetReal("maxMass", m_gridMaxMass);
+	if (m_mpmAlgorithmEngine->m_algo_code == MpmAlgorithmEngine::MPM_ALGORITHM_CODE::CPP) {
+		densityShader->SetInt("currGridSizeX", m_mpmAlgorithmEngine->m_cppChunkX * m_chunks_x);
+		densityShader->SetInt("currGridSizeY", m_mpmAlgorithmEngine->m_cppChunkY * m_chunks_y);
+	}
+	else {
+		densityShader->SetInt("currGridSizeX", 32 * m_chunks_x);
+		densityShader->SetInt("currGridSizeY", 32 * m_chunks_y);
+	}
+	
+
+	glBindVertexArray(openGLScreen->VAO);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, binding, ssbo);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, binding, 0);
 	glBindVertexArray(0);
 }
 

@@ -91,13 +91,21 @@ mpm::control::ControlGrid::ControlGrid(int _xSize, int _ySize)
 {
 	grid_size_x = _xSize;
 	grid_size_y = _ySize;
-	nodes = std::vector<std::vector<ControlGridNode>>(_xSize, std::vector<ControlGridNode>(_ySize, ControlGridNode()));
+	nodes = std::vector<ControlGridNode>(_xSize * _ySize, ControlGridNode());
 
 	for (int i = 0; i < _xSize; i++) {
 		for (int j = 0; j < _ySize; j++) {
-			nodes[i][j].x = vec2(real(i), real(j));
+			size_t grid_ind = i + j * size_t(grid_size_y);
+			nodes[grid_ind].x = vec2(real(i), real(j));
 		}
 	}
+}
+
+mpm::control::MPMSpaceTimeComputationGraph::MPMSpaceTimeComputationGraph()
+{
+	std::shared_ptr<ControlGrid> tempGrid = std::make_shared<ControlGrid>(GRID_SIZE_X, GRID_SIZE_Y);
+	GenControlGridSSBO(tempGrid, targetGridSsbo);
+	GenControlGridSSBO(tempGrid, gridSsbo);
 }
 
 void mpm::control::MPMSpaceTimeComputationGraph::InitSTCG()
@@ -114,6 +122,14 @@ void mpm::control::MPMSpaceTimeComputationGraph::InitSTCG()
 				std::make_shared<ControlGrid>(grid_size_x, grid_size_y))
 		);
 	}
+}
+
+void mpm::control::MPMSpaceTimeComputationGraph::SetGridSize(int _grid_size_x, int _grid_size_y)
+{
+	grid_size_x = _grid_size_x;
+	grid_size_y = _grid_size_y;
+
+	targetGrid = std::make_shared<ControlGrid>(grid_size_x, grid_size_y);
 }
 
 void mpm::control::MPMSpaceTimeComputationGraph::InitControlPointCloud(std::shared_ptr<PointCloud> pointCloud)
