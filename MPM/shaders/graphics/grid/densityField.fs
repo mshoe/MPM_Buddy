@@ -4,13 +4,23 @@ out vec4 fragColor;
 uniform int currGridSizeX;
 uniform int currGridSizeY;
 uniform double maxMass;
-uniform vec4 densityColor;
+uniform double mediumMass;
+uniform double minMass;
+
+uniform vec4 maxDensityColor;
+uniform vec4 mediumDensityColor;
+uniform vec4 minDensityColor;
+
+uniform bool useColorSpectrum;
+
 uniform vec4 backgroundColor;
 
 uniform dvec2 zoomPoint;
 uniform double zoomFactor;
 
-uniform dvec2 screenResolution; 
+uniform dvec2 screenResolution;
+
+uniform bool sharp = false;
 
 /*** HEADER ***/
 
@@ -78,13 +88,30 @@ void main() {
     
     double mass = GetInterpolatedMass(pos);
 
-    double norm_mass = mass / maxMass;
-
     vec4 color;
-    color.x = mix(backgroundColor.x, densityColor.x, float(norm_mass));
-    color.y = mix(backgroundColor.y, densityColor.y, float(norm_mass));
-    color.z = mix(backgroundColor.z, densityColor.z, float(norm_mass));
-    color.w = mix(backgroundColor.w, densityColor.w, float(norm_mass));
+    if (sharp) {
+        
+        if (mass >= maxMass) {
+            color = maxDensityColor;
+        } else if (useColorSpectrum && mass >= mediumMass) {
+            color = mediumDensityColor;
+        } else if (useColorSpectrum && mass > minMass) {
+            color = minDensityColor;
+        }
+        else {
+            color = backgroundColor;
+        }
+
+    } else {
+
+        double norm_mass = mass / maxMass;
+
+        
+        color.x = mix(backgroundColor.x, maxDensityColor.x, float(norm_mass));
+        color.y = mix(backgroundColor.y, maxDensityColor.y, float(norm_mass));
+        color.z = mix(backgroundColor.z, maxDensityColor.z, float(norm_mass));
+        color.w = mix(backgroundColor.w, maxDensityColor.w, float(norm_mass));
+    }
 
 	fragColor = color;
     //fragColor = densityColor;

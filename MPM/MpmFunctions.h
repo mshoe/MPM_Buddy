@@ -22,4 +22,6 @@ namespace mpm {
 	mat2 NormalizedMatrix(mat2 X);
 
 	real MatrixNorm(mat2 X);
+
+	real MatrixNormSqrd(mat2 X);
 }

@@ -22,9 +22,21 @@ struct ControlPoint {
     dvec2 dLdv;
 
     double m;
+    double dmc;
+    double dLdm;
+
     double vol;
+    double dvolc;
+    double dLdvol;
+    
     double lam;
+    double dlamc;
+    double dLdlam;
+
     double mew;
+    double dmewc;
+    double dLdmew;
+
 };
 
 struct ControlGridNode {

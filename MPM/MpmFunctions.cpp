@@ -125,3 +125,11 @@ real mpm::MatrixNorm(mat2 X)
 		X[0][1] * X[0][1] +
 		X[1][1] * X[1][1]);
 }
+
+real mpm::MatrixNormSqrd(mat2 X)
+{
+	return	X[0][0] * X[0][0] +
+			X[1][0] * X[1][0] +
+			X[0][1] * X[0][1] +
+			X[1][1] * X[1][1];
+}

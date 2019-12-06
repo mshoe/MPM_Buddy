@@ -8,6 +8,8 @@
 #include <glad/glad.h>
 #include <vector>
 #include <iomanip>
+#include <iostream>
+#include <fstream>
 
 namespace mpm {
 
@@ -42,11 +44,12 @@ namespace mpm {
 	};
 
 	struct MaterialPoint {
+		MaterialPoint() {}
 		MaterialPoint(vec2 _x, vec2 _v, GLreal _m) : x(_x), v(_v), m(_m) {}
 
-		vec2 x;
-		vec2 v;
-		GLreal m;
+		vec2 x = vec2(0.0);
+		vec2 v = vec2(0.0);
+		GLreal m = 0.0;
 		GLreal vol = 0.0; // initial volume
 		real Lz = 0.0; // angular momentum (for RPIC)
 		real padding = 1.5; // padding
@@ -165,6 +168,101 @@ namespace mpm {
 			//ImGui::DisplayNamedBoolColor("padding2", padding2, max_color, min_color);
 			//ImGui::DisplayNamedBoolColor("padding3", padding3, max_color, min_color);
 		}
+
+		void WriteToFile(std::ofstream& myFile) {
+			myFile << x.x << " " << x.y << std::endl;
+			myFile << v.x << " " << v.y << std::endl;
+			myFile << m << std::endl;
+			myFile << vol << std::endl;
+
+			
+			myFile << lam << std::endl;
+			myFile << mew << std::endl;
+
+
+			// skip lz and padding
+
+			myFile << B[0].x << " " << B[0].y << " " << B[1].x << " " << B[1].y <<  std::endl;
+			myFile << Fe[0].x << " " << Fe[0].y << " " << Fe[1].x << " " << Fe[1].y << std::endl;
+			myFile << Fp[0].x << " " << Fp[0].y << " " << Fp[1].x << " " << Fp[1].y << std::endl;
+			myFile << P[0].x << " " << P[0].y << " " << P[1].x << " " << P[1].y << std::endl;
+
+			// skip everything else
+		}
+
+		void LoadFromFile(std::ifstream& myFile) {
+			std::string line;
+			std::string valueStr;
+			std::stringstream ss;
+
+			getline(myFile, line);
+			ss.str(line);
+			getline(ss, valueStr, ' ');
+			x.x = std::stod(valueStr);
+			getline(ss, valueStr, ' ');
+			x.y = std::stod(valueStr);
+
+
+			getline(myFile, line);
+			ss.clear();
+			ss.str(line);
+			getline(ss, valueStr, ' ');
+			v.x = std::stod(valueStr);
+			getline(ss, valueStr, ' ');
+			v.y = std::stod(valueStr);
+
+			getline(myFile, line);
+			m = std::stod(line);
+
+			getline(myFile, line);
+			vol = std::stod(line);
+
+			getline(myFile, line);
+			lam = std::stod(line);
+
+			getline(myFile, line);
+			mew = std::stod(line);
+
+			getline(myFile, line);
+			ss.clear();
+			ss.str(line);
+			for (int i = 0; i < 2; i++) {
+				for (int j = 0; j < 2; j++) {
+					getline(ss, valueStr, ' ');
+					B[i][j] = std::stod(valueStr);
+				}
+			}
+
+			getline(myFile, line);
+			ss.clear();
+			ss.str(line);
+			for (int i = 0; i < 2; i++) {
+				for (int j = 0; j < 2; j++) {
+					getline(ss, valueStr, ' ');
+					Fe[i][j] = std::stod(valueStr);
+				}
+			}
+
+			getline(myFile, line);
+			ss.clear();
+			ss.str(line);
+			for (int i = 0; i < 2; i++) {
+				for (int j = 0; j < 2; j++) {
+					getline(ss, valueStr, ' ');
+					Fp[i][j] = std::stod(valueStr);
+				}
+			}
+
+			getline(myFile, line);
+			ss.clear();
+			ss.str(line);
+			for (int i = 0; i < 2; i++) {
+				for (int j = 0; j < 2; j++) {
+					getline(ss, valueStr, ' ');
+					P[i][j] = std::stod(valueStr);
+				}
+			}
+		}
 	};
 
 	
@@ -204,6 +302,79 @@ namespace mpm {
 			);
 		}
 
+		void SaveToFile(std::string fileName) {
+			fileName = "..\\SavedMPM\\" + fileName + ".mpm";
+
+			std::ofstream myFile;
+			myFile.open(fileName, std::ios::out);
+			std::streamsize prevPrec = myFile.precision(16);
+
+			// first write the number of material points
+			
+			std::cout << "Writing " << points.size() << " points to file '" << fileName << "'" << std::endl;
+			
+			myFile << points.size() << std::endl;
+			myFile << color.x << " " << color.y << " " << color.z << " " << color.w << std::endl;
+			myFile << size_t(comodel) << std::endl;
+			// then write the data itself
+			for (size_t i = 0; i < points.size(); i++) {
+				points[i].WriteToFile(myFile);
+			}
+			myFile.precision(prevPrec);
+
+			std::cout << "Finished writing." << std::endl;
+
+		}
+
+		void LoadFromFile(std::string fileName) {
+			fileName = "..\\SavedMPM\\" + fileName + ".mpm";
+
+			std::cout << "Loading point cloud from file " << fileName << std::endl;
+
+			std::string line;
+			std::string valueStr;
+			std::ifstream myfile(fileName);
+			if (myfile.is_open())
+			{
+				// first is # of pts
+				getline(myfile, line);
+				N = size_t(std::stoi(line));
+				
+				// second is color
+				getline(myfile, line);
+				std::stringstream ss(line);
+				getline(ss, valueStr, ' ');
+				color.x = std::stod(valueStr);
+				getline(ss, valueStr, ' ');
+				color.y = std::stod(valueStr);
+				getline(ss, valueStr, ' ');
+				color.z = std::stod(valueStr);
+				getline(ss, valueStr, ' ');
+				color.w = std::stod(valueStr);
+
+				// third is comodel
+				getline(myfile, line);
+				comodel = ENERGY_MODEL(size_t(std::stoi(line)));
+
+				points.resize(N);
+
+				// now load the point data
+				for (size_t i = 0; i < N; i++)
+				{
+					//cout << line << '\n';
+					points[i].LoadFromFile(myfile);
+				}
+				myfile.close();
+			}
+
+			else std::cout << "Unable to open file";
+
+			std::cout << "Finished loading point cloud." << std::endl;
+
+			GenPointCloudSSBO();
+
+		}
+		
 		
 
 		size_t N = 0;

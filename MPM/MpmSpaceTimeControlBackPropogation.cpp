@@ -79,11 +79,14 @@ void mpm::control::BackPropParticlePositionLossFunctionInit(ControlPoint& mp, co
 
 	// dL / dC
 	mp.dLdC = mat2(0.0);
+
+	mp.dLdmew = 0.0;
+	mp.dLdlam = 0.0;
 }
 
 void mpm::control::BackPropGridMassLossFunctionInit(std::shared_ptr<ControlPointCloud> controlPointCloud, 
 													std::shared_ptr<ControlGrid> controlGrid, 
-													std::shared_ptr<const ControlGrid> targetGrid, 
+													std::shared_ptr<const TargetGrid> targetGrid, 
 													const real dt)
 {
 	if (controlGrid->grid_size_x != targetGrid->grid_size_x ||
@@ -97,7 +100,8 @@ void mpm::control::BackPropGridMassLossFunctionInit(std::shared_ptr<ControlPoint
 	// compute dL / dm per each node
 	for (int i = 0; i < controlGrid->grid_size_x; i++) {
 		for (int j = 0; j < controlGrid->grid_size_y; j++) {
-			controlGrid->Node(i, j).dLdm = controlGrid->Node(i, j).m - targetGrid->ConstNode(i, j).m;
+			controlGrid->Node(i, j).dLdm = targetGrid->penaltyWeights[i][j] * 
+				(controlGrid->Node(i, j).m - targetGrid->ConstNode(i, j).m);
 			//std::cout << i << ", " << j << ": " << controlGrid->nodes[i][j].dLdm << "| ";
 		}
 		//std::cout << std::endl;
@@ -278,6 +282,9 @@ void mpm::control::BackPropGridNodeToParticle(const ControlGridNode& node, Contr
 	// Not necessary to compute here b/c we compute it in BackPropParticle right
 	mp_prev.dLdC += wgp * mp_prev.m * glm::outerProduct(node.dLdp, dgp);
 
+	// dL / dm
+	mp_prev.dLdm += wgp * node.dLdm;
+
 	// dL / dx
 	// Note: this gradient also gets particle contributions, which will be added later
 	//mp_prev.dLdx += 
@@ -288,4 +295,8 @@ void mpm::control::BackPropParticleToParticle(const ControlPoint& mp, ControlPoi
 	mp_prev.dLdF += glm::transpose(mat2(1.0) + dt * mp.dLdC) * mp.dLdF;
 	mp_prev.dLdF += FixedCorotationalElasticity::d2Psi_dF2_multbydF(mp_prev.F + mp_prev.dFc, mp_prev.lam, mp_prev.mew, mp_prev.dLdP);
 
+	mp_prev.dLdm += mp.dLdm;
+
+	mp_prev.dLdlam = InnerProduct(mp_prev.dLdP, FixedCorotationalElasticity::dPdlam(mp_prev.F + mp_prev.dFc)) + mp.dLdlam;
+	mp_prev.dLdmew = InnerProduct(mp_prev.dLdP, FixedCorotationalElasticity::dPdmew(mp_prev.F + mp_prev.dFc)) + mp.dLdmew;
 }

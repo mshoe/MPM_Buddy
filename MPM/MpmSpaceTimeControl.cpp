@@ -83,7 +83,7 @@ real mpm::control::ParticlePositionLossFunction(std::shared_ptr<const ControlPoi
 
 real mpm::control::GridMassLossFunction(std::shared_ptr<ControlPointCloud> controlPointCloud, 
 										std::shared_ptr<ControlGrid> controlGrid, 
-										std::shared_ptr<const ControlGrid> targetGrid,
+										std::shared_ptr<const TargetGrid> targetGrid,
 										const real dt)
 {
 
@@ -98,7 +98,7 @@ real mpm::control::GridMassLossFunction(std::shared_ptr<ControlPointCloud> contr
 	for (int i = 0; i < controlGrid->grid_size_x; i++) {
 		for (int j = 0; j < controlGrid->grid_size_y; j++) {
 			real dm = controlGrid->Node(i, j).m - targetGrid->ConstNode(i, j).m;
-			loss += 0.5 * dm * dm;
+			loss += 0.5 * dm * dm * targetGrid->penaltyWeights[i][j];
 		}
 	}
 	return loss;
@@ -109,6 +109,7 @@ void mpm::control::OptimizeSetDeformationGradient(std::shared_ptr<MPMSpaceTimeCo
 												  mat2 initialFe, int optFrameOffset,
 												  int numTimeSteps, int max_iters, int maxLineSearchIters,
 												  LOSS_FUNCTION lossFunction, bool forceDescent,
+												  real penalty,
 												  real initialAlpha, bool optimizeOnlyInitialF, bool debugOutput)
 {
 	switch (lossFunction) {
@@ -122,9 +123,10 @@ void mpm::control::OptimizeSetDeformationGradient(std::shared_ptr<MPMSpaceTimeCo
 		break;
 	case LOSS_FUNCTION::GRID_NODE_MASSES:
 		// create the target grid from the target point cloud
-		stcg->targetGrid = std::make_shared<ControlGrid>(stcg->grid_size_x, stcg->grid_size_y);
+		stcg->targetGrid = std::make_shared<TargetGrid>(stcg->grid_size_x, stcg->grid_size_y);
 		P2G(stcg->targetPointCloud, stcg->targetGrid, dt);
 		MapCPUControlGridToGPU(stcg->targetGrid, stcg->targetGridSsbo);
+		stcg->targetGrid->InitializePenaltyWeights(penalty);
 		break;
 	default:
 		std::cout << "error" << std::endl;
@@ -250,8 +252,12 @@ void mpm::control::OptimizeSetDeformationGradient_InTemporalOrder(std::shared_pt
 																  const vec2 f_ext, const real dt,
 																  mat2 initialFe, int optFrameOffset,
 																  int numTimeSteps, int max_iters, int maxLineSearchIters,
+																  int totalTemporalIterations,
 																  LOSS_FUNCTION lossFunction, bool forceDescent,
-																  real initialAlpha, bool optimizeOnlyInitialF, bool debugOutput)
+																  bool reverseTime, real penalty,
+																  real initialFAlpha, real initialMaterialAlpha,
+																  real tol,
+																  bool optimizeOnlyInitialF, bool debugOutput)
 {
 	switch (lossFunction) {
 	case LOSS_FUNCTION::PARTICLE_POSITIONS:
@@ -264,9 +270,10 @@ void mpm::control::OptimizeSetDeformationGradient_InTemporalOrder(std::shared_pt
 		break;
 	case LOSS_FUNCTION::GRID_NODE_MASSES:
 		// create the target grid from the target point cloud
-		stcg->targetGrid = std::make_shared<ControlGrid>(stcg->grid_size_x, stcg->grid_size_y);
+		stcg->targetGrid = std::make_shared<TargetGrid>(stcg->grid_size_x, stcg->grid_size_y);
 		P2G(stcg->targetPointCloud, stcg->targetGrid, dt);
 		MapCPUControlGridToGPU(stcg->targetGrid, stcg->targetGridSsbo);
+		stcg->targetGrid->InitializePenaltyWeights(penalty);
 		break;
 	default:
 		std::cout << "error" << std::endl;
@@ -294,50 +301,111 @@ void mpm::control::OptimizeSetDeformationGradient_InTemporalOrder(std::shared_pt
 
 	mat2 controlF = initialFe;
 	stcg->simStates[0]->pointCloud->SetF(controlF);
-	real alpha = initialAlpha;
+	real alpha = initialFAlpha;
 
+	stcg->lossValues.clear();
+
+	// for descending only 1 point at a time
+	//ControlPoint dummy_mp;
+	//ControlPoint& max_mp = dummy_mp;
 
 	bool timeStepOptFLossDecreased = false;
-	for (int timeStep = 0; timeStep < int(stcg->simStates.size()) - 1; timeStep += optFrameOffset) {
-		std::cout << "Optimizing gradients for timestep: " << timeStep << std::endl;
-		alpha = initialAlpha;
-		for (int i = 0; i < max_iters; i++) {
-			std::cout << "Gradient descent iteration: " << i << std::endl;
+
+	int initialTimeStep;
+	int timeIncrement;
+	if (reverseTime) {
+		initialTimeStep = int(stcg->simStates.size()) - 2;
+		timeIncrement = -optFrameOffset;
+	}
+	else {
+		initialTimeStep = 0;
+		timeIncrement = optFrameOffset;
+	}
+
+	for (int temporalIter = 0; temporalIter < totalTemporalIterations; temporalIter++) {
+		std::cout << "Temporal iteration: " << temporalIter << std::endl;
+
+		bool temporalIterationConverged = true;
+		bool lossDecreased = false;
+
+		for (int timeStep = initialTimeStep; 0 <= timeStep && timeStep < int(stcg->simStates.size()) - 1; timeStep += timeIncrement) {
+			std::cout << "Optimizing for timestep: " << timeStep << std::endl;
+			
+			bool timeStepConverged = false;
 			
 
-			MPMForwardSimulation(stcg, f_ext, dt, timeStep, debugOutput);
+			std::cout << "Optimizing F" << std::endl;
+			alpha = initialFAlpha;
+			for (int i = 0; i < max_iters; i++) {
+				std::cout << "Gradient descent iteration: " << i << std::endl;
 
-
-			// Compute loss
-			loss = ComputeLoss(stcg, lossFunction, dt);
-			std::cout << "Loss = " << loss << std::endl;
-
-			// Compute gradients
-			MPMBackPropogation(stcg, dt, lossFunction, i, debugOutput);
-	
-			bool lineSearchLossDecreased = false;
-			for (int iter = 0; iter < maxLineSearchIters; iter++) {
-
-				stcg->simStates[timeStep]->pointCloud->DescendFGradients(alpha);
 
 				MPMForwardSimulation(stcg, f_ext, dt, timeStep, debugOutput);
-				real nextLoss = ComputeLoss(stcg, lossFunction, dt);
-				std::cout << "Line search iter: " << iter << ", loss = " << nextLoss << std::endl;
-				// if the loss fxn decreased, then we r good
-				if (nextLoss < loss) {
-					lineSearchLossDecreased = true;
+
+
+				// Compute loss
+				loss = ComputeLoss(stcg, lossFunction, dt);
+				std::cout << "Loss = " << loss << std::endl;
+
+				// IMGUI ONLY WORKS WITH FLOATS HERE
+				// assuming loss will pretty much always be > 0
+				stcg->lossValues.push_back(float(log(loss)));
+
+				// Compute gradients
+				MPMBackPropogation(stcg, dt, lossFunction, i, debugOutput);
+
+				// only check convergence on the initial iteration
+				if (i == 0) {
+					timeStepConverged = stcg->simStates[timeStep]->pointCloud->CheckFConvergence(tol, true);
+				}
+
+				if (timeStepConverged) {
+					std::cout << "Time step is converged." << std::endl;
 					break;
 				}
 
-				stcg->simStates[timeStep]->pointCloud->DescendFGradients(-alpha);
-				alpha /= 2.0;
+				bool lineSearchLossDecreased = false;
+				for (int iter = 0; iter < maxLineSearchIters; iter++) {
+
+					stcg->simStates[timeStep]->pointCloud->DescendFGradients(alpha);
+					//stcg->simStates[timeStep]->pointCloud->DescendMaterialAndFGradients(alpha);
+
+					MPMForwardSimulation(stcg, f_ext, dt, timeStep, debugOutput);
+					real nextLoss = ComputeLoss(stcg, lossFunction, dt);
+					std::cout << "Line search iter: " << iter << ", loss = " << nextLoss << std::endl;
+					// if the loss fxn decreased, then we r good
+					if (nextLoss < loss) {
+						lineSearchLossDecreased = true;
+						lossDecreased = true;
+						break;
+					}
+
+					
+					stcg->simStates[timeStep]->pointCloud->DescendFGradients(-alpha);
+					//stcg->simStates[timeStep]->pointCloud->DescendMaterialAndFGradients(-alpha);
+					alpha /= 2.0;
+				}
+
+				if (!lineSearchLossDecreased) {
+					std::cout << "Line search unable to find a loss decrease this time step..." << std::endl;
+					break; // go to next time step
+				}
 			}
 
-			if (!lineSearchLossDecreased) {
-				std::cout << "Line search unable to find a loss decrease this time step..." << std::endl;
-				break; // go to next time step
-			}
+			temporalIterationConverged = temporalIterationConverged && timeStepConverged;
 		}
+
+		
+		if (!lossDecreased) {
+			std::cout << "Failed to find a decrease..." << std::endl;
+			break;
+		}
+
+		if (temporalIterationConverged) {
+			std::cout << "Gradients below tolerance..." << std::endl;
+			break;
+		}
+
 	}
 
 	//stcg->outputPointCloud = std::make_shared<ControlPointCloud>(stcg->simStates[0]->pointCloud);
@@ -404,4 +472,3 @@ void mpm::control::MapCPUControlGridToGPU(std::shared_ptr<ControlGrid> grid, GLu
 //	}
 //
 //}
-

@@ -11,6 +11,9 @@ namespace mpm {
 
 	namespace FixedCorotationalElasticity {
 		mat2 PKTensor(mat2 Fe, real lam, real mew);
+		mat2 dPdlam(mat2 Fe);
+		mat2 dPdmew(mat2 Fe);
+
 		mat4 d2Psi_dF2_Mat4(mat2 Fe, real lam, real mew); // don't use this, not working
 
 

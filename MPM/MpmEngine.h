@@ -95,6 +95,8 @@ namespace mpm {
 
 		float m_backgroundColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 		float m_densityColor[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
+		float m_mediumDensityColor[4] = { 0.0f, 1.0f, 0.0f, 1.0f };
+		float m_minDensityColor[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
 
 	private:
 
@@ -176,6 +178,7 @@ namespace mpm {
 		std::shared_ptr<StandardShader> m_pPointCloudShader = nullptr;
 
 		bool m_viewGridDensity = false; // for gridDensityShader
+		bool m_densitySharp = true;
 	private:
 		std::shared_ptr<StandardShader> m_pPointCloudVectorShader = nullptr;
 		std::shared_ptr<StandardShader> m_mouseShader = nullptr;
@@ -186,6 +189,9 @@ namespace mpm {
 		std::shared_ptr<StandardShader> m_gridDensityShader = nullptr;
 		
 		real m_gridMaxMass = 1.0;
+		real m_gridMediumMass = 0.5;
+		real m_gridMinMass = 0.0;
+		bool m_useColorSpectrum = true;
 
 		std::shared_ptr<StandardShader> m_borderShader = nullptr;
 

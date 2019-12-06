@@ -8,6 +8,7 @@ void mpm::MpmControlEngine::GUI()
 	if (m_imguiDeformationGradientSpaceTimeController) ImGuiDeformationGradientSpaceTimeController();
 	if (m_imguiControlPointViewer) ImGuiControlPointViewer();
 	if (m_imguiControlGridViewer) ImGuiControlGridViewer();
+	if (m_imguiGradientDescentPlot) ImGuiGradientDescentPlot();
 }
 
 void mpm::MpmControlEngine::Menu()
@@ -31,6 +32,9 @@ void mpm::MpmControlEngine::Menu()
 		}
 		if (ImGui::MenuItem("Control Grid Viewer", "", m_imguiControlGridViewer)) {
 			m_imguiControlGridViewer = !m_imguiControlGridViewer;
+		}
+		if (ImGui::MenuItem("Gradient Descent Plot", "", m_imguiGradientDescentPlot)) {
+			m_imguiGradientDescentPlot = !m_imguiGradientDescentPlot;
 		}
 		ImGui::EndMenu();
 	}
@@ -158,6 +162,13 @@ void mpm::MpmControlEngine::ImGuiMaterialParameterController() {
 
 		ImGui::Checkbox("Set Selected", &setSelected);
 
+
+		if (ImGui::Button("Slime lame parameters")) {
+			materialParametersControl.lam = 2500.0;
+			materialParametersControl.mew = 100.0;
+		}
+
+
 		std::string setCurrPointCloudStr = "Set '" + currPointCloud + "' lame parameters";
 		if (ImGui::Button(setCurrPointCloudStr.c_str())) {
 			SetLameParametersGLSL(currPointCloud, materialParametersControl.lam, materialParametersControl.mew, setSelected);
@@ -247,11 +258,16 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 
 		static bool controlGridSizeChosen = false;
 
+		
+
 		if (ImGui::Button("Choose control grid size")) {
 			m_stcg->SetGridSize(m_mpmEngine->m_chunks_x * m_mpmAlgorithmEngine->m_cppChunkX,
 								m_mpmEngine->m_chunks_y * m_mpmAlgorithmEngine->m_cppChunkY);
 			controlGridSizeChosen = true;
 		}
+
+		
+
 
 		if (controlGridSizeChosen == false) {
 			ImGui::Text("No control grid set up");
@@ -263,7 +279,7 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 
 		ImGui::NewLine(); ImGui::NewLine();
 
-		static int num_steps = 120;
+		static int num_steps = 240;
 		ImGui::InputInt("Num time steps", &num_steps);
 		num_steps = glm::max(0, num_steps);
 		m_stcg->timeSteps = num_steps;
@@ -277,8 +293,12 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 		static int max_lineSearchIters = 5;
 		ImGui::InputInt("Max backtracking line search iterations", &max_lineSearchIters);
 
-		static real initialAlpha = 0.1;
-		ImGui::InputReal("initialAlpha", &initialAlpha, 0.01, 0.05);
+		static real initialFAlpha = 1.0;
+		ImGui::InputReal("initialFAlpha", &initialFAlpha, 0.01, 0.05);
+
+		static real initialMaterialAlpha = 1000.0;
+		ImGui::InputReal("initialMaterialAlpha", &initialMaterialAlpha, 100.0, 1000.0);
+
 
 		static mat2 initialControlFe = mat2(1.0);
 		ImGui::InputReal("Fe[0][0]: ", &initialControlFe[0][0], 0.1, 1.0, "%.6f");
@@ -298,8 +318,42 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 		m_mpmEngine->ImGuiDropDown("Optimization Loss Function", lossFunctionIndex, control::lossFunctionStrVec);
 		control::LOSS_FUNCTION lossFunction = control::LOSS_FUNCTION(lossFunctionIndex);
 
+		static int totalTemporalIterations = 1;
+		ImGui::InputInt("Total Temporal Iterations", &totalTemporalIterations);
+
 		static bool forceDescent = false;
 		ImGui::Checkbox("Force gradient descent (skip line search)", &forceDescent);
+
+		static bool reverseTimeOpt = false;
+		ImGui::Checkbox("Reverse Time Optimization", &reverseTimeOpt);
+
+		static real penalty = 1.0;
+		ImGui::InputReal("Penalty weight", &penalty, 0.1, 1.0);
+
+		static real tol = 1e-3;
+		ImGui::InputReal("Tolerance", &tol, 0.001, 0.1);
+
+
+		ImGui::NewLine(); ImGui::NewLine();
+
+		if (ImGui::Button("Set up mass control environment")) {
+			m_globalForce.y = 0.0;
+			m_mpmAlgorithmEngine->m_algo_code = MpmAlgorithmEngine::MPM_ALGORITHM_CODE::CPP;
+			m_mpmGeometryEngine->SmallCircle();
+			m_mpmEngine->m_chunks_x = 1;
+			m_mpmEngine->m_chunks_y = 1;
+			m_mpmAlgorithmEngine->m_cppChunkX = 32;
+			m_mpmAlgorithmEngine->m_cppChunkY = 32;
+			m_stcg->SetGridSize(m_mpmEngine->m_chunks_x * m_mpmAlgorithmEngine->m_cppChunkX,
+								m_mpmEngine->m_chunks_y * m_mpmAlgorithmEngine->m_cppChunkY);
+			controlGridSizeChosen = true;
+			optFrameOffset = 10;
+			optimizeOnlyInitialF = false;
+			max_iters = 25;
+			max_lineSearchIters = 15;
+			lossFunctionIndex = size_t(control::LOSS_FUNCTION::GRID_NODE_MASSES);
+			lossFunction = control::LOSS_FUNCTION::GRID_NODE_MASSES;
+		}
 
 		ImGui::NewLine(); ImGui::NewLine();
 
@@ -371,15 +425,21 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 														initialControlFe, optFrameOffset,
 														num_steps, max_iters, max_lineSearchIters,
 														lossFunction, forceDescent,
-														initialAlpha, optimizeOnlyInitialF, debugOutput);
+														penalty,
+														initialFAlpha,
+														optimizeOnlyInitialF, debugOutput);
 			}
 
 			if (ImGui::Button("Optimize L(F) in temporal order")) {
 				control::OptimizeSetDeformationGradient_InTemporalOrder(m_stcg, m_globalForce, m_mpmAlgorithmEngine->m_dt,
 														initialControlFe, optFrameOffset,
 														num_steps, max_iters, max_lineSearchIters,
+														totalTemporalIterations,
 														lossFunction, forceDescent,
-														initialAlpha, optimizeOnlyInitialF, debugOutput);
+														reverseTimeOpt, penalty,
+														initialFAlpha, initialMaterialAlpha,
+														tol,
+														optimizeOnlyInitialF, debugOutput);
 			}
 		}
 
@@ -565,4 +625,12 @@ void mpm::MpmControlEngine::ImGuiControlGridViewer()
 	}
 	ImGui::End();
 
+}
+
+void mpm::MpmControlEngine::ImGuiGradientDescentPlot()
+{
+	if (ImGui::Begin("Gradient Descent Loss Viewer", &m_imguiGradientDescentPlot)) {
+		ImGui::PlotLines("Gradient Descent Loss", m_stcg->lossValues.data(), m_stcg->lossValues.size(), 0, (const char*)0, 3.402823466e+38F,3.402823466e+38F, ImVec2(0, 120));
+	}
+	ImGui::End();
 }

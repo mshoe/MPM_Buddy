@@ -246,8 +246,16 @@ void mpm::MpmEngine::RenderDensityField(vec2 zoomPoint, real zoomFactor, int bin
 	glm::highp_fvec4 backgroundColor = glm::highp_fvec4(m_backgroundColor[0], m_backgroundColor[1], m_backgroundColor[2], m_backgroundColor[3]);
 	densityShader->SetVec("backgroundColor", backgroundColor);
 	glm::highp_fvec4 densityColor = glm::highp_fvec4(m_densityColor[0], m_densityColor[1], m_densityColor[2], m_densityColor[3]);
-	densityShader->SetVec("densityColor", densityColor);
+	densityShader->SetVec("maxDensityColor", densityColor);
+	glm::highp_fvec4 mediumDensityColor = glm::highp_fvec4(m_mediumDensityColor[0], m_mediumDensityColor[1], m_mediumDensityColor[2], m_mediumDensityColor[3]);
+	densityShader->SetVec("mediumDensityColor", mediumDensityColor);
+	glm::highp_fvec4 minDensityColor = glm::highp_fvec4(m_minDensityColor[0], m_minDensityColor[1], m_minDensityColor[2], m_minDensityColor[3]);
+	densityShader->SetVec("minDensityColor", minDensityColor);
+	densityShader->SetBool("useColorSpectrum", m_useColorSpectrum);
 	densityShader->SetReal("maxMass", m_gridMaxMass);
+	densityShader->SetReal("mediumMass", m_gridMediumMass);
+	densityShader->SetReal("minMass", m_gridMinMass);
+	densityShader->SetBool("sharp", m_densitySharp);
 	if (m_mpmAlgorithmEngine->m_algo_code == MpmAlgorithmEngine::MPM_ALGORITHM_CODE::CPP) {
 		densityShader->SetInt("currGridSizeX", m_mpmAlgorithmEngine->m_cppChunkX * m_chunks_x);
 		densityShader->SetInt("currGridSizeY", m_mpmAlgorithmEngine->m_cppChunkY * m_chunks_y);

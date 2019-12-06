@@ -160,8 +160,14 @@ void mpm::MpmEngine::ImGuiGridOptions()
 
 			if (ImGui::TreeNode("Density Field Options")) {
 
-				ImGui::ColorEdit4("Density color", m_densityColor);
+				ImGui::Checkbox("Use color spectrum", &m_useColorSpectrum);
+				ImGui::ColorEdit4("Max density color", m_densityColor);
+				ImGui::ColorEdit4("Medium density color", m_mediumDensityColor);
+				ImGui::ColorEdit4("Min density color", m_minDensityColor);
 				ImGui::InputReal("Max grid mass", &m_gridMaxMass);
+				ImGui::InputReal("Medium grid mass", &m_gridMediumMass);
+				ImGui::InputReal("Min grid mass", &m_gridMinMass);
+				ImGui::Checkbox("Sharp density field", &m_densitySharp);
 				ImGui::TreePop();
 			}
 		}
@@ -271,6 +277,22 @@ void mpm::MpmEngine::ImGuiMaterialPointViewer()
 
 		ImGuiSelectPointCloud(m_pointCloudViewSelectStr, "Select Point Cloud");
 
+		static char saveLoadFile[50];
+		ImGui::InputText("Select file", saveLoadFile, 50);
+
+		if (ImGui::Button("Save selected point cloud to file")) {
+			if (m_pointCloudMap.count(m_pointCloudViewSelectStr)) {
+				m_pointCloudMap[m_pointCloudViewSelectStr]->SaveToFile(std::string(saveLoadFile));
+			}
+		}
+
+		static char loadPointCloudName[50];
+		ImGui::InputText("Loaded point cloud name", loadPointCloudName, 50);
+		if (ImGui::Button("Load point cloud from file")) {
+			m_pointCloudMap[std::string(loadPointCloudName)] = std::make_shared<PointCloud>();
+			m_pointCloudMap[std::string(loadPointCloudName)]->LoadFromFile(std::string(saveLoadFile));
+		}
+
 		if (ImGui::Button("Update point cloud data")) {
 			UpdatePointCloudData(m_pointCloudViewSelectStr);
 		}
@@ -311,7 +333,7 @@ void mpm::MpmEngine::ImGuiMaterialPointViewer()
 
 
 		ImGui::InputInt("Point Index", &pointIndex);
-		pointIndex = glm::min(glm::max(pointIndex, 0), numPoints - 1); // keep point index in bounds
+		pointIndex = glm::min(glm::max(pointIndex, 0), glm::max(0, numPoints - 1)); // keep point index in bounds
 
 
 		/*if (ImGui::Button("View Particles") && m_paused) {

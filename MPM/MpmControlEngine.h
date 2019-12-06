@@ -72,6 +72,7 @@ namespace mpm {
 		void ImGuiMaterialParameterController();
 		void ImGuiControlPointViewer();
 		void ImGuiControlGridViewer();
+		void ImGuiGradientDescentPlot();
 
 		// control
 		bool m_imguiExternalForceController = false;
@@ -79,6 +80,7 @@ namespace mpm {
 		bool m_imguiMaterialParameterController = false;
 		bool m_imguiControlPointViewer = false;
 		bool m_imguiControlGridViewer = false;
+		bool m_imguiGradientDescentPlot = false;
 
 		bool m_animateSimStates = false;
 		bool m_animateLoop = false;
@@ -96,6 +98,7 @@ namespace mpm {
 		std::unique_ptr<StandardShader> m_pRenderControlPointCloudCircles = nullptr;
 		bool m_renderPoints = true;
 		bool m_renderCircles = false;
+		//bool m_solidCircles = true;
 		bool m_renderDeformationGradients = false;
 		bool m_renderControlDeformationGradients = false;
 		real m_pointCircleRadius = 0.075;

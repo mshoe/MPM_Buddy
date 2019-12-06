@@ -51,7 +51,7 @@ void mpm::control::P2G(std::shared_ptr<ControlPointCloud> pointCloud, std::share
 		int botLeftNode_i = int(glm::floor(mp.x.x)) - 1;
 		int botLeftNode_j = int(glm::floor(mp.x.y)) - 1;
 
-		mp.P = FixedCorotationalElasticity::PKTensor(mp.F + mp.dFc, mp.lam, mp.mew);
+		mp.P = FixedCorotationalElasticity::PKTensor(mp.F + mp.dFc, mp.lam + mp.dlamc, mp.mew + mp.dmewc);
 
 		for (int i = 0; i <= 3; i++) {
 			for (int j = 0; j <= 3; j++) {
@@ -146,4 +146,6 @@ void mpm::control::UpdateParticle(ControlPoint& mp, const ControlPoint& mp_prev,
 {
 	mp.F = (mat2(1.0) + dt * mp.C) * (mp_prev.F + mp_prev.dFc);
 	mp.x += dt * mp.v;
+	mp.lam = mp_prev.lam + mp_prev.dLdlam;
+	mp.mew = mp_prev.mew + mp_prev.dLdmew;
 }

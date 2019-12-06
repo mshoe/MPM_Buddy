@@ -58,6 +58,22 @@ mat2 mpm::FixedCorotationalElasticity::PKTensor(mat2 Fe, real lam, real mew)
 	return P;
 }
 
+mat2 mpm::FixedCorotationalElasticity::dPdlam(mat2 Fe)
+{
+	mat2 Fit = glm::transpose(glm::inverse(Fe));
+	real J = glm::determinant(Fe);
+
+	return (J - 1.0) * J * Fit;
+}
+
+mat2 mpm::FixedCorotationalElasticity::dPdmew(mat2 Fe)
+{
+	mat2 R, S;
+	PolarDecomp(Fe, R, S);
+
+	return 2.0 * (Fe - R);
+}
+
 mat4 mpm::FixedCorotationalElasticity::d2Psi_dF2_Mat4(mat2 Fe, real lam, real mew)
 {
 	mat2 R, S, U, V;

@@ -23,7 +23,7 @@ void mpm::MpmControlEngine::InitShaders()
 
 	m_pRenderControlPointCloudCircles = std::make_unique<StandardShader>(
 		std::vector<std::string>{controlPath + "ControlPointCloud.vs"},
-		std::vector<std::string>{controlPath + "ControlPointCloud.gs"},
+		std::vector<std::string>{controlPath + "ControlPointCloudFill.gs"},
 		std::vector<std::string>{controlPath + "ControlPointCloud.fs"},
 		std::vector<std::string>{controlPath + "mpmControlStructs.comp"});
 
