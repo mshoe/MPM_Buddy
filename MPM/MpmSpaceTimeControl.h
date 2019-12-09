@@ -185,6 +185,7 @@ namespace control {
 		void SetFromControlPointCloud(std::shared_ptr<const ControlPointCloud> pointCloud);
 		void SetFromPreviousTimeStepControlPointCloud(std::shared_ptr<const ControlPointCloud> pointCloud);
 		void SetRegularPointCloud(std::shared_ptr<PointCloud> pointCloud);
+		//std::shared_ptr<PointCloud> GenRegularPointCloud();
 		void SetF(mat2 F);
 		void ResetGradients() {
 			for (size_t p = 0; p < controlPoints.size(); p++) {
@@ -267,6 +268,7 @@ namespace control {
 		}
 		void SetPointCloudMassEqualToGiven(std::shared_ptr<const ControlPointCloud> pointCloud);
 
+		void SetFsToIdentity();
 		//ControlPoint& GetLargestFGradientPoint() {
 		//	real max_dLdF_mag = -1.0;
 		//	ControlPoint& max_mp = controlPoints[0];
@@ -394,6 +396,7 @@ namespace control {
 		//void OptimizeControlF();
 
 		void InitControlPointCloud(std::shared_ptr<PointCloud> pointCloud);
+		void InitControlPointCloud(std::shared_ptr<ControlPointCloud> pointCloud);
 		void InitTargetPointCloud(std::shared_ptr<PointCloud> pointCloud);
 		void InitTargetPointCloud(std::shared_ptr<ControlPointCloud> pointCloud);
 
@@ -504,7 +507,8 @@ namespace control {
 
 	void OptimizeSetDeformationGradient_InTemporalOrder(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg,
 														const vec2 f_ext, const real dt,
-														mat2 initialFe, int optFrameOffset,
+														bool setInitialFe, mat2 initialFe, 
+														int optFrameOffset,
 														int numTimeSteps, int max_iters, int maxLineSearchIters,
 														int totalTemporalIterations,
 														LOSS_FUNCTION lossFunction, bool forceDescent,

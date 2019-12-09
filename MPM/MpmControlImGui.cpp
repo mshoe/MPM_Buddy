@@ -293,12 +293,14 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 		static int max_lineSearchIters = 5;
 		ImGui::InputInt("Max backtracking line search iterations", &max_lineSearchIters);
 
-		static real initialFAlpha = 1.0;
+		static real initialFAlpha = 0.025;
 		ImGui::InputReal("initialFAlpha", &initialFAlpha, 0.01, 0.05);
 
 		static real initialMaterialAlpha = 1000.0;
 		ImGui::InputReal("initialMaterialAlpha", &initialMaterialAlpha, 100.0, 1000.0);
 
+		static bool setInitialFe = false;
+		ImGui::Checkbox("Set initial Fe", &setInitialFe);
 
 		static mat2 initialControlFe = mat2(1.0);
 		ImGui::InputReal("Fe[0][0]: ", &initialControlFe[0][0], 0.1, 1.0, "%.6f");
@@ -432,7 +434,8 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 
 			if (ImGui::Button("Optimize L(F) in temporal order")) {
 				control::OptimizeSetDeformationGradient_InTemporalOrder(m_stcg, m_globalForce, m_mpmAlgorithmEngine->m_dt,
-														initialControlFe, optFrameOffset,
+														setInitialFe, initialControlFe, 
+														optFrameOffset,
 														num_steps, max_iters, max_lineSearchIters,
 														totalTemporalIterations,
 														lossFunction, forceDescent,
@@ -443,14 +446,25 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 			}
 		}
 
-		if (m_stcg->outputPointCloud != nullptr) {
-			if (ImGui::Button("Set selected from output point cloud")) {
-				if (m_mpmEngine->m_pointCloudMap.count(controlPointCloudSelectStr)) {
-					m_stcg->outputPointCloud->SetRegularPointCloud(m_mpmEngine->m_pointCloudMap[controlPointCloudSelectStr]);
-					m_mpmEngine->MapCPUPointCloudToGPU(m_mpmEngine->m_pointCloudMap[controlPointCloudSelectStr]);
-				}
+		//static char outputPointCloudStr[50] = "";
+		//ImGui::InputText("Output point cloud name", outputPointCloudStr, 50);
+
+		if (ImGui::Button("Set control to final time step point cloud")) {
+			if (!m_stcg->simStates.empty() && m_stcg->simStates.back()->pointCloud != nullptr) {
+				std::cout << "set control point cloud to final time step point cloud" << std::endl;
+				m_stcg->controlPointCloud = m_stcg->simStates.back()->pointCloud;
+				//m_stcg->
 			}
 		}
+
+		if (ImGui::Button("Set control defgrads to identity")) {
+			if (m_stcg->controlPointCloud != nullptr) {
+				std::cout << "set control point cloud defgrads to identity..." << std::endl;
+				m_stcg->controlPointCloud->SetFsToIdentity();
+				//m_stcg->
+			}
+		}
+		
 	
 		ImGui::NewLine(); ImGui::NewLine();
 		

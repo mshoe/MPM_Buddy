@@ -85,6 +85,9 @@
     <Filter Include="Header Files\MPM\Control\SpaceTime">
       <UniqueIdentifier>{8eecdf49-62b9-4320-8a25-0ebf69bc2835}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\imgui\extensions">
+      <UniqueIdentifier>{73c11e64-643a-4f06-9eab-d7d2fc236b95}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -219,6 +222,9 @@
     <ClCompile Include="MpmSpaceTimeControlBackPropogation.cpp">
       <Filter>Source Files\MPM\SpaceTime Control</Filter>
     </ClCompile>
+    <ClCompile Include="PointCloud.cpp">
+      <Filter>Header Files\MPM\Data Structures</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainEngine.h">
@@ -307,6 +313,9 @@
     </ClInclude>
     <ClInclude Include="Structures.h">
       <Filter>Header Files\MPM\Data Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="external\imgui\imfilebrowser.h">
+      <Filter>Resource Files\imgui\extensions</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

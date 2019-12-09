@@ -131,6 +131,8 @@ namespace mpm {
 		void RenderDensityField(vec2 zoomPoint, real zoomFactor, int binding, GLuint ssbo, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> densityShader);
 	private:
 		//*** GUI FUNCTIONS ***//
+		void ImGuiPointCloudSaver();
+		void ImGuiPointCloudLoader();
 		void ImGuiGridOptions();
 		void ImGuiGridNodeViewer();
 		void ImGuiMaterialPointViewer();
@@ -148,6 +150,10 @@ namespace mpm {
 
 		// material point
 		bool m_imguiMaterialPointViewer = false;
+
+		// save/load
+		bool m_imguiPointCloudSaver = false;
+		bool m_imguiPointCloudLoader = false;
 
 		/******************** ZOOM WINDOW ********************/
 		void InitZoomWindow();

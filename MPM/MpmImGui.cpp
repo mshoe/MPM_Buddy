@@ -1,5 +1,6 @@
 #include "MpmEngine.h"
 #include "imgui/imgui.h"
+#include "imgui/imfilebrowser.h"
 
 #include "glm_MATLAB.h"
 #include "glm_imgui.h"
@@ -15,6 +16,12 @@ void mpm::MpmEngine::RenderGUI()
 		{
 			if (ImGui::BeginMenu("File"))
 			{
+				if (ImGui::MenuItem("Save Point Cloud")) {
+					m_imguiPointCloudSaver = !m_imguiPointCloudSaver;
+				}
+				if (ImGui::MenuItem("Load Point Cloud")) {
+					m_imguiPointCloudLoader = !m_imguiPointCloudLoader;
+				}
 				if (ImGui::MenuItem("ImGui Demo", "", imguiImGuiDemo)) {
 					imguiImGuiDemo = !imguiImGuiDemo;
 				}
@@ -74,6 +81,8 @@ void mpm::MpmEngine::RenderGUI()
 		if (m_imguiGridNodeViewer) ImGuiGridNodeViewer();
 		if (m_imguiMaterialPointViewer) ImGuiMaterialPointViewer();
 		if (m_imguiZoomWindow) ImGuiZoomWindow();
+		if (m_imguiPointCloudSaver) ImGuiPointCloudSaver();
+		if (m_imguiPointCloudLoader) ImGuiPointCloudLoader();
 		
 		
 		if (imguiImGuiDemo) { ImGui::ShowDemoWindow(); }
@@ -100,6 +109,69 @@ void mpm::MpmEngine::RenderGUI()
 //}
 
 
+
+void mpm::MpmEngine::ImGuiPointCloudSaver()
+{
+	if (ImGui::Begin("Point Cloud Saver", &m_imguiPointCloudSaver)) {
+
+		static std::string savePointCloudSelectStr = "";
+
+		ImGuiSelectPointCloud(savePointCloudSelectStr, "Select Point Cloud");
+
+
+
+		static char savePointCloudStr[50] = "";
+
+		ImGui::InputText("Save point cloud file", savePointCloudStr, 50);
+
+		if (ImGui::Button("Save selected point cloud to file")) {
+			std::cout << "Saving to " << savePointCloudStr << "..." << std::endl;
+			if (m_pointCloudMap.count(savePointCloudSelectStr)) {
+				m_pointCloudMap[savePointCloudSelectStr]->SaveToFile(std::string("..\\SavedMPM\\") + savePointCloudStr + std::string(".mpm"));
+			}
+		}
+	}
+	ImGui::End();
+}
+
+void mpm::MpmEngine::ImGuiPointCloudLoader()
+{
+	if (ImGui::Begin("Point Cloud Loader", &m_imguiPointCloudLoader)) {
+		/**** LOADING POINT CLOUDS ****/
+
+		static ImGui::FileBrowser loadFileDialog;
+		static std::string loadPointCloudStr = "";
+		static char loadPointCloudName[50];
+
+		if (ImGui::Button("Open point cloud file")) {
+			loadFileDialog.Open();
+			loadFileDialog.SetPwd("..\\SavedMPM");
+		}
+
+		loadFileDialog.Display();
+
+		if (loadFileDialog.HasSelected())
+		{
+			loadPointCloudStr = loadFileDialog.GetSelected().string();
+		}
+
+		ImGui::Text(std::string(std::string("Selected point cloud file: ") + loadPointCloudStr).c_str());
+
+		ImGui::InputText("Loaded point cloud name", loadPointCloudName, 50);
+		if (ImGui::Button("Load point cloud from file")) {
+			if (!loadFileDialog.HasSelected()) {
+				std::cout << "no file selected" << std::endl;
+			}
+			else {
+				m_pointCloudMap[std::string(loadPointCloudName)] = std::make_shared<PointCloud>();
+				m_pointCloudMap[std::string(loadPointCloudName)]->LoadFromFile(loadPointCloudStr);
+			}
+		}
+
+		/**** END - LOADING POINT CLOUDS ****/
+	}
+	ImGui::End();
+}
 
 void mpm::MpmEngine::ImGuiGridOptions()
 {
@@ -266,32 +338,7 @@ void mpm::MpmEngine::ImGuiMaterialPointViewer()
 
 		ImGui::Checkbox("View point clouds", &m_viewPointClouds);
 
-		/*if (ImGui::CollapsingHeader("Point Clouds")) {
-			for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
-				ImGui::Text(pointCloudPair.first.c_str());
-			}
-		}
-		m_pointCloudSelect.resize(30);
-		ImGui::InputText("Check point cloud", m_pointCloudSelect.data(), 30);*/
-		//static std::string pointCloudSelectStr;// = std::string(m_pointCloudSelect.data());
-
 		ImGuiSelectPointCloud(m_pointCloudViewSelectStr, "Select Point Cloud");
-
-		static char saveLoadFile[50];
-		ImGui::InputText("Select file", saveLoadFile, 50);
-
-		if (ImGui::Button("Save selected point cloud to file")) {
-			if (m_pointCloudMap.count(m_pointCloudViewSelectStr)) {
-				m_pointCloudMap[m_pointCloudViewSelectStr]->SaveToFile(std::string(saveLoadFile));
-			}
-		}
-
-		static char loadPointCloudName[50];
-		ImGui::InputText("Loaded point cloud name", loadPointCloudName, 50);
-		if (ImGui::Button("Load point cloud from file")) {
-			m_pointCloudMap[std::string(loadPointCloudName)] = std::make_shared<PointCloud>();
-			m_pointCloudMap[std::string(loadPointCloudName)]->LoadFromFile(std::string(saveLoadFile));
-		}
 
 		if (ImGui::Button("Update point cloud data")) {
 			UpdatePointCloudData(m_pointCloudViewSelectStr);
@@ -333,7 +380,8 @@ void mpm::MpmEngine::ImGuiMaterialPointViewer()
 
 
 		ImGui::InputInt("Point Index", &pointIndex);
-		pointIndex = glm::min(glm::max(pointIndex, 0), glm::max(0, numPoints - 1)); // keep point index in bounds
+		
+		pointIndex = min(max(pointIndex, 0), max(0, numPoints - 1)); // keep point index in bounds
 
 
 		/*if (ImGui::Button("View Particles") && m_paused) {

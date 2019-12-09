@@ -62,6 +62,14 @@ void mpm::control::ControlPointCloud::SetRegularPointCloud(std::shared_ptr<Point
 	}
 }
 
+//std::shared_ptr<mpm::PointCloud> mpm::control::ControlPointCloud::GenRegularPointCloud()
+//{
+//	std::shared_ptr<PointCloud> ret = std::make_shared<PointCloud>();
+//	SetRegularPointCloud(ret);
+//	ret->GenPointCloudSSBO();
+//	return ret;
+//}
+
 void mpm::control::ControlPointCloud::SetF(mat2 F)
 {
 	for (size_t i = 0; i < controlPoints.size(); i++) {
@@ -83,6 +91,14 @@ void mpm::control::ControlPointCloud::SetPointCloudMassEqualToGiven(std::shared_
 	// could just as easily set total mass,
 	// but do this just to see how much numerical error was introduced
 	ComputeTotalMass();
+}
+
+void mpm::control::ControlPointCloud::SetFsToIdentity()
+{
+	for (ControlPoint& mp : controlPoints) {
+		mp.F = mat2(1.0);
+		//mp.dFc = mat2(0.0);
+	}
 }
 
 
@@ -145,6 +161,12 @@ void mpm::control::MPMSpaceTimeComputationGraph::SetGridSize(int _grid_size_x, i
 }
 
 void mpm::control::MPMSpaceTimeComputationGraph::InitControlPointCloud(std::shared_ptr<PointCloud> pointCloud)
+{
+	controlPointCloud = std::make_shared<ControlPointCloud>(pointCloud);
+	GenControlPointCloudSSBO(controlPointCloud, controlSsbo);
+}
+
+void mpm::control::MPMSpaceTimeComputationGraph::InitControlPointCloud(std::shared_ptr<ControlPointCloud> pointCloud)
 {
 	controlPointCloud = std::make_shared<ControlPointCloud>(pointCloud);
 	GenControlPointCloudSSBO(controlPointCloud, controlSsbo);

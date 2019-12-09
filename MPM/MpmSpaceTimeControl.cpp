@@ -250,7 +250,8 @@ void mpm::control::OptimizeSetDeformationGradient(std::shared_ptr<MPMSpaceTimeCo
 
 void mpm::control::OptimizeSetDeformationGradient_InTemporalOrder(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg,
 																  const vec2 f_ext, const real dt,
-																  mat2 initialFe, int optFrameOffset,
+																  bool setInitialFe, mat2 initialFe,
+																  int optFrameOffset,
 																  int numTimeSteps, int max_iters, int maxLineSearchIters,
 																  int totalTemporalIterations,
 																  LOSS_FUNCTION lossFunction, bool forceDescent,
@@ -299,8 +300,10 @@ void mpm::control::OptimizeSetDeformationGradient_InTemporalOrder(std::shared_pt
 	std::streamsize prevPrecision = std::cout.precision(16);
 
 
-	mat2 controlF = initialFe;
-	stcg->simStates[0]->pointCloud->SetF(controlF);
+	if (setInitialFe) {
+		mat2 controlF = initialFe;
+		stcg->simStates[0]->pointCloud->SetF(controlF);
+	}
 	real alpha = initialFAlpha;
 
 	stcg->lossValues.clear();
