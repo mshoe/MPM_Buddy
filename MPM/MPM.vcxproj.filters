@@ -88,6 +88,9 @@
     <Filter Include="Resource Files\imgui\extensions">
       <UniqueIdentifier>{73c11e64-643a-4f06-9eab-d7d2fc236b95}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\stb">
+      <UniqueIdentifier>{768bab3e-9c56-43f4-b511-caaea609c70b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -316,6 +319,9 @@
     </ClInclude>
     <ClInclude Include="external\imgui\imfilebrowser.h">
       <Filter>Resource Files\imgui\extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="external\include\stb\stb_image.h">
+      <Filter>Resource Files\stb</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

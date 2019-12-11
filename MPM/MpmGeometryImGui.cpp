@@ -1,4 +1,7 @@
 #include "MpmGeometryEngine.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb/stb_image.h"
+#include "imgui/imfilebrowser.h"
 
 void mpm::MpmGeometryEngine::GUI()
 {
@@ -6,6 +9,7 @@ void mpm::MpmGeometryEngine::GUI()
 	if (m_imguiPWLineEditor) ImGuiPWLineEditor();
 	if (m_imguiBasicShapesEditor) ImGuiBasicShapesEditor();
 	if (m_imguiPointSelector) ImGuiPointSelector();
+	if (m_imguiImageLoader) ImGuiImageLoader();
 }
 
 void mpm::MpmGeometryEngine::Menu()
@@ -22,6 +26,9 @@ void mpm::MpmGeometryEngine::Menu()
 		}
 		if (ImGui::MenuItem("Point Selector", "", m_imguiPointSelector)) {
 			m_imguiPointSelector = !m_imguiPointSelector;
+		}
+		if (ImGui::MenuItem("Image Loader", "", m_imguiImageLoader)) {
+			m_imguiImageLoader = !m_imguiImageLoader;
 		}
 		ImGui::EndMenu();
 	}
@@ -166,6 +173,146 @@ void mpm::MpmGeometryEngine::ImGuiPointSelector()
 			for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_mpmEngine->m_pointCloudMap) {
 				SelectPointsInPolygon(pointCloudPair.first);
 			}
+		}
+	}
+	ImGui::End();
+}
+
+// Simple helper function to load an image into a OpenGL texture with common settings
+bool LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_width, int* out_height)
+{
+	// Load from file
+	int image_width = 0;
+	int image_height = 0;
+	unsigned char* image_data = stbi_load(filename, &image_width, &image_height, NULL, 4);
+
+	if (image_data == NULL)
+		return false;
+
+	// Create a OpenGL texture identifier
+	GLuint image_texture;
+	glGenTextures(1, &image_texture);
+	glBindTexture(GL_TEXTURE_2D, image_texture);
+
+	// Setup filtering parameters for display
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	// Upload pixels into texture
+	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image_width, image_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
+	stbi_image_free(image_data);
+
+	*out_texture = image_texture;
+	*out_width = image_width;
+	*out_height = image_height;
+
+	return true;
+}
+
+void mpm::MpmGeometryEngine::ImGuiImageLoader()
+{
+	if (ImGui::Begin("Image Loader", &m_imguiImageLoader)) {
+
+		static int image_width = 0;
+		static int image_height = 0;
+		static GLuint image_texture = 0;
+		static bool ret = false;
+
+		static ImGui::FileBrowser loadFileDialog;
+
+		static std::vector<unsigned char> pixelData;
+
+		if (ImGui::Button("Open point cloud file")) {
+			loadFileDialog.Open();
+			loadFileDialog.SetPwd("..\\pngClouds");
+		}
+
+		loadFileDialog.Display();
+
+		if (loadFileDialog.HasSelected())
+		{
+			std::string loadedImagePath = loadFileDialog.GetSelected().string();
+			std::cout << "Loading: " << loadedImagePath << std::endl;
+			loadFileDialog.ClearSelected();
+
+			GLuint newTexture = 0;
+
+			ret = LoadTextureFromFile(loadedImagePath.c_str(), &newTexture, &image_width, &image_height);
+
+			if (!ret) {
+				std::cout << "failed to load image" << std::endl;
+				
+			}
+			else {
+				glDeleteTextures(1, &image_texture);
+				image_texture = newTexture;
+			}
+			//unsigned char* image_data = stbi_
+		}
+
+		if (ret) {
+
+			ImGui::Text("pointer = %p", image_texture);
+			ImGui::Text("size = %d x %d", image_width, image_height);
+
+			static char pointCloudName[50];
+			ImGui::InputText("Gen Point Cloud Name", pointCloudName, 50);
+
+			if (ImGui::Button("Gen Point Cloud")) {
+				pixelData.resize(4 * image_width * image_height);
+				glGetTextureImage(image_texture, 0, GL_RGBA, GL_UNSIGNED_BYTE, 4 * image_width * image_height, pixelData.data());
+
+				
+				//for (int j = 0; j < image_height; j++) {
+				//	for (int i = 0; i < image_width; i++) {
+				//		if (int(pixelData[4 * i * image_height + 4 * j + 0]) == 255 &&
+				//			int(pixelData[4 * i * image_height + 4 * j + 1]) == 255 &&
+				//			int(pixelData[4 * i * image_height + 4 * j + 2]) == 255) {
+				//			std::cout << " ";
+				//		}
+				//		else {
+				//			std::cout << "1";
+				//		}
+
+				//		/*std::cout << "( ";
+				//		for (int k = 0; k < 4; k++) {
+				//			std::cout << int(pixelData[4 * i * image_height + 4 * j + k]) << " ";
+				//		}
+				//		std::cout << ")";*/
+
+				//	}
+				//	std::cout << std::endl;
+				//}
+
+				glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
+
+				using namespace std::chrono;
+				time_point<high_resolution_clock> t1;
+				time_point<high_resolution_clock> t2;
+				t1 = high_resolution_clock::now();
+
+				std::shared_ptr<PointCloud> pointCloud = GenPointCloudFromImage(std::string(pointCloudName), pixelData, image_width, image_height,
+									   real(m_mpmEngine->m_chunks_x) * real(CHUNK_WIDTH), real(m_mpmEngine->m_chunks_y) * real(CHUNK_WIDTH), 
+									   m_mpmAlgorithmEngine->m_mpParameters, m_mpmAlgorithmEngine->m_comodel,
+									   m_initVelocity, color);
+
+				
+				t2 = high_resolution_clock::now();
+
+				std::cout << "Finished generating " << pointCloud->N << " points for '" << std::string(pointCloudName) << "' point cloud in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
+
+				/*std::cout << std::endl << std::endl;
+				for (int i = 0; i < pixelData.size(); i++) {
+					std::cout << int(pixelData[i]) << " " << std::endl;
+				}*/
+				//pixel
+			}
+
+			ImGui::Image(
+				(void*)(intptr_t)image_texture,
+				ImVec2((float)image_width, (float)image_height)
+			);
 		}
 	}
 	ImGui::End();

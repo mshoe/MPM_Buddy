@@ -156,6 +156,11 @@ void mpm::MpmControlEngine::ImGuiMaterialParameterController() {
 		}
 		ImGui::InputReal("Lame's 1st Parameter (lambda)", &materialParametersControl.lam);
 		ImGui::InputReal("Lame 2nd Parameter (mew, shear modulus)", &materialParametersControl.mew);
+
+		if (ImGui::Button("Calculate Young's Modulus and Poisson's Ratio")) {
+			materialParametersControl.CalculateYongeAndPoisson();
+		}
+
 		ImGui::InputReal("Critical Compression", &materialParametersControl.crit_c);
 		ImGui::InputReal("Critical Stretch", &materialParametersControl.crit_s);
 		ImGui::InputReal("Hardening coefficient", &materialParametersControl.hardening);
@@ -207,7 +212,48 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 		//	}
 		//}
 
+		static bool controlGridSizeChosen = false;
+
+		static int num_steps = 240;
+		static bool debugOutput = false;
+		static int max_iters = 10;
+		static int max_lineSearchIters = 5;
+		static real initialFAlpha = 0.025;
+		static real initialMaterialAlpha = 1000.0;
+		static bool setInitialFe = false;
+		static mat2 initialControlFe = mat2(1.0);
+		static bool optimizeOnlyInitialF = true;
+		static int optFrameOffset = 50;
+		static size_t lossFunctionIndex = 0;
+		static int totalTemporalIterations = 1;
+		static bool forceDescent = false;
+		static bool reverseTimeOpt = false;
+		static real penalty = 1.0;
+		static real tol = 1e-3;
+
 		ImGui::NewLine();
+
+		
+
+		if (ImGui::Button("Set up mass control environment")) {
+			m_globalForce.y = 0.0;
+			m_mpmAlgorithmEngine->m_algo_code = MpmAlgorithmEngine::MPM_ALGORITHM_CODE::CPP;
+			m_mpmGeometryEngine->SmallCircle();
+			m_mpmEngine->m_chunks_x = 1;
+			m_mpmEngine->m_chunks_y = 1;
+			m_mpmAlgorithmEngine->m_cppChunkX = 32;
+			m_mpmAlgorithmEngine->m_cppChunkY = 32;
+			m_stcg->SetGridSize(m_mpmEngine->m_chunks_x * m_mpmAlgorithmEngine->m_cppChunkX,
+								m_mpmEngine->m_chunks_y * m_mpmAlgorithmEngine->m_cppChunkY);
+			controlGridSizeChosen = true;
+			optFrameOffset = 10;
+			optimizeOnlyInitialF = false;
+			max_iters = 25;
+			max_lineSearchIters = 15;
+			lossFunctionIndex = size_t(control::LOSS_FUNCTION::GRID_NODE_MASSES);
+		}
+
+		ImGui::NewLine(); ImGui::NewLine();
 
 		static std::string controlPointCloudSelectStr = "";
 		m_mpmEngine->ImGuiSelectPointCloud(controlPointCloudSelectStr, "Select control point cloud");
@@ -229,8 +275,6 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 			}
 		}
 
-		
-
 		ImGui::NewLine(); ImGui::NewLine();
 
 		ImGui::InputReal("dt", &m_mpmAlgorithmEngine->m_dt, 0.001, 1.0 / 60.0, "%.6f");
@@ -241,7 +285,7 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 			m_mpmAlgorithmEngine->m_dt /= 2.0;
 		}
 
-		ImGui::NewLine(); ImGui::NewLine();
+		/*ImGui::NewLine(); ImGui::NewLine();
 
 		if (ImGui::Button("Small Circle")) {
 			m_mpmGeometryEngine->SmallCircle();
@@ -254,20 +298,11 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 			m_mpmAlgorithmEngine->m_cppChunkY = 32;
 		}
 
-
-
-		static bool controlGridSizeChosen = false;
-
-		
-
 		if (ImGui::Button("Choose control grid size")) {
 			m_stcg->SetGridSize(m_mpmEngine->m_chunks_x * m_mpmAlgorithmEngine->m_cppChunkX,
 								m_mpmEngine->m_chunks_y * m_mpmAlgorithmEngine->m_cppChunkY);
 			controlGridSizeChosen = true;
 		}
-
-		
-
 
 		if (controlGridSizeChosen == false) {
 			ImGui::Text("No control grid set up");
@@ -275,87 +310,37 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 		else {
 			std::string controlGridSizeStr = "Control grid size: " + std::to_string(m_stcg->grid_size_x) + "x" + std::to_string(m_stcg->grid_size_y);
 			ImGui::Text(controlGridSizeStr.c_str());
-		}
+		}*/
 
 		ImGui::NewLine(); ImGui::NewLine();
 
-		static int num_steps = 240;
+		m_mpmEngine->ImGuiDropDown("Optimization Loss Function", lossFunctionIndex, control::lossFunctionStrVec);
+		control::LOSS_FUNCTION lossFunction = control::LOSS_FUNCTION(lossFunctionIndex);
 		ImGui::InputInt("Num time steps", &num_steps);
 		num_steps = glm::max(0, num_steps);
 		m_stcg->timeSteps = num_steps;
-
-		static bool debugOutput = false;
 		ImGui::Checkbox("debugOutput", &debugOutput);
-
-		static int max_iters = 10;
 		ImGui::InputInt("Max gradient descent iterations", &max_iters);
-
-		static int max_lineSearchIters = 5;
 		ImGui::InputInt("Max backtracking line search iterations", &max_lineSearchIters);
-
-		static real initialFAlpha = 0.025;
 		ImGui::InputReal("initialFAlpha", &initialFAlpha, 0.01, 0.05);
-
-		static real initialMaterialAlpha = 1000.0;
 		ImGui::InputReal("initialMaterialAlpha", &initialMaterialAlpha, 100.0, 1000.0);
-
-		static bool setInitialFe = false;
 		ImGui::Checkbox("Set initial Fe", &setInitialFe);
-
-		static mat2 initialControlFe = mat2(1.0);
 		ImGui::InputReal("Fe[0][0]: ", &initialControlFe[0][0], 0.1, 1.0, "%.6f");
 		ImGui::InputReal("Fe[0][1]: ", &initialControlFe[0][1], 0.1, 1.0, "%.6f");
 		ImGui::InputReal("Fe[1][0]: ", &initialControlFe[1][0], 0.1, 1.0, "%.6f");
 		ImGui::InputReal("Fe[1][1]: ", &initialControlFe[1][1], 0.1, 1.0, "%.6f");
 		ImGui::DisplayNamedGlmMatrixMixColor("Initial Control Set Fe: ", initialControlFe, glm::highp_fvec4(1.0f, 0.0f, 0.0f, 1.0f), glm::highp_fvec4(0.0f, 1.0f, 0.0f, 1.0f));
-
-		static bool optimizeOnlyInitialF = true;
 		ImGui::Checkbox("Optimize only initial F", &optimizeOnlyInitialF);
-
-		static int optFrameOffset = 50;
 		ImGui::InputInt("Optimization timestep offset (only optimize every .. frames)", &optFrameOffset);
 		optFrameOffset = glm::max(optFrameOffset, 0);
-
-		static size_t lossFunctionIndex = 0;
-		m_mpmEngine->ImGuiDropDown("Optimization Loss Function", lossFunctionIndex, control::lossFunctionStrVec);
-		control::LOSS_FUNCTION lossFunction = control::LOSS_FUNCTION(lossFunctionIndex);
-
-		static int totalTemporalIterations = 1;
 		ImGui::InputInt("Total Temporal Iterations", &totalTemporalIterations);
-
-		static bool forceDescent = false;
 		ImGui::Checkbox("Force gradient descent (skip line search)", &forceDescent);
-
-		static bool reverseTimeOpt = false;
 		ImGui::Checkbox("Reverse Time Optimization", &reverseTimeOpt);
-
-		static real penalty = 1.0;
 		ImGui::InputReal("Penalty weight", &penalty, 0.1, 1.0);
-
-		static real tol = 1e-3;
 		ImGui::InputReal("Tolerance", &tol, 0.001, 0.1);
 
 
-		ImGui::NewLine(); ImGui::NewLine();
-
-		if (ImGui::Button("Set up mass control environment")) {
-			m_globalForce.y = 0.0;
-			m_mpmAlgorithmEngine->m_algo_code = MpmAlgorithmEngine::MPM_ALGORITHM_CODE::CPP;
-			m_mpmGeometryEngine->SmallCircle();
-			m_mpmEngine->m_chunks_x = 1;
-			m_mpmEngine->m_chunks_y = 1;
-			m_mpmAlgorithmEngine->m_cppChunkX = 32;
-			m_mpmAlgorithmEngine->m_cppChunkY = 32;
-			m_stcg->SetGridSize(m_mpmEngine->m_chunks_x * m_mpmAlgorithmEngine->m_cppChunkX,
-								m_mpmEngine->m_chunks_y * m_mpmAlgorithmEngine->m_cppChunkY);
-			controlGridSizeChosen = true;
-			optFrameOffset = 10;
-			optimizeOnlyInitialF = false;
-			max_iters = 25;
-			max_lineSearchIters = 15;
-			lossFunctionIndex = size_t(control::LOSS_FUNCTION::GRID_NODE_MASSES);
-			lossFunction = control::LOSS_FUNCTION::GRID_NODE_MASSES;
-		}
+		
 
 		ImGui::NewLine(); ImGui::NewLine();
 

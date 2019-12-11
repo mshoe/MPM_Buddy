@@ -1,5 +1,18 @@
 #include "PointCloud.h"
 
+void mpm::MaterialParameters::CalculateLameParameters()
+{
+	lam = youngMod * poisson / ((1.0 + poisson) * (1.0 - 2.0 * poisson));
+	mew = youngMod / (2.0 + 2.0 * poisson);
+}
+
+void mpm::MaterialParameters::CalculateYongeAndPoisson()
+{
+	youngMod = mew * (3.0 * lam + 2.0 * mew) / (lam + mew);
+	poisson = lam / (2.0 * (lam + mew));
+}
+
+
 void mpm::MaterialPoint::SetMaterialParameters(const MaterialParameters& parameters)
 {
 	lam = parameters.lam;
@@ -302,3 +315,4 @@ void mpm::PointCloud::LoadFromFile(std::string fileName)
 	GenPointCloudSSBO();
 
 }
+

@@ -1,5 +1,7 @@
 #include "MpmGeometryEngine.h"
 
+
+
 void mpm::MpmGeometryEngine::GenPointCloudPolygon(std::shared_ptr<sdf::Polygon> polygon, vec2 center)
 {
 	if (!m_mpmAlgorithmEngine->m_paused)
@@ -80,13 +82,9 @@ std::shared_ptr<mpm::PointCloud> mpm::MpmGeometryEngine::GenPointCloud(const std
 
 	pointCloud->color = color;
 	pointCloud->parameters = parameters;
-	pointCloud->parameters.CalculateLameParameters();/*
-	pointCloud->mew = parameters.youngMod / (2.f + 2.f* parameters.poisson);
-	pointCloud->lam = parameters.youngMod * parameters.poisson / ((1.f + parameters.poisson) * (1.f - 2.f * parameters.poisson));*/
+	pointCloud->parameters.CalculateLameParameters();
 
 	std::cout << "mew: " << pointCloud->parameters.mew << ", lam: " << pointCloud->parameters.lam << std::endl;
-	//m_mew = pointCloud->mew;
-	//m_lam = pointCloud->lam;
 
 	pointCloud->comodel = comodel;
 
@@ -131,17 +129,6 @@ std::shared_ptr<mpm::PointCloud> mpm::MpmGeometryEngine::GenPointCloud(const std
 	pointCloud->N = pointCloud->points.size();
 
 	if (pointCloud->N > 0) {
-
-		// Create the SSBO for the point cloud, so it is stored on the GPU
-		//GLuint pointCloudSSBO;
-		//glCreateBuffers(1, &pointCloudSSBO);
-		//pointCloud->ssbo = pointCloudSSBO;
-		//glNamedBufferStorage(
-		//	pointCloud->ssbo,
-		//	sizeof(MaterialPoint) * pointCloud->points.size(),
-		//	&(pointCloud->points.front().x.x),
-		//	GL_MAP_READ_BIT | GL_MAP_WRITE_BIT // add write bit for cpu mode
-		//);
 		pointCloud->GenPointCloudSSBO();
 
 		m_mpmAlgorithmEngine->CalculatePointCloudVolumes(pointCloudID, pointCloud);
@@ -154,6 +141,71 @@ std::shared_ptr<mpm::PointCloud> mpm::MpmGeometryEngine::GenPointCloud(const std
 	return pointCloud;
 }
 
+std::shared_ptr<mpm::PointCloud> mpm::MpmGeometryEngine::GenPointCloudFromImage(const std::string pointCloudID, const std::vector<unsigned char>& pixels, 
+																				const int image_width, const int image_height, 
+																				const real gridDimX, const real gridDimY,
+																				const MaterialParameters& parameters, 
+																				const ENERGY_MODEL comodel, 
+																				vec2 initialVelocity, glm::highp_fvec4 color)
+{
+	std::shared_ptr<PointCloud> pointCloud = std::make_shared<PointCloud>();
+
+	pointCloud->color = color;
+	pointCloud->parameters = parameters;
+	pointCloud->parameters.CalculateLameParameters();
+
+	std::cout << "mew: " << pointCloud->parameters.mew << ", lam: " << pointCloud->parameters.lam << std::endl;
+
+	pointCloud->comodel = comodel;
+
+	pointCloud->fixed = false;
+
+	// preferably image_width == image_height, and gridDimX == gridDimY
+	real particle_spacing = gridDimX / real(image_width);
+
+	real mass = particle_spacing * particle_spacing * parameters.density;
+
+	// gen points from sdf
+	
+	for (int j = 0; j < image_width; j++) {
+		for (int i = 0; i < image_height; i++) {
+
+			real x = real(j) * particle_spacing;
+			real y = real(image_height - 1 - i) * particle_spacing;
+
+			// have these mixed up for some reason
+			glm::vec2 p(x, y);
+
+			if (int(pixels[4 * i * image_width + 4 * j + 0]) == 255 &&
+				int(pixels[4 * i * image_width + 4 * j + 1]) == 255 &&
+				int(pixels[4 * i * image_width + 4 * j + 2]) == 255) {
+
+				// no material point here
+				continue;
+
+			}
+			else {
+				MaterialPoint mp(p, initialVelocity, GLreal(mass));
+				mp.SetMaterialParameters(parameters);
+				// calculate mp.vol in a compute shader (not here)
+				pointCloud->points.push_back(mp);
+			}
+		}
+	}
+	pointCloud->N = pointCloud->points.size();
+
+	if (pointCloud->N > 0) {
+		pointCloud->GenPointCloudSSBO();
+
+		m_mpmAlgorithmEngine->CalculatePointCloudVolumes(pointCloudID, pointCloud);
+
+		m_mpmEngine->m_pointCloudMap[pointCloudID] = pointCloud;
+	}
+
+	std::cout << "PointCloud size = " << pointCloud->points.size() * sizeof(MaterialPoint) << " bytes." << std::endl;
+
+	return pointCloud;
+}
 
 void mpm::MpmGeometryEngine::HandleGeometryStates()
 {

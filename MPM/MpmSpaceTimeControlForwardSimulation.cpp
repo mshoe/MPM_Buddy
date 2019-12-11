@@ -128,6 +128,8 @@ void mpm::control::UpdateGridNode(ControlGridNode& node, const vec2 f_ext, const
 {
 	// ASSUMING mass != 0
 
+	// should I implement a drag force??
+
 	node.v = node.p / node.m + dt * f_ext;
 }
 

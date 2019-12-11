@@ -16,10 +16,10 @@ void mpm::MpmEngine::RenderGUI()
 		{
 			if (ImGui::BeginMenu("File"))
 			{
-				if (ImGui::MenuItem("Save Point Cloud")) {
+				if (ImGui::MenuItem("Save Point Cloud", "", m_imguiPointCloudSaver)) {
 					m_imguiPointCloudSaver = !m_imguiPointCloudSaver;
 				}
-				if (ImGui::MenuItem("Load Point Cloud")) {
+				if (ImGui::MenuItem("Load Point Cloud", "", m_imguiPointCloudLoader)) {
 					m_imguiPointCloudLoader = !m_imguiPointCloudLoader;
 				}
 				if (ImGui::MenuItem("ImGui Demo", "", imguiImGuiDemo)) {

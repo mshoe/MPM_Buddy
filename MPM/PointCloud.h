@@ -37,10 +37,8 @@ namespace mpm {
 		real crit_s = 0.0075;
 		real hardening = 10.0;
 
-		void CalculateLameParameters() {
-			lam = youngMod * poisson / ((1.f + poisson) * (1.f - 2.f * poisson));
-			mew = youngMod / (2.f + 2.f * poisson);
-		}
+		void CalculateLameParameters();
+		void CalculateYongeAndPoisson();
 	};
 
 	struct MaterialPoint {

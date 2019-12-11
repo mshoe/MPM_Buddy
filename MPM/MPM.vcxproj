@@ -191,6 +191,7 @@
     <ClInclude Include="external\imgui\imstb_textedit.h" />
     <ClInclude Include="external\imgui\imstb_truetype.h" />
     <ClInclude Include="external\include\glad\glad.h" />
+    <ClInclude Include="external\include\stb\stb_image.h" />
     <ClInclude Include="glm_imgui.h" />
     <ClInclude Include="glm_MATLAB.h" />
     <ClInclude Include="Grid.h" />

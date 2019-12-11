@@ -18,58 +18,15 @@ namespace control {
 
 	struct ControlPoint {
 
-		ControlPoint() {
-
-		}
+		ControlPoint() {}
 		
-		ControlPoint(const MaterialPoint& mp) {
-			F = mp.Fe;
-			dLdF = mat2(0.0);
-			P = mp.P;
-			dLdP = mat2(0.0);
-			C = mp.B;
-			dLdC = mat2(0.0);
-			x = mp.x;
-			dLdx = vec2(0.0);
-			v = mp.v;
-			dLdv = vec2(0.0);
-			m = mp.m;
-			vol = mp.vol;
-			lam = mp.lam;
-			mew = mp.mew;
-		}
+		ControlPoint(const MaterialPoint& mp);
 
-		void SetRegularMaterialPoint(MaterialPoint& mp) {
-			mp.x = x;
-			mp.v = v;
-			mp.B = C;
-			mp.Fe = F + dFc;
-			mp.P = P;
-			mp.m = m;
-			mp.vol = vol;
-			mp.lam = lam;
-			mp.mew = mew;
-		}
+		void SetRegularMaterialPoint(MaterialPoint& mp);
 
-		void SetFromPreviousTimeStepControlPoint(const ControlPoint& mp) {
-			F = mp.F;
-			P = mp.P;
-			C = mp.C;
-			x = mp.x;
-			v = mp.v;
-			m = mp.m;
-			vol = mp.vol;
-			lam = mp.lam;
-			mew = mp.mew;
-		}
+		void SetFromPreviousTimeStepControlPoint(const ControlPoint& mp);
 
-		void ResetGradients() {
-			dLdF = mat2(0.0);
-			dLdP = mat2(0.0);
-			dLdC = mat2(0.0);
-			dLdx = vec2(0.0);
-			dLdv = vec2(0.0);
-		}
+		void ResetGradients();
 		
 		mat2 F = mat2(1.0);
 		mat2 dFc = mat2(0.0);
@@ -103,46 +60,14 @@ namespace control {
 		real dmewc = 0.0;
 		real dLdmew = 0.0;
 
-		void ImGuiDisplay() {
-			glm::highp_fvec4 min_color = glm::highp_fvec4(1.0, 0.0, 0.0, 1.0);
-			glm::highp_fvec4 max_color = glm::highp_fvec4(0.0, 1.0, 0.0, 1.0);
-
-			ImGui::DisplayNamedGlmVecMixColor("x", x, min_color, max_color);
-			ImGui::DisplayNamedGlmVecMixColor("dLdx", dLdx, min_color, max_color);
-			ImGui::DisplayNamedGlmVecMixColor("v", v, min_color, max_color);
-			ImGui::DisplayNamedGlmVecMixColor("dLdc", dLdv, min_color, max_color);
-			ImGui::DisplayNamedGlmRealColor("m", m, max_color);
-			ImGui::DisplayNamedGlmRealColor("dLdm", dLdm, max_color);
-			ImGui::DisplayNamedGlmRealColor("vol", vol, max_color);
-			ImGui::DisplayNamedGlmRealColor("dLdvol", dLdvol, max_color);
-			ImGui::DisplayNamedGlmRealColor("lam", lam, max_color);
-			ImGui::DisplayNamedGlmRealColor("dlamc", dlamc, max_color);
-			ImGui::DisplayNamedGlmRealColor("dLdlam", dLdlam, max_color);
-			ImGui::DisplayNamedGlmRealColor("mew", mew, max_color);
-			ImGui::DisplayNamedGlmRealColor("dmewc", dmewc, max_color);
-			ImGui::DisplayNamedGlmRealColor("dLdmew", dLdmew, max_color);
-			ImGui::DisplayNamedGlmMatrixMixColor("F", F, min_color, max_color);
-			ImGui::DisplayNamedGlmMatrixMixColor("dFc", dFc, min_color, max_color);
-			ImGui::DisplayNamedGlmMatrixMixColor("dLdF", dLdF, min_color, max_color);
-			ImGui::DisplayNamedGlmMatrixMixColor("P", P, min_color, max_color);
-			ImGui::DisplayNamedGlmMatrixMixColor("dLdP", dLdP, min_color, max_color);
-			ImGui::DisplayNamedGlmMatrixMixColor("C", C, min_color, max_color);
-			ImGui::DisplayNamedGlmMatrixMixColor("dLdC", dLdC, min_color, max_color);
-		}
+		void ImGuiDisplay();
 	};
 
 	struct ControlGridNode {
 		ControlGridNode() {}
-		void Reset_vpm() {
-			v = vec2(0.0);
-			p = vec2(0.0);
-			m = 0.0;
-		}
-		void ResetGradients() {
-			dLdv = vec2(0.0);
-			dLdp = vec2(0.0);
-			dLdm = 0.0;
-		}
+		void Reset_vpm();
+
+		void ResetGradients();
 
 		vec2 x = vec2(0.0); // this will never change, but storing cuz I can afford it
 
@@ -155,21 +80,7 @@ namespace control {
 		real m = 0.0;
 		real dLdm = 0.0;
 
-		void ImGuiDisplay() {
-			glm::highp_fvec4 min_color = glm::highp_fvec4(1.0, 0.0, 0.0, 1.0);
-			glm::highp_fvec4 max_color = glm::highp_fvec4(0.0, 1.0, 0.0, 1.0);
-			ImGui::DisplayNamedGlmRealColor("m", m, max_color);
-			ImGui::DisplayNamedGlmRealColor("dLdm", dLdm, max_color);
-
-			ImGui::DisplayNamedGlmVecMixColor("x", x, min_color, max_color);
-
-			ImGui::DisplayNamedGlmVecMixColor("p", p, min_color, max_color);
-			ImGui::DisplayNamedGlmVecMixColor("dLdp", dLdp, min_color, max_color);
-
-			ImGui::DisplayNamedGlmVecMixColor("v", v, min_color, max_color);
-			ImGui::DisplayNamedGlmVecMixColor("dLdv", dLdv, min_color, max_color);
-
-		}
+		void ImGuiDisplay();
 	};
 
 	
@@ -187,85 +98,16 @@ namespace control {
 		void SetRegularPointCloud(std::shared_ptr<PointCloud> pointCloud);
 		//std::shared_ptr<PointCloud> GenRegularPointCloud();
 		void SetF(mat2 F);
-		void ResetGradients() {
-			for (size_t p = 0; p < controlPoints.size(); p++) {
-				controlPoints[p].ResetGradients();
-			}
-		}
-		void ResetdFc() {
-			for (size_t p = 0; p < controlPoints.size(); p++) {
-				controlPoints[p].dFc = mat2(0.0);
-			}
-		}
-		//void DescendFGradients(real alpha) {
-		//	// First properly normalize the dL / dF's
-		//	real norm = 0.0;
-		//	for (ControlPoint& mp : controlPoints) {
-		//		norm += MatrixNormSqrd(mp.dLdF);
-		//	}
-		//	norm = sqrt(norm);
+		void ResetGradients();
+		void ResetdFc();
 
-		//	if (norm == 0.0) {
-		//		std::cout << "rare error: norm = 0" << std::endl;
-		//		return;
-		//	}
+		bool CheckFConvergence(real tol, bool debugOutput);
 
-		//	for (ControlPoint& mp : controlPoints) {
-		//		// view this dLdF matrix as a vector
-		//		// descend in the direction of the vector
-		//		mp.dFc -= alpha * mp.dLdF / norm;
-		//	}
-		//}
-
-		bool CheckFConvergence(real tol, bool debugOutput) {
-			real norm = 0.0;
-			for (ControlPoint& mp : controlPoints) {
-				norm += MatrixNormSqrd(mp.dLdF);
-			}
-			norm = sqrt(norm);
-			if (debugOutput)
-				std::cout << "norm is: " << norm << std::endl;
-			if (norm < tol) {
-				return true;
-			}
-			return false;
-		}
-
-		void DescendFGradients(real alpha) {
-			for (ControlPoint& mp : controlPoints) {
-				// view this dLdF matrix as a vector
-				// descend in the direction of the vector
-				mp.dFc -= alpha * mp.dLdF;
-			}
-		}
+		void DescendFGradients(real alpha);
 		
-		void DescendMaterialGradients(real alpha) {
-			// First properly normalize the dL / dF's
-			real norm = 0.0;
-			for (ControlPoint& mp : controlPoints) {
-				norm += mp.dLdlam * mp.dLdlam;
-				norm += mp.dLdmew * mp.dLdmew;
-			}
-			norm = sqrt(norm);
+		void DescendMaterialGradients(real alpha);
 
-			if (norm == 0.0) {
-				std::cout << "rare error: norm = 0" << std::endl;
-				return;
-			}
-
-			for (ControlPoint& mp : controlPoints) {
-				mp.dlamc -= alpha * mp.dLdlam / norm;
-				mp.dmewc -= alpha * mp.dLdmew / norm;
-			}
-		}
-		void ComputeTotalMass() {
-			std::cout << "computing total mass..." << std::endl;
-			real mass = 0.0;
-			for (const ControlPoint& mp : controlPoints) {
-				mass += mp.m;
-			}
-			totalMass = mass;
-		}
+		void ComputeTotalMass();
 		void SetPointCloudMassEqualToGiven(std::shared_ptr<const ControlPointCloud> pointCloud);
 
 		void SetFsToIdentity();
@@ -292,37 +134,16 @@ namespace control {
 	struct ControlGrid {
 		ControlGrid() {}
 		ControlGrid(int _xSize, int _ySize);
-		virtual ~ControlGrid() {
-			nodes.clear(); // vector clears recursively
-		}
+		virtual ~ControlGrid();
 
 		void InitGrid(int _xSize, int _ySize);
 
-		ControlGridNode& Node(size_t i, size_t j) {
-			return nodes[i + grid_size_y * j];
-		}
-		const ControlGridNode& ConstNode(size_t i, size_t j) const {
-			return nodes[i + grid_size_y * j];
-		}
+		ControlGridNode& Node(size_t i, size_t j);
 
-		void ResetGradients() {
-			for (size_t i = 0; i < size_t(grid_size_x); i++) {
-				for (size_t j = 0; j < size_t(grid_size_y); j++) {
-					size_t grid_ind = i + j * size_t(grid_size_y);
-					nodes[grid_ind].ResetGradients();
-				}
-			}
-		}
-		real GetTotalMass() {
-			real totalMass = 0.0;
-			for (size_t i = 0; i < size_t(grid_size_x); i++) {
-				for (size_t j = 0; j < size_t(grid_size_y); j++) {
-					size_t grid_ind = i + j * size_t(grid_size_y);
-					totalMass += nodes[grid_ind].m;
-				}
-			}
-			return totalMass;
-		}
+		const ControlGridNode& ConstNode(size_t i, size_t j) const;
+
+		void ResetGradients();
+		real GetTotalMass();
 
 		int grid_size_x;
 		int grid_size_y;
@@ -332,21 +153,9 @@ namespace control {
 	struct TargetGrid : public ControlGrid {
 
 		TargetGrid(int _xSize, int _ySize);
-		~TargetGrid() {
-			penaltyWeights.clear();
-			nodes.clear();
-		}
+		~TargetGrid();
 
-		void InitializePenaltyWeights(real penalty) {
-			penaltyWeights.resize(grid_size_x, std::vector<real>(grid_size_y, 1.0));
-			for (int i = 0; i < grid_size_x; i++) {
-				for (int j = 0; j < grid_size_y; j++) {
-					if (Node(i, j).m == 0.0) {
-						penaltyWeights[i][j] = penalty;
-					}
-				}
-			}
-		}
+		void InitializePenaltyWeights(real penalty);
 
 		std::vector<std::vector<real>> penaltyWeights;
 	};
@@ -365,11 +174,7 @@ namespace control {
 
 		MPMSpaceTimeComputationGraph();
 
-		~MPMSpaceTimeComputationGraph() {
-			glDeleteBuffers(1, &controlSsbo);
-			glDeleteBuffers(1, &targetSsbo);
-			glDeleteBuffers(1, &gridSsbo);
-		}
+		~MPMSpaceTimeComputationGraph();
 
 		void InitSTCG();
 		void SetGridSize(int _grid_size_x, int _grid_size_y);
@@ -386,35 +191,21 @@ namespace control {
 		bool bounded_dFc = false;
 		real max_dFc_norm = 1.0;
 		
-		//std::vector<SparseMatrixd> p2gNetwork;
 		int timeSteps = 120;
 		int iters = 10;
 		int grid_size_x = 32;
 		int grid_size_y = 32;
 		std::vector<std::shared_ptr<MPMSpaceComputationGraph>> simStates;
 
-		//void OptimizeControlF();
-
 		void InitControlPointCloud(std::shared_ptr<PointCloud> pointCloud);
 		void InitControlPointCloud(std::shared_ptr<ControlPointCloud> pointCloud);
 		void InitTargetPointCloud(std::shared_ptr<PointCloud> pointCloud);
 		void InitTargetPointCloud(std::shared_ptr<ControlPointCloud> pointCloud);
 
-		void SetTargetPointCloudMassToControl() {
-			if (targetPointCloud != nullptr && controlPointCloud != nullptr) {
-				targetPointCloud->SetPointCloudMassEqualToGiven(controlPointCloud);
-			}
-			else {
-				std::cout << "error" << std::endl;
-			}
-		}
+		void SetTargetPointCloudMassToControl();
 
 		std::vector<float> lossValues;
-		
-		
-		//void MapToGPU(std::shared_ptr<ControlPointCloud> pointCloud, GLuint ssbo);
 
-		//GLuint originalSsbo = 0;
 		GLuint controlSsbo = 0;
 		GLuint targetSsbo = 0;
 
@@ -496,6 +287,16 @@ namespace control {
 							  std::shared_ptr<ControlGrid> controlGrid,
 							  std::shared_ptr<const TargetGrid> targetGrid,
 							  const real dt);
+
+	real GridMassLossFunction_WithPenalty(std::shared_ptr<ControlPointCloud> controlPointCloud,
+										  std::shared_ptr<ControlGrid> controlGrid,
+										  std::shared_ptr<const TargetGrid> targetGrid,
+										  const real dt);
+
+	real GridMassLossFunction_WithDefGradPenalty(std::shared_ptr<ControlPointCloud> controlPointCloud,
+												 std::shared_ptr<ControlGrid> controlGrid,
+												 std::shared_ptr<const TargetGrid> targetGrid,
+												 const real dt);
 
 	void OptimizeSetDeformationGradient(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg,
 										const vec2 f_ext, const real dt,

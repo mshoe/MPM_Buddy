@@ -48,6 +48,9 @@ void mpm::MpmEngine::ImGuiMpmRenderWindow()
 		//ImGui::Text("global window pos: "); ImGui::SameLine(); ImGui::Text(windowPosStr.c_str());
 		ImGui::Text("rsbl pos: "); ImGui::SameLine(); ImGui::Text(rsblStr.c_str());
 		ImGui::Text("mouse in render screen: "); ImGui::SameLine(); ImGui::Text(mouseInRenderScreenStr.c_str());
+		
+		std::string mpmMouseStr = glm::to_string(m_mouseMpmRenderScreenGridSpace);
+		ImGui::Text("mouse in mpm space: "); ImGui::SameLine(); ImGui::Text(mpmMouseStr.c_str());
 
 		static glm::highp_fvec4 min_color = glm::highp_fvec4(1.0, 0.0, 0.0, 1.0);
 		static glm::highp_fvec4 max_color = glm::highp_fvec4(0.0, 1.0, 0.0, 1.0);
@@ -60,11 +63,6 @@ void mpm::MpmEngine::ImGuiZoomWindow()
 {
 	if (ImGui::Begin("Zoom Window", &m_imguiZoomWindow)) {
 		
-		ImGui::InputReal("Zoom Point x: ", &m_zoomPoint.x, 1.0, 10.0, "%.1f");
-		ImGui::InputReal("Zoom Point y: ", &m_zoomPoint.y, 1.0, 10.0, "%.1f");
-		ImGui::InputReal("Zoom Factor", &m_zoomFactor, 0.5, 2.0, "%.1f");
-		ImGui::Checkbox("Show Zoom Border", &m_showZoomBorder);
-		ImGui::Checkbox("Move Zoom Window", &m_movingZoomWindow);
 
 
 		ImGui::Image(
@@ -75,6 +73,37 @@ void mpm::MpmEngine::ImGuiZoomWindow()
 			ImVec4(1, 1, 1, 1),
 			ImVec4(1, 1, 1, 1)
 		);
+
+		ImGui::InputReal("Zoom Point x: ", &m_zoomPoint.x, 1.0, 10.0, "%.1f");
+		ImGui::InputReal("Zoom Point y: ", &m_zoomPoint.y, 1.0, 10.0, "%.1f");
+		ImGui::InputReal("Zoom Factor", &m_zoomFactor, 0.5, 2.0, "%.1f");
+		ImGui::Checkbox("Show Zoom Border", &m_showZoomBorder);
+		ImGui::Checkbox("Move Zoom Window", &m_movingZoomWindow);
+		
+		
+
+		
+		//ImVec2 windowPos = ImGui::GetWindowPos(); //ImVec2(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y);
+		//std::string windowPosStr = std::to_string(windowPos.x) + ", " + std::to_string(windowPos.y);
+
+		//ImGui::Text("window pos: "); ImGui::SameLine(); ImGui::Text(windowPosStr.c_str());
+
+		//ImVec2 zoomScreenScreenBotLeft = ImVec2(windowPos.x, windowPos.y - (float)m_zoomWindow->screen_dimensions.y);
+		//std::string zsblStr = std::to_string(zoomScreenScreenBotLeft.x) + ", " + std::to_string(zoomScreenScreenBotLeft.y);
+
+		//ImVec2 mouseGlobalScreen = ImVec2((float)m_mouseGlobalScreen.x, (float)m_mouseGlobalScreen.y);
+		////std::string mouseGlobalStr = std::to_string(m_mouseGlobalScreen.x) + ", " + std::to_string(m_mouseGlobalScreen.y);
+
+		//ImVec2 mouseInZoomScreen = ImVec2(mouseGlobalScreen.x - zoomScreenScreenBotLeft.x, mouseGlobalScreen.y - zoomScreenScreenBotLeft.y);
+		//std::string mouseInZoomScreenStr = std::to_string(mouseInZoomScreen.x) + ", " + std::to_string(mouseInZoomScreen.y);
+
+		//ImGui::Text("mouse in zoom screen: "); ImGui::SameLine(); ImGui::Text(mouseInZoomScreenStr.c_str());
+
+		/*ImVec2 mouseInZoomWindowGridSpace = zoomWindowScreenBotLeft;
+		std::string mpmMouseStr = glm::to_string(m_mouseMpmRenderScreenGridSpace);
+		ImGui::Text("mouse in mpm space: "); ImGui::SameLine(); ImGui::Text(mpmMouseStr.c_str());*/
+
+		
 	}
 	ImGui::End();
 }

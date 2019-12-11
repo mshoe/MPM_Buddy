@@ -76,12 +76,13 @@ namespace mpm {
 		void ImGuiPolygonEditor();
 		void ImGuiPWLineEditor();
 		void ImGuiPointSelector();
+		void ImGuiImageLoader();
 
 		bool m_imguiBasicShapesEditor = false;
 		bool m_imguiPolygonEditor = false;
 		bool m_imguiPWLineEditor = false;
 		bool m_imguiPointSelector = false;
-		
+		bool m_imguiImageLoader = false;
 
 		// graphics shaders
 		std::shared_ptr<StandardShader> m_circleShader = nullptr;
@@ -97,6 +98,9 @@ namespace mpm {
 		bool m_visualizeSelected = false;
 		glm::highp_fvec4 m_pointSelectColor = glm::highp_fvec4(1.0, 1.0, 0.0, 1.0);
 
+
+		std::shared_ptr<ImGuiScreen> m_imageScreen = nullptr;
+
 		/******************** GEOMETRY EDITOR ********************/
 
 		float m_color[4] = { 1.0f, 0.0f, 0.0f, 1.0f }; // color needs to be float
@@ -111,6 +115,15 @@ namespace mpm {
 			const ENERGY_MODEL comodel, sdf::SDF_OPTION sdfOption,
 			bool inverted, bool fixed,
 			vec2 initialVelocity, glm::highp_fvec4 color);
+
+		std::shared_ptr<PointCloud> GenPointCloudFromImage(const std::string pointCloudID, const std::vector<unsigned char>& pixels,
+														   const int image_width, const int image_height,
+														   const real gridDimX, const real gridDimY,
+														   const MaterialParameters& parameters,
+														   const ENERGY_MODEL comodel,
+														   vec2 initialVelocity, glm::highp_fvec4 color);
+		
+
 		void ClearCreateStates() {
 			m_createCircleState = false;
 			m_createRectState = false;

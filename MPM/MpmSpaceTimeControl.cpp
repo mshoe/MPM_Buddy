@@ -98,11 +98,54 @@ real mpm::control::GridMassLossFunction(std::shared_ptr<ControlPointCloud> contr
 	for (int i = 0; i < controlGrid->grid_size_x; i++) {
 		for (int j = 0; j < controlGrid->grid_size_y; j++) {
 			real dm = controlGrid->Node(i, j).m - targetGrid->ConstNode(i, j).m;
+			loss += 0.5 * dm * dm;
+		}
+	}
+	return loss;
+}
+
+real mpm::control::GridMassLossFunction_WithPenalty(std::shared_ptr<ControlPointCloud> controlPointCloud, std::shared_ptr<ControlGrid> controlGrid, std::shared_ptr<const TargetGrid> targetGrid, const real dt)
+{
+	if (controlGrid->grid_size_x != targetGrid->grid_size_x ||
+		controlGrid->grid_size_y != targetGrid->grid_size_y) {
+		return -1.0;
+	}
+
+	P2G(controlPointCloud, controlGrid, dt);
+
+	real loss = 0.0;
+	for (int i = 0; i < controlGrid->grid_size_x; i++) {
+		for (int j = 0; j < controlGrid->grid_size_y; j++) {
+			real dm = controlGrid->Node(i, j).m - targetGrid->ConstNode(i, j).m;
 			loss += 0.5 * dm * dm * targetGrid->penaltyWeights[i][j];
 		}
 	}
 	return loss;
 }
+
+real mpm::control::GridMassLossFunction_WithDefGradPenalty(std::shared_ptr<ControlPointCloud> controlPointCloud, std::shared_ptr<ControlGrid> controlGrid, std::shared_ptr<const TargetGrid> targetGrid, const real dt)
+{
+	if (controlGrid->grid_size_x != targetGrid->grid_size_x ||
+		controlGrid->grid_size_y != targetGrid->grid_size_y) {
+		return -1.0;
+	}
+
+	P2G(controlPointCloud, controlGrid, dt);
+
+	real loss = 0.0;
+	for (int i = 0; i < controlGrid->grid_size_x; i++) {
+		for (int j = 0; j < controlGrid->grid_size_y; j++) {
+			real dm = controlGrid->Node(i, j).m - targetGrid->ConstNode(i, j).m;
+			loss += 0.5 * dm * dm;
+		}
+	}
+	for (int p = 0; p < controlPointCloud->controlPoints.size(); p++) {
+		loss += MatrixNormSqrd(controlPointCloud->controlPoints[p].F);
+	}
+
+	return loss;
+}
+
 
 void mpm::control::OptimizeSetDeformationGradient(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg,
 												  const vec2 f_ext, const real dt,
@@ -475,3 +518,5 @@ void mpm::control::MapCPUControlGridToGPU(std::shared_ptr<ControlGrid> grid, GLu
 //	}
 //
 //}
+
+
