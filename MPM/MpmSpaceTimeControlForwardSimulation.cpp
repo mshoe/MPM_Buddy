@@ -148,6 +148,6 @@ void mpm::control::UpdateParticle(ControlPoint& mp, const ControlPoint& mp_prev,
 {
 	mp.F = (mat2(1.0) + dt * mp.C) * (mp_prev.F + mp_prev.dFc);
 	mp.x += dt * mp.v;
-	mp.lam = mp_prev.lam + mp_prev.dLdlam;
-	mp.mew = mp_prev.mew + mp_prev.dLdmew;
+	mp.lam = mp_prev.lam + mp_prev.dlamc;
+	mp.mew = mp_prev.mew + mp_prev.dmewc;
 }

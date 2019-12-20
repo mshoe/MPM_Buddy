@@ -215,6 +215,11 @@ bool mpm::control::ControlPointCloud::CheckFConvergence(real tol, bool debugOutp
 	if (debugOutput)
 		std::cout << "norm is: " << norm << std::endl;
 	if (norm < tol) {
+		std::cout << "norm under tolerance..." << std::endl;
+		return true;
+	}
+	else if (isnan(norm)) {
+		std::cout << "gradient is nan..." << std::endl;
 		return true;
 	}
 	return false;
@@ -282,6 +287,19 @@ void mpm::control::ControlPointCloud::SetFsToIdentity()
 		mp.F = mat2(1.0);
 		//mp.dFc = mat2(0.0);
 	}
+}
+
+bool mpm::control::ControlPointCloud::Check_dLdF_Nan()
+{
+	for (ControlPoint& mp : controlPoints) {
+		if (glm::isnan(mp.dLdF[0][0]) ||
+			glm::isnan(mp.dLdF[0][1]) ||
+			glm::isnan(mp.dLdF[1][0]) ||
+			glm::isnan(mp.dLdF[1][1])) {
+			return true;
+		}
+	}
+	return false;
 }
 
 

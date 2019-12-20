@@ -137,7 +137,6 @@ protected:
 				if (!shaderFile.eof()) {
 					std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
 					time_point<high_resolution_clock> t2 = clock.now();
-					duration_cast<seconds>(t2 - t1);
 					std::cout << "Failed compiling in " << duration_cast<seconds>(t2 - t1).count() << " seconds." << std::endl;
 					return false;
 				}

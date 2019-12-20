@@ -230,6 +230,7 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 		static bool reverseTimeOpt = false;
 		static real penalty = 1.0;
 		static real tol = 1e-3;
+		static real suffLossTemporalIterDecreaseFactor = 0.001;
 
 		ImGui::NewLine();
 
@@ -338,7 +339,7 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 		ImGui::Checkbox("Reverse Time Optimization", &reverseTimeOpt);
 		ImGui::InputReal("Penalty weight", &penalty, 0.1, 1.0);
 		ImGui::InputReal("Tolerance", &tol, 0.001, 0.1);
-
+		ImGui::InputReal("Sufficient Decrease Factor (Temporal)", &suffLossTemporalIterDecreaseFactor, 0.0001, 0.01);
 
 		
 
@@ -407,7 +408,7 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 		ImGui::NewLine(); ImGui::NewLine();
 
 		if (m_stcg->controlPointCloud != nullptr && m_stcg->targetPointCloud != nullptr) {
-			if (ImGui::Button("Optimize L(F)")) {
+			/*if (ImGui::Button("Optimize L(F)")) {
 				control::OptimizeSetDeformationGradient(m_stcg, m_globalForce, m_mpmAlgorithmEngine->m_dt, 
 														initialControlFe, optFrameOffset,
 														num_steps, max_iters, max_lineSearchIters,
@@ -415,7 +416,7 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 														penalty,
 														initialFAlpha,
 														optimizeOnlyInitialF, debugOutput);
-			}
+			}*/
 
 			if (ImGui::Button("Optimize L(F) in temporal order")) {
 				control::OptimizeSetDeformationGradient_InTemporalOrder(m_stcg, m_globalForce, m_mpmAlgorithmEngine->m_dt,
@@ -426,7 +427,7 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 														lossFunction, forceDescent,
 														reverseTimeOpt, penalty,
 														initialFAlpha, initialMaterialAlpha,
-														tol,
+														tol, suffLossTemporalIterDecreaseFactor,
 														optimizeOnlyInitialF, debugOutput);
 			}
 		}

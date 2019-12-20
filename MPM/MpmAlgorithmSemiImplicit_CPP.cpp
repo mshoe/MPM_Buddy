@@ -5,43 +5,6 @@
 
 #include <unordered_map>
 
-//void d2Psi_dF2(Eigen::Matrix4d& dPdF, double mew, double lam, const mpm::MaterialPoint& mp) {
-//
-//	mat2 R, S, U, V;
-//	real s1, s2;
-//	PolarDecomp(mp.Fe, R, S);
-//	SVD(R, S, U, s1, s2, V);
-//
-//	real u1 = ExtractRotationAngle(U);
-//	real v1 = ExtractRotationAngle(V);
-//
-//	// pooped out from MATLAB script: MATLAB/P_SVD.mlx
-//	// Assuming release mode will optimize this bad boy
-//
-//	real cosu1 = cos(u1);
-//	real sinu1 = sin(u1);
-//	real cosv1 = cos(v1);
-//	real sinv1 = sin(v1);
-//
-//
-//	dPdF(0, 0) = mew * cosu1 * cosv1 * 2.0 - lam * sinu1 * sinv1 + lam * (s2 * s2) * cosu1 * cosv1 + lam * s1 * s2 * sinu1 * sinv1 * 2.0;
-//	dPdF(0, 1) = lam * cosv1 * sinu1 + mew * cosu1 * sinv1 * 2.0 + lam * (s2 * s2) * cosu1 * sinv1 - lam * s1 * s2 * cosv1 * sinu1 * 2.0;
-//	dPdF(0, 2) = lam * cosu1 * sinv1 + mew * cosv1 * sinu1 * 2.0 + lam * (s2 * s2) * cosv1 * sinu1 - lam * s1 * s2 * cosu1 * sinv1 * 2.0;
-//	dPdF(0, 3) = -lam * cosu1 * cosv1 + mew * sinu1 * sinv1 * 2.0 + lam * (s2 * s2) * sinu1 * sinv1 + lam * s1 * s2 * cosu1 * cosv1 * 2.0;
-//	dPdF(1, 0) = -(mew * cosu1 * sinv1 * -2.0 + mew * cosv1 * sinu1 * 2.0 + lam * s1 * cosv1 * sinu1 + lam * s2 * cosv1 * sinu1 + mew * s1 * cosu1 * sinv1 * 2.0 + mew * s2 * cosu1 * sinv1 * 2.0 - lam * s1 * (s2 * s2) * cosv1 * sinu1 - lam * (s1 * s1) * s2 * cosv1 * sinu1) / (s1 + s2);
-//	dPdF(1, 1) = -(mew * cosu1 * cosv1 * 2.0 + mew * sinu1 * sinv1 * 2.0 + lam * s1 * sinu1 * sinv1 + lam * s2 * sinu1 * sinv1 - mew * s1 * cosu1 * cosv1 * 2.0 - mew * s2 * cosu1 * cosv1 * 2.0 - lam * s1 * (s2 * s2) * sinu1 * sinv1 - lam * (s1 * s1) * s2 * sinu1 * sinv1) / (s1 + s2);
-//	dPdF(1, 2) = (mew * cosu1 * cosv1 * 2.0 + mew * sinu1 * sinv1 * 2.0 - mew * s1 * sinu1 * sinv1 * 2.0 - mew * s2 * sinu1 * sinv1 * 2.0 + lam * s1 * cosu1 * cosv1 + lam * s2 * cosu1 * cosv1 - lam * s1 * (s2 * s2) * cosu1 * cosv1 - lam * (s1 * s1) * s2 * cosu1 * cosv1) / (s1 + s2);
-//	dPdF(1, 3) = (mew * cosu1 * sinv1 * 2.0 - mew * cosv1 * sinu1 * 2.0 + lam * s1 * cosu1 * sinv1 + lam * s2 * cosu1 * sinv1 + mew * s1 * cosv1 * sinu1 * 2.0 + mew * s2 * cosv1 * sinu1 * 2.0 - lam * s1 * (s2 * s2) * cosu1 * sinv1 - lam * (s1 * s1) * s2 * cosu1 * sinv1) / (s1 + s2);
-//	dPdF(2, 0) = -(mew * cosu1 * sinv1 * 2.0 - mew * cosv1 * sinu1 * 2.0 + lam * s1 * cosu1 * sinv1 + lam * s2 * cosu1 * sinv1 + mew * s1 * cosv1 * sinu1 * 2.0 + mew * s2 * cosv1 * sinu1 * 2.0 - lam * s1 * (s2 * s2) * cosu1 * sinv1 - lam * (s1 * s1) * s2 * cosu1 * sinv1) / (s1 + s2);
-//	dPdF(2, 1) = (mew * cosu1 * cosv1 * 2.0 + mew * sinu1 * sinv1 * 2.0 - mew * s1 * sinu1 * sinv1 * 2.0 - mew * s2 * sinu1 * sinv1 * 2.0 + lam * s1 * cosu1 * cosv1 + lam * s2 * cosu1 * cosv1 - lam * s1 * (s2 * s2) * cosu1 * cosv1 - lam * (s1 * s1) * s2 * cosu1 * cosv1) / (s1 + s2);
-//	dPdF(2, 2) = -(mew * cosu1 * cosv1 * 2.0 + mew * sinu1 * sinv1 * 2.0 + lam * s1 * sinu1 * sinv1 + lam * s2 * sinu1 * sinv1 - mew * s1 * cosu1 * cosv1 * 2.0 - mew * s2 * cosu1 * cosv1 * 2.0 - lam * s1 * (s2 * s2) * sinu1 * sinv1 - lam * (s1 * s1) * s2 * sinu1 * sinv1) / (s1 + s2);
-//	dPdF(2, 3) = (mew * cosu1 * sinv1 * -2.0 + mew * cosv1 * sinu1 * 2.0 + lam * s1 * cosv1 * sinu1 + lam * s2 * cosv1 * sinu1 + mew * s1 * cosu1 * sinv1 * 2.0 + mew * s2 * cosu1 * sinv1 * 2.0 - lam * s1 * (s2 * s2) * cosv1 * sinu1 - lam * (s1 * s1) * s2 * cosv1 * sinu1) / (s1 + s2);
-//	dPdF(3, 0) = -lam * cosu1 * cosv1 + mew * sinu1 * sinv1 * 2.0 + lam * (s1 * s1) * sinu1 * sinv1 + lam * s1 * s2 * cosu1 * cosv1 * 2.0;
-//	dPdF(3, 1) = -lam * cosu1 * sinv1 - mew * cosv1 * sinu1 * 2.0 - lam * (s1 * s1) * cosv1 * sinu1 + lam * s1 * s2 * cosu1 * sinv1 * 2.0;
-//	dPdF(3, 2) = -lam * cosv1 * sinu1 - mew * cosu1 * sinv1 * 2.0 - lam * (s1 * s1) * cosu1 * sinv1 + lam * s1 * s2 * cosv1 * sinu1 * 2.0;
-//	dPdF(3, 3) = mew * cosu1 * cosv1 * 2.0 - lam * sinu1 * sinv1 + lam * (s1 * s1) * cosu1 * cosv1 + lam * s1 * s2 * sinu1 * sinv1 * 2.0;
-//}
-
 void d2e_dxidxj(mat2 &d2e,
 				//vec2 wpgGrad_i, vec2 wpgGrad_j,
 				real wxixp, real wxjxp,

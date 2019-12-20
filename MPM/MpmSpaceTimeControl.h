@@ -111,6 +111,8 @@ namespace control {
 		void SetPointCloudMassEqualToGiven(std::shared_ptr<const ControlPointCloud> pointCloud);
 
 		void SetFsToIdentity();
+
+		bool Check_dLdF_Nan();
 		//ControlPoint& GetLargestFGradientPoint() {
 		//	real max_dLdF_mag = -1.0;
 		//	ControlPoint& max_mp = controlPoints[0];
@@ -239,12 +241,18 @@ namespace control {
 		PARTICLE_POSITIONS = 0,
 		GRID_NODE_MASSES = 1
 	};
+	enum class LOSS_PENALTY {
+		MP_VELOCITIES = 0,
+		MP_DEFGRADS = 1
+	};
+
 	// BACKPROPOGATION
 	void MPMBackPropogation(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg, 
 							const real dt, 
 							LOSS_FUNCTION lossFunction,
 							int controlTimeStep,
 							bool debugOutput);
+
 	void BackPropPointCloudPositionLossFunctionInit(std::shared_ptr<ControlPointCloud> controlPointCloud,
 													std::shared_ptr<const ControlPointCloud> targetPointCloud,
 													const real dt);
@@ -291,20 +299,20 @@ namespace control {
 	real GridMassLossFunction_WithPenalty(std::shared_ptr<ControlPointCloud> controlPointCloud,
 										  std::shared_ptr<ControlGrid> controlGrid,
 										  std::shared_ptr<const TargetGrid> targetGrid,
+										  const std::vector<LOSS_PENALTY> &penalties,
 										  const real dt);
 
-	real GridMassLossFunction_WithDefGradPenalty(std::shared_ptr<ControlPointCloud> controlPointCloud,
-												 std::shared_ptr<ControlGrid> controlGrid,
-												 std::shared_ptr<const TargetGrid> targetGrid,
-												 const real dt);
+	real MpDefGradPenalty(std::shared_ptr<ControlPointCloud> controlPointCloud);
+	real MpVelocityPenalty(std::shared_ptr<ControlPointCloud> controlPointCloud);
 
-	void OptimizeSetDeformationGradient(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg,
+
+	/*void OptimizeSetDeformationGradient(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg,
 										const vec2 f_ext, const real dt,
 										mat2 initialFe, int optFrameOffset,
 										int numTimeSteps, int max_iters, int maxLineSearchIters,
 										LOSS_FUNCTION lossFunction, bool forceDescent,
 										real penalty,
-										real initialAlpha, bool optimizeOnlyInitialF, bool debugOutput);
+										real initialAlpha, bool optimizeOnlyInitialF, bool debugOutput);*/
 
 	void OptimizeSetDeformationGradient_InTemporalOrder(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg,
 														const vec2 f_ext, const real dt,
@@ -315,7 +323,7 @@ namespace control {
 														LOSS_FUNCTION lossFunction, bool forceDescent,
 														bool reverseTime, real penalty,
 														real initialAlpha, real initialMaterialAlpha,
-														real tol,
+														real tol, real suffTemporalIterLossDecreaseFactor,
 														bool optimizeOnlyInitialF, bool debugOutput);
 
 
