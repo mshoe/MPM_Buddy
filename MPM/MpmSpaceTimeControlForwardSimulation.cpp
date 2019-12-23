@@ -1,7 +1,7 @@
 #include "MpmSpaceTimeControl.h"
 
 void mpm::control::MPMForwardSimulation(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg, 
-										const vec2 f_ext, const real dt, 
+										const vec2 f_ext, const real drag, const real dt,
 										int controlTimeStep, 
 										bool debugOutput)
 {
@@ -18,7 +18,7 @@ void mpm::control::MPMForwardSimulation(std::shared_ptr<MPMSpaceTimeComputationG
 		MPMForwardTimeStep(
 			stcg->simStates[i],
 			stcg->simStates[i + 1],
-			f_ext, dt);
+			f_ext, drag, dt);
 
 	}
 	if (debugOutput) {
@@ -29,14 +29,14 @@ void mpm::control::MPMForwardSimulation(std::shared_ptr<MPMSpaceTimeComputationG
 
 void mpm::control::MPMForwardTimeStep(std::shared_ptr<MPMSpaceComputationGraph> scg_n,
 									  std::shared_ptr<MPMSpaceComputationGraph> scg_nplus1,
-									  const vec2 f_ext, const real dt)
+									  const vec2 f_ext, const real drag, const real dt)
 {
-	P2G(scg_n->pointCloud, scg_n->grid, dt);
+	P2G(scg_n->pointCloud, scg_n->grid, drag, dt);
 	G_Update(scg_n->grid, f_ext, dt);
 	G2P(scg_n->pointCloud, scg_nplus1->pointCloud, scg_n->grid, dt);
 }
 
-void mpm::control::P2G(std::shared_ptr<ControlPointCloud> pointCloud, std::shared_ptr<ControlGrid> grid, const real dt)
+void mpm::control::P2G(std::shared_ptr<ControlPointCloud> pointCloud, std::shared_ptr<ControlGrid> grid, const real drag, const real dt)
 {
 	// reset the grid
 	for (size_t i = 0; i < size_t(grid->grid_size_x); i++) {
@@ -63,7 +63,7 @@ void mpm::control::P2G(std::shared_ptr<ControlPointCloud> pointCloud, std::share
 					continue;
 				}
 
-				ProjectParticleToGridNode(mp, grid->Node(currNode_i, currNode_j), dt);
+				ProjectParticleToGridNode(mp, grid->Node(currNode_i, currNode_j), drag, dt);
 			}
 		}
 	}
@@ -113,7 +113,7 @@ void mpm::control::G2P(std::shared_ptr<const ControlPointCloud> pointCloud_n,
 	}
 }
 
-void mpm::control::ProjectParticleToGridNode(const ControlPoint& mp, ControlGridNode& node, const real dt)
+void mpm::control::ProjectParticleToGridNode(const ControlPoint& mp, ControlGridNode& node, const real drag, const real dt)
 {
 	vec2 xg = node.x;
 	vec2 xp = mp.x;
@@ -121,7 +121,7 @@ void mpm::control::ProjectParticleToGridNode(const ControlPoint& mp, ControlGrid
 	real wgp = CubicBSpline(dgp.x) * CubicBSpline(dgp.y);
 
 	node.m += wgp * mp.m;
-	node.p += wgp * (mp.m * mp.v + (-Dp_inv * dt * mp.vol * mp.P * glm::transpose(mp.F + mp.dFc) + mp.m * mp.C) * dgp);
+	node.p += wgp * (mp.m * mp.v * (1.0 - dt * drag) + (-Dp_inv * dt * mp.vol * mp.P * glm::transpose(mp.F + mp.dFc) + mp.m * mp.C) * dgp);
 }
 
 void mpm::control::UpdateGridNode(ControlGridNode& node, const vec2 f_ext, const real dt)

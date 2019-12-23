@@ -10,6 +10,7 @@
 #include "PointCloud.h"
 #include <vector>
 #include <iostream>
+#include <utility>
 
 namespace mpm {
 namespace control {
@@ -217,18 +218,18 @@ namespace control {
 
 	// FORWARD SIMULATION
 	void MPMForwardSimulation(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg, 
-							  const vec2 f_ext, const real dt, 
+							  const vec2 f_ext, const real drag, const real dt,
 							  int controlTimeStep,
 							  bool debugOutput);
 	void MPMForwardTimeStep(std::shared_ptr<MPMSpaceComputationGraph> scg_n, 
 							std::shared_ptr<MPMSpaceComputationGraph> scg_nplus1,
-							const vec2 f_ext, const real dt);
-	void P2G(std::shared_ptr<ControlPointCloud> pointCloud, std::shared_ptr<ControlGrid> grid, const real dt);
+							const vec2 f_ext, const real drag, const real dt);
+	void P2G(std::shared_ptr<ControlPointCloud> pointCloud, std::shared_ptr<ControlGrid> grid, const real drag, const real dt);
 	void G_Update(std::shared_ptr<ControlGrid> grid, const vec2 f_ext, const real dt);
 	void G2P(std::shared_ptr<const ControlPointCloud> pointCloud_n,
 			 std::shared_ptr<ControlPointCloud> pointCloud_nplus1,
 			 std::shared_ptr<const ControlGrid> grid, const real dt);
-	void ProjectParticleToGridNode(const ControlPoint& mp, ControlGridNode& node, const real dt);
+	void ProjectParticleToGridNode(const ControlPoint& mp, ControlGridNode& node, const real drag, const real dt);
 	void UpdateGridNode(ControlGridNode& node, const vec2 f_ext, const real dt);
 	void ProjectGridNodeToParticle(const ControlGridNode& node, ControlPoint& mp, const real dt);
 	void UpdateParticle(ControlPoint& mp, const ControlPoint& mp_prev, const real dt);
@@ -245,23 +246,28 @@ namespace control {
 		MP_VELOCITIES = 0,
 		MP_DEFGRADS = 1
 	};
+	typedef std::vector<std::pair<LOSS_PENALTY, real>> mp_penalty_vector;
 
 	// BACKPROPOGATION
 	void MPMBackPropogation(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg, 
-							const real dt, 
+							const real drag, const real dt,
 							LOSS_FUNCTION lossFunction,
 							int controlTimeStep,
+							const mp_penalty_vector& penalties,
 							bool debugOutput);
 
 	void BackPropPointCloudPositionLossFunctionInit(std::shared_ptr<ControlPointCloud> controlPointCloud,
 													std::shared_ptr<const ControlPointCloud> targetPointCloud,
 													const real dt);
-	void BackPropParticlePositionLossFunctionInit(ControlPoint& mp, const ControlPoint& mp_target, const real dt);
+	void BackPropParticlePositionLossFunctionInit(ControlPoint& mp, 
+												  const ControlPoint& mp_target, 
+												  const real dt);
 
 	void BackPropGridMassLossFunctionInit(std::shared_ptr<ControlPointCloud> controlPointCloud,
 										  std::shared_ptr<ControlGrid> controlGrid,
 										  std::shared_ptr<const TargetGrid> targetGrid,
-										  const real dt);
+										  const mp_penalty_vector& penalties,
+										  const real drag, const real dt);
 
 
 	void MPMBackPropogationTimeStep(std::shared_ptr<MPMSpaceComputationGraph> scg_nplus1,
@@ -280,47 +286,44 @@ namespace control {
 	void BackPropGridNodeToParticle(const ControlGridNode& node, ControlPoint& mp_prev, const real dt);
 	void BackPropParticleToParticle(const ControlPoint& mp, ControlPoint& mp_prev, const real dt);
 
+	// MANUAL MORPHING
 	void ExpandPointCloud(std::shared_ptr<ControlPointCloud> pointCloud, real expansionFactor);
 	void TranslatePointCloud(std::shared_ptr<ControlPointCloud> pointCloud, vec2 translation);
 	void TransformPointCloud(std::shared_ptr<ControlPointCloud> pointCloud, mat2 transformMat);
 	
+
+	// LOSS FUNCTION
 	real ComputeLoss(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg,
 					 LOSS_FUNCTION lossFunction,
-					 const real dt);
+					 const mp_penalty_vector& penalties,
+					 const real drag, const real dt);
 
 	real ParticlePositionLossFunction(std::shared_ptr<const ControlPointCloud> controlPointCloud, 
 									  std::shared_ptr<const ControlPointCloud> targetPointCloud);
 
-	real GridMassLossFunction(std::shared_ptr<ControlPointCloud> controlPointCloud,
+	/*real GridMassLossFunction(std::shared_ptr<ControlPointCloud> controlPointCloud,
 							  std::shared_ptr<ControlGrid> controlGrid,
 							  std::shared_ptr<const TargetGrid> targetGrid,
-							  const real dt);
+							  const real dt);*/
 
 	real GridMassLossFunction_WithPenalty(std::shared_ptr<ControlPointCloud> controlPointCloud,
 										  std::shared_ptr<ControlGrid> controlGrid,
 										  std::shared_ptr<const TargetGrid> targetGrid,
-										  const std::vector<LOSS_PENALTY> &penalties,
-										  const real dt);
+										  const mp_penalty_vector& penalties,
+										  const real drag, const real dt);
 
 	real MpDefGradPenalty(std::shared_ptr<ControlPointCloud> controlPointCloud);
 	real MpVelocityPenalty(std::shared_ptr<ControlPointCloud> controlPointCloud);
 
-
-	/*void OptimizeSetDeformationGradient(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg,
-										const vec2 f_ext, const real dt,
-										mat2 initialFe, int optFrameOffset,
-										int numTimeSteps, int max_iters, int maxLineSearchIters,
-										LOSS_FUNCTION lossFunction, bool forceDescent,
-										real penalty,
-										real initialAlpha, bool optimizeOnlyInitialF, bool debugOutput);*/
-
 	void OptimizeSetDeformationGradient_InTemporalOrder(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg,
-														const vec2 f_ext, const real dt,
+														const vec2 f_ext, const real drag, const real dt,
 														bool setInitialFe, mat2 initialFe, 
 														int optFrameOffset,
 														int numTimeSteps, int max_iters, int maxLineSearchIters,
 														int totalTemporalIterations,
-														LOSS_FUNCTION lossFunction, bool forceDescent,
+														LOSS_FUNCTION lossFunction, 
+														const mp_penalty_vector& penalties,
+														bool forceDescent,
 														bool reverseTime, real penalty,
 														real initialAlpha, real initialMaterialAlpha,
 														real tol, real suffTemporalIterLossDecreaseFactor,

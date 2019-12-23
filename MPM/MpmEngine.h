@@ -164,7 +164,7 @@ namespace mpm {
 		bool m_zoomState = false;
 		bool m_showZoomBorder = true;
 		bool m_movingZoomWindow = true;
-		vec2 m_zoomPoint = vec2(40.0, 50.0); // ZOOM POINT IN GRID SPACE
+		vec2 m_zoomPoint = vec2(0.0, 0.0); // ZOOM POINT IN GRID SPACE
 		vec2 m_zoomDim = vec2(GRID_SIZE_X, GRID_SIZE_Y);
 
 		/******************** MPM RENDER WINDOW AND RENDERING ********************/
@@ -194,9 +194,9 @@ namespace mpm {
 		std::shared_ptr<StandardShader> m_gridShaderMarchingSquares = nullptr;
 		std::shared_ptr<StandardShader> m_gridDensityShader = nullptr;
 		
-		real m_gridMaxMass = 1.0;
-		real m_gridMediumMass = 0.5;
-		real m_gridMinMass = 0.0;
+		real m_gridMaxMass = 4.0;
+		real m_gridMediumMass = 2.0;
+		real m_gridMinMass = 0.5;
 		bool m_useColorSpectrum = true;
 
 		std::shared_ptr<StandardShader> m_borderShader = nullptr;

@@ -1,9 +1,10 @@
 #include "MpmSpaceTimeControl.h"
 
 void mpm::control::MPMBackPropogation(std::shared_ptr<MPMSpaceTimeComputationGraph> stcg, 
-									  const real dt, 
+									  const real drag, const real dt,
 									  LOSS_FUNCTION lossFunction, 
 									  int controlTimeStep,
+									  const mp_penalty_vector& penalties,
 									  bool debugOutput)
 {
 	switch (lossFunction) {
@@ -16,6 +17,8 @@ void mpm::control::MPMBackPropogation(std::shared_ptr<MPMSpaceTimeComputationGra
 		BackPropGridMassLossFunctionInit(stcg->simStates.back()->pointCloud,
 										 stcg->simStates.back()->grid,
 										 stcg->targetGrid,
+										 penalties,
+										 drag,
 										 dt);
 		break;
 	default:
@@ -87,7 +90,8 @@ void mpm::control::BackPropParticlePositionLossFunctionInit(ControlPoint& mp, co
 void mpm::control::BackPropGridMassLossFunctionInit(std::shared_ptr<ControlPointCloud> controlPointCloud, 
 													std::shared_ptr<ControlGrid> controlGrid, 
 													std::shared_ptr<const TargetGrid> targetGrid, 
-													const real dt)
+													const mp_penalty_vector& penalties,
+													const real drag, const real dt)
 {
 	if (controlGrid->grid_size_x != targetGrid->grid_size_x ||
 		controlGrid->grid_size_y != targetGrid->grid_size_y) {
@@ -95,7 +99,7 @@ void mpm::control::BackPropGridMassLossFunctionInit(std::shared_ptr<ControlPoint
 	}
 
 	// first get masses onto grid
-	P2G(controlPointCloud, controlGrid, dt);
+	P2G(controlPointCloud, controlGrid, drag, dt);
 
 	// compute dL / dm per each node
 	for (int i = 0; i < controlGrid->grid_size_x; i++) {
@@ -158,6 +162,28 @@ void mpm::control::BackPropGridMassLossFunctionInit(std::shared_ptr<ControlPoint
 
 		// dL / dC
 		mp.dLdC = mat2(0.0);
+	}
+
+
+	for (size_t i = 0; i < penalties.size(); i++) {
+		switch (penalties[i].first) {
+		case LOSS_PENALTY::MP_VELOCITIES:
+			// gradient of 0.5 * || mp.v ||^2
+			for (size_t p = 0; p < controlPointCloud->controlPoints.size(); p++) {
+				ControlPoint& mp = controlPointCloud->controlPoints[p];
+				mp.dLdv += mp.v * penalties[i].second;
+			}
+			break;
+		case LOSS_PENALTY::MP_DEFGRADS:
+			// gradient of 0.5 * || mp.F - I ||^2
+			for (size_t p = 0; p < controlPointCloud->controlPoints.size(); p++) {
+				ControlPoint& mp = controlPointCloud->controlPoints[p];
+				mp.dLdF += (mp.F - mat2(1.0)) * penalties[i].second;
+			}
+			break;
+		default:
+			break;
+		}
 	}
 	
 }

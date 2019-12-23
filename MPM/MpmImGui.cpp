@@ -37,7 +37,7 @@ void mpm::MpmEngine::RenderGUI()
 			if (ImGui::BeginMenu("Edit"))
 			{
 				if (ImGui::MenuItem("Undo", "CTRL+Z")) {}
-				if (ImGui::MenuItem("Redo", "CTRL+Y", true , false)) {}  // Disabled item
+				if (ImGui::MenuItem("Redo", "CTRL+Y", true, false)) {}  // Disabled item
 				ImGui::Separator();
 				if (ImGui::MenuItem("Cut", "CTRL+X")) {}
 				if (ImGui::MenuItem("Copy", "CTRL+C")) {}
@@ -45,6 +45,9 @@ void mpm::MpmEngine::RenderGUI()
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("View")) {
+				if (ImGui::MenuItem("MPM Window", "", m_imguiMpmRenderWindow)) {
+					m_imguiMpmRenderWindow = !m_imguiMpmRenderWindow;
+				}
 				if (ImGui::MenuItem("Zoom Window", "", m_imguiZoomWindow)) {
 					m_imguiZoomWindow = !m_imguiZoomWindow;
 				}

@@ -4,8 +4,8 @@ void mpm::MpmEngine::ImGuiMpmRenderWindow()
 {
 	ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBringToFrontOnFocus;
 	if (ImGui::Begin("MPM Render Window", &m_imguiMpmRenderWindow, windowFlags)) {
-		ImGui::SetWindowPos(ImVec2(SRC_WIDTH / 2.0, 0.0));
-		ImGui::SetWindowSize(ImVec2(SRC_WIDTH / 2.0, SRC_HEIGHT));
+		ImGui::SetWindowPos(ImVec2(SRC_WIDTH / 2, 20));
+		ImGui::SetWindowSize(ImVec2(SRC_WIDTH / 2, SRC_HEIGHT + 5));
 		//ImGui::Window
 		//ImGui::Window
 		//ImGui::GetStyle().WindowRounding = 0.0f;
@@ -61,9 +61,15 @@ void mpm::MpmEngine::ImGuiMpmRenderWindow()
 
 void mpm::MpmEngine::ImGuiZoomWindow()
 {
-	if (ImGui::Begin("Zoom Window", &m_imguiZoomWindow)) {
+	static ImGuiWindowFlags windowFlags = 0; 
+	if (ImGui::Begin("Zoom Window", &m_imguiZoomWindow, windowFlags)) {
 		
+		static bool lockWindow = false;
 
+		if (lockWindow) {
+			ImGui::SetWindowPos(ImVec2(SRC_WIDTH / 4, 20));
+			ImGui::SetWindowSize(ImVec2(m_zoomWindow->screen_dimensions.x + 50, m_zoomWindow->screen_dimensions.y + 200));
+		}
 
 		ImGui::Image(
 			(void*)(intptr_t)m_zoomWindow->texture,
@@ -74,12 +80,20 @@ void mpm::MpmEngine::ImGuiZoomWindow()
 			ImVec4(1, 1, 1, 1)
 		);
 
+		if (ImGui::Button("Spacetime Control Mode")) {
+			m_zoomFactor = 4.0;
+			m_zoomPoint.x = 0.0;
+			m_zoomPoint.y = 0.0;
+			lockWindow = true;
+			windowFlags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBringToFrontOnFocus;
+		}
+
 		ImGui::InputReal("Zoom Point x: ", &m_zoomPoint.x, 1.0, 10.0, "%.1f");
 		ImGui::InputReal("Zoom Point y: ", &m_zoomPoint.y, 1.0, 10.0, "%.1f");
 		ImGui::InputReal("Zoom Factor", &m_zoomFactor, 0.5, 2.0, "%.1f");
 		ImGui::Checkbox("Show Zoom Border", &m_showZoomBorder);
 		ImGui::Checkbox("Move Zoom Window", &m_movingZoomWindow);
-		
+		ImGui::Checkbox("Lock window", &lockWindow);
 		
 
 		

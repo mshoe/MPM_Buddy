@@ -84,7 +84,7 @@ void mpm::MpmEngine::ZoomRender()
 void mpm::MpmEngine::Render()
 {
 	glViewport(0, 0, (GLsizei)m_openGLScreen->screen_dimensions.x, (GLsizei)m_openGLScreen->screen_dimensions.y);
-	glClearColor(m_backgroundColor[0], m_backgroundColor[1], m_backgroundColor[2], m_backgroundColor[3]);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	if (m_imguiMpmRenderWindow)

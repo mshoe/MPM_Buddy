@@ -232,6 +232,11 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 		static real tol = 1e-3;
 		static real suffLossTemporalIterDecreaseFactor = 0.001;
 
+		static bool addVelocityPenalty = false;
+		static real velocityPenaltyFactor = 0.5;
+		static bool addDefGradPenalty = false;
+		static real defGradPenaltyFactor = 0.5;
+
 		ImGui::NewLine();
 
 		
@@ -317,6 +322,12 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 
 		m_mpmEngine->ImGuiDropDown("Optimization Loss Function", lossFunctionIndex, control::lossFunctionStrVec);
 		control::LOSS_FUNCTION lossFunction = control::LOSS_FUNCTION(lossFunctionIndex);
+
+		ImGui::Checkbox("Add velocity penalty", &addVelocityPenalty);
+		ImGui::InputReal("Velocity Penalty Factor", &velocityPenaltyFactor, 0.1, 1.0);
+		ImGui::Checkbox("Add deformation gradient penalty", &addDefGradPenalty);
+		ImGui::InputReal("DefGrad Penalty Factor", &defGradPenaltyFactor, 0.1, 1.0);
+
 		ImGui::InputInt("Num time steps", &num_steps);
 		num_steps = glm::max(0, num_steps);
 		m_stcg->timeSteps = num_steps;
@@ -353,7 +364,7 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 
 			if (controlGridSizeChosen && ImGui::Button("Run Forward Simulation")) {
 				m_stcg->InitSTCG();
-				control::MPMForwardSimulation(m_stcg, m_globalForce, m_mpmAlgorithmEngine->m_dt, 0, true);
+				control::MPMForwardSimulation(m_stcg, m_globalForce, m_drag, m_mpmAlgorithmEngine->m_dt, 0, true);
 			}
 
 			
@@ -419,12 +430,23 @@ void mpm::MpmControlEngine::ImGuiDeformationGradientSpaceTimeController()
 			}*/
 
 			if (ImGui::Button("Optimize L(F) in temporal order")) {
-				control::OptimizeSetDeformationGradient_InTemporalOrder(m_stcg, m_globalForce, m_mpmAlgorithmEngine->m_dt,
+
+				control::mp_penalty_vector penalties;
+				if (addVelocityPenalty) {
+					penalties.push_back(std::pair<control::LOSS_PENALTY, real>(control::LOSS_PENALTY::MP_VELOCITIES, velocityPenaltyFactor));
+				}
+				if (addDefGradPenalty) {
+					penalties.push_back(std::pair<control::LOSS_PENALTY, real>(control::LOSS_PENALTY::MP_DEFGRADS, defGradPenaltyFactor));
+				}
+
+				control::OptimizeSetDeformationGradient_InTemporalOrder(m_stcg, m_globalForce, m_drag, m_mpmAlgorithmEngine->m_dt,
 														setInitialFe, initialControlFe, 
 														optFrameOffset,
 														num_steps, max_iters, max_lineSearchIters,
 														totalTemporalIterations,
-														lossFunction, forceDescent,
+														lossFunction, 
+														penalties,
+														forceDescent,
 														reverseTimeOpt, penalty,
 														initialFAlpha, initialMaterialAlpha,
 														tol, suffLossTemporalIterDecreaseFactor,
@@ -630,7 +652,7 @@ void mpm::MpmControlEngine::ImGuiControlGridViewer()
 void mpm::MpmControlEngine::ImGuiGradientDescentPlot()
 {
 	if (ImGui::Begin("Gradient Descent Loss Viewer", &m_imguiGradientDescentPlot)) {
-		ImGui::PlotLines("Gradient Descent Loss", m_stcg->lossValues.data(), m_stcg->lossValues.size(), 0, (const char*)0, 3.402823466e+38F,3.402823466e+38F, ImVec2(0, 120));
+		ImGui::PlotLines("Gradient Descent Loss", m_stcg->lossValues.data(), m_stcg->lossValues.size(), 0, (const char*)0, 3.402823466e+38F,3.402823466e+38F, ImVec2(0, 500));
 	}
 	ImGui::End();
 }
