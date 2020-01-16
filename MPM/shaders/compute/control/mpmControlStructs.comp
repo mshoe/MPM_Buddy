@@ -37,6 +37,10 @@ struct ControlPoint {
     double dmewc;
     double dLdmew;
 
+    dvec4 rgba;
+    //vec3 rgb;
+    //float padding;
+
 };
 
 struct ControlGridNode {
@@ -50,6 +54,10 @@ struct ControlGridNode {
 
     double m;
     double dLdm;
+
+    dvec4 rgba;
+    //vec3 rgb;
+    //float padding;
 };
 
 layout (std430, binding = 7) buffer controlPointCloud {
