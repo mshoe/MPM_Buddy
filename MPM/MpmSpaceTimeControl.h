@@ -61,6 +61,11 @@ namespace control {
 		real dmewc = 0.0;
 		real dLdmew = 0.0;
 
+		//glm::highp_fvec3 rgb = glm::highp_fvec3(1.0, 0.0, 0.0);
+		//float padding = 0.0;
+
+		vec4 rgba = vec4(1.0, 0.0, 0.0, 1.0);
+
 		void ImGuiDisplay();
 	};
 
@@ -81,10 +86,13 @@ namespace control {
 		real m = 0.0;
 		real dLdm = 0.0;
 
+		//glm::highp_fvec3 rgb = glm::highp_fvec3(0.0);
+		//float padding = 0.0;
+
+		vec4 rgba = vec4(0.0, 0.0, 0.0, 1.0);
+
 		void ImGuiDisplay();
 	};
-
-	
 
 	struct ControlPointCloud {
 
