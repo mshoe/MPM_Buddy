@@ -17,7 +17,7 @@ void mpm::MpmEngine::MpmRender()
 	RenderScreenShader(m_zoomPoint, 1.0, m_mpmRenderWindow);
 
 	if (m_viewGridDensity) {
-		RenderDensityField(m_zoomPoint, 1.0, 2, gridSSBO, m_mpmRenderWindow, m_gridDensityShader);
+		RenderDensityField(m_zoomPoint, 1.0, 2, gridSSBO, false, m_mpmRenderWindow, m_gridDensityShader);
 	}
 
 	if (m_viewPointClouds) {
@@ -59,7 +59,7 @@ void mpm::MpmEngine::ZoomRender()
 	//RenderScreenShader(m_zoomPoint, m_zoomFactor, m_zoomWindow);
 
 	if (m_viewGridDensity) {
-		RenderDensityField(m_zoomPoint, m_zoomFactor, 2, gridSSBO, m_zoomWindow, m_gridDensityShader);
+		RenderDensityField(m_zoomPoint, m_zoomFactor, 2, gridSSBO, false, m_zoomWindow, m_gridDensityShader);
 	}
 
 	if (m_viewPointClouds) {
@@ -235,7 +235,7 @@ void mpm::MpmEngine::RenderGridBorder(vec2 zoomPoint, real zoomFactor, std::shar
 	glBindVertexArray(0);
 }
 
-void mpm::MpmEngine::RenderDensityField(vec2 zoomPoint, real zoomFactor, int binding, GLuint ssbo, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> densityShader)
+void mpm::MpmEngine::RenderDensityField(vec2 zoomPoint, real zoomFactor, int binding, GLuint ssbo, bool controlMode, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> densityShader)
 {
 	densityShader->Use();
 	//m_mouseShader->SetVec("iCenter", vec2(openGLScreen->center.x, openGLScreen->screen_dimensions.y - openGLScreen->center.y)); // correct y for glsl
@@ -256,6 +256,7 @@ void mpm::MpmEngine::RenderDensityField(vec2 zoomPoint, real zoomFactor, int bin
 	densityShader->SetReal("mediumMass", m_gridMediumMass);
 	densityShader->SetReal("minMass", m_gridMinMass);
 	densityShader->SetBool("sharp", m_densitySharp);
+	densityShader->SetBool("controlMode", controlMode);
 	if (m_mpmAlgorithmEngine->m_algo_code == MpmAlgorithmEngine::MPM_ALGORITHM_CODE::CPP) {
 		densityShader->SetInt("currGridSizeX", m_mpmAlgorithmEngine->m_cppChunkX * m_chunks_x);
 		densityShader->SetInt("currGridSizeY", m_mpmAlgorithmEngine->m_cppChunkY * m_chunks_y);

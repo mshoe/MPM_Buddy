@@ -2,6 +2,7 @@
 
 out vec4 vs_speedColor;
 out vec4 vs_stressColor;
+out vec4 vs_pointColor;
 out uint pointID;
 uniform double minSpeedClamp = 0.0;
 uniform double maxSpeedClamp = 25.0;
@@ -16,6 +17,11 @@ void main() {
 	// calculate radius
 	gl_PointSize = 2.0;
 	pointID = gl_VertexID;
+
+	vs_pointColor = vec4(float(points[gl_VertexID].rgba.x),
+						float(points[gl_VertexID].rgba.y),
+						float(points[gl_VertexID].rgba.z),
+						float(points[gl_VertexID].rgba.w));
 
 	// map position to (-1.0, 1.0)
 	dvec2 pos = points[gl_VertexID].x - zoomPoint;

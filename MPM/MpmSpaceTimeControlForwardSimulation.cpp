@@ -42,6 +42,7 @@ void mpm::control::P2G(std::shared_ptr<ControlPointCloud> pointCloud, std::share
 	for (size_t i = 0; i < size_t(grid->grid_size_x); i++) {
 		for (size_t j = 0; j < size_t(grid->grid_size_y); j++) {
 			grid->Node(i, j).Reset_vpm();
+			grid->Node(i, j).Reset_rgba();
 		}
 	}
 
@@ -122,6 +123,9 @@ void mpm::control::ProjectParticleToGridNode(const ControlPoint& mp, ControlGrid
 
 	node.m += wgp * mp.m;
 	node.p += wgp * (mp.m * mp.v * (1.0 - dt * drag) + (-Dp_inv * dt * mp.vol * mp.P * glm::transpose(mp.F + mp.dFc) + mp.m * mp.C) * dgp);
+
+
+	// node.rgba += wgp * mp.m * mp.rgba;
 }
 
 void mpm::control::UpdateGridNode(ControlGridNode& node, const vec2 f_ext, const real dt)

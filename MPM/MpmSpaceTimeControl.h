@@ -72,6 +72,7 @@ namespace control {
 	struct ControlGridNode {
 		ControlGridNode() {}
 		void Reset_vpm();
+		void Reset_rgba();
 
 		void ResetGradients();
 

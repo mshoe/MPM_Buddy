@@ -9,7 +9,7 @@ void mpm::MpmControlEngine::Render(vec2 zoomPoint, real zoomFactor, std::shared_
 
 	if (m_mpmEngine->m_viewGridDensity) {
 		if (m_stcg->targetGrid != nullptr && m_renderTargetPointCloud) {
-			m_mpmEngine->RenderDensityField(zoomPoint, zoomFactor, 8, m_stcg->targetGridSsbo, openGLScreen, m_gridDensityShader);
+			m_mpmEngine->RenderDensityField(zoomPoint, zoomFactor, 8, m_stcg->targetGridSsbo, true, openGLScreen, m_gridDensityShader);
 		}
 
 		if (m_animateSimStates &&
@@ -28,7 +28,7 @@ void mpm::MpmControlEngine::Render(vec2 zoomPoint, real zoomFactor, std::shared_
 		}
 
 		if (m_stcg->controlPointCloud != nullptr && m_renderControlPointCloud) {
-			m_mpmEngine->RenderDensityField(zoomPoint, zoomFactor, 8, m_stcg->gridSsbo, openGLScreen, m_gridDensityShader);
+			m_mpmEngine->RenderDensityField(zoomPoint, zoomFactor, 8, m_stcg->gridSsbo, true, openGLScreen, m_gridDensityShader);
 		}
 	}
 	else {

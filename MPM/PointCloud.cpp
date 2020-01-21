@@ -80,6 +80,7 @@ void mpm::MaterialPoint::ImGuiDisplay(bool calcDecomp, bool calcdPdF, bool calcV
 	ImGui::DisplayNamedGlmRealColor("energy", energy, max_color);
 	//ImGui::DisplayNamedBoolColor("padding1", padding1, max_color, min_color);
 	ImGui::DisplayNamedGlmRealColor("selected", selected, max_color);
+	ImGui::DisplayNamedGlmVecColor("rgba", rgba, min_color);
 	//ImGui::DisplayNamedBoolColor("padding2", padding2, max_color, min_color);
 	//ImGui::DisplayNamedBoolColor("padding3", padding3, max_color, min_color);
 }

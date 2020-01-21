@@ -176,9 +176,13 @@ std::shared_ptr<mpm::PointCloud> mpm::MpmGeometryEngine::GenPointCloudFromImage(
 			// have these mixed up for some reason
 			glm::vec2 p(x, y);
 
-			if (int(pixels[4 * i * image_width + 4 * j + 0]) == 255 &&
-				int(pixels[4 * i * image_width + 4 * j + 1]) == 255 &&
-				int(pixels[4 * i * image_width + 4 * j + 2]) == 255) {
+			int r = int(pixels[4 * i * image_width + 4 * j + 0]);
+			int g = int(pixels[4 * i * image_width + 4 * j + 1]);
+			int b = int(pixels[4 * i * image_width + 4 * j + 2]);
+
+			if (r == 255 &&
+				g == 255 &&
+				b == 255) {
 
 				// no material point here
 				continue;
@@ -186,6 +190,7 @@ std::shared_ptr<mpm::PointCloud> mpm::MpmGeometryEngine::GenPointCloudFromImage(
 			}
 			else {
 				MaterialPoint mp(p, initialVelocity, GLreal(mass));
+				mp.rgba = vec4(double(r)/255.0, double(g)/255.0, double(b)/255.0, 1.0);
 				mp.SetMaterialParameters(parameters);
 				// calculate mp.vol in a compute shader (not here)
 				pointCloud->points.push_back(mp);

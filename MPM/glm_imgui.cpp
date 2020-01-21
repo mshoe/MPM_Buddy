@@ -90,6 +90,31 @@ void ImGui::DisplayNamedGlmVecMixColor(std::string name, vec2 vec, glm::highp_fv
 	ImGui::Text(" ]");
 }
 
+void ImGui::DisplayNamedGlmVecColor(std::string name, vec4 vec, glm::highp_fvec4 color)
+{
+	std::string beginStr = name + " = [ ";
+	ImGui::Text(beginStr.c_str());
+
+	ImGui::PopupCopyVecMATLAB(name, vec);
+
+	ImGui::SameLine();
+	DisplayGlmRealColor(vec.x, color);
+	ImGui::SameLine();
+	ImGui::Text(" , ");
+	ImGui::SameLine();
+	DisplayGlmRealColor(vec.y, color);
+	ImGui::SameLine();
+	ImGui::Text(" , ");
+	ImGui::SameLine();
+	DisplayGlmRealColor(vec.z, color);
+	ImGui::SameLine();
+	ImGui::Text(" , ");
+	ImGui::SameLine();
+	DisplayGlmRealColor(vec.w, color);
+	ImGui::SameLine();
+	ImGui::Text(" ]");
+}
+
 void ImGui::DisplayNamedGlmMatrixMixColor(std::string name, mat2 mat, glm::highp_fvec4 min_color, glm::highp_fvec4 max_color)
 {
 

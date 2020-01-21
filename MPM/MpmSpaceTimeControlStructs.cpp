@@ -16,6 +16,7 @@ mpm::control::ControlPoint::ControlPoint(const MaterialPoint& mp)
 	vol = mp.vol;
 	lam = mp.lam;
 	mew = mp.mew;
+	rgba = mp.rgba;
 }
 
 void mpm::control::ControlPoint::SetRegularMaterialPoint(MaterialPoint& mp)
@@ -29,6 +30,7 @@ void mpm::control::ControlPoint::SetRegularMaterialPoint(MaterialPoint& mp)
 	mp.vol = vol;
 	mp.lam = lam;
 	mp.mew = mew;
+	mp.rgba = rgba;
 }
 
 void mpm::control::ControlPoint::SetFromPreviousTimeStepControlPoint(const ControlPoint& mp)
@@ -42,6 +44,7 @@ void mpm::control::ControlPoint::SetFromPreviousTimeStepControlPoint(const Contr
 	vol = mp.vol;
 	lam = mp.lam;
 	mew = mp.mew;
+	rgba = mp.rgba;
 }
 
 void mpm::control::ControlPoint::ResetGradients()
@@ -86,6 +89,11 @@ void mpm::control::ControlGridNode::Reset_vpm()
 	v = vec2(0.0);
 	p = vec2(0.0);
 	m = 0.0;
+}
+
+void mpm::control::ControlGridNode::Reset_rgba()
+{
+	rgba = vec4(0.0, 0.0, 0.0, 1.0);
 }
 
 void mpm::control::ControlGridNode::ResetGradients()

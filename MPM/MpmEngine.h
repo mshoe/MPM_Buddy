@@ -128,7 +128,7 @@ namespace mpm {
 		void RenderGridBorder(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> borderShader);
 
 	public:
-		void RenderDensityField(vec2 zoomPoint, real zoomFactor, int binding, GLuint ssbo, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> densityShader);
+		void RenderDensityField(vec2 zoomPoint, real zoomFactor, int binding, GLuint ssbo, bool controlMode, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> densityShader);
 	private:
 		//*** GUI FUNCTIONS ***//
 		void ImGuiPointCloudSaver();

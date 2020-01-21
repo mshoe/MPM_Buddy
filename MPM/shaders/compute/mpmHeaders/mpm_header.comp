@@ -40,6 +40,8 @@ struct materialPoint {
 
 	double energy;
 	double selected;
+
+	dvec4 rgba;
 };
 
 struct gridNode {

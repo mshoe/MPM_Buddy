@@ -76,6 +76,8 @@ namespace mpm {
 		real energy = 0.0;
 		real selected = 0.0;
 
+		vec4 rgba = vec4(1.0, 1.0, 0.0, 1.0);
+
 		void SetMaterialParameters(const MaterialParameters& parameters);
 
 		friend std::ostream& operator << (std::ostream& out, const MaterialPoint& c);

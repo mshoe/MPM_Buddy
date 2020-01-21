@@ -22,6 +22,8 @@ uniform dvec2 screenResolution;
 
 uniform bool sharp = false;
 
+uniform bool controlMode = false;
+
 /*** HEADER ***/
 
 double GetNodeMass(in ivec2 gn) {
@@ -86,6 +88,12 @@ void main() {
     pos /= zoomFactor;
     pos += zoomPoint;
     
+    if (!controlMode) {
+        double temp = pos.x;
+        pos.x = pos.y;
+        pos.y = temp;
+    }
+
     double mass = GetInterpolatedMass(pos);
 
     vec4 color;
