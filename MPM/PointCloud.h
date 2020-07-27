@@ -105,7 +105,10 @@ namespace mpm {
 
 		void LoadFromFile(std::string fileName);
 		
-		
+		double ComputeTotalMass();
+		double ComputeCOMKE(); // compute center of mass kinetic energy
+		double ComputeMPKE(); // compute total material point kinetic energy
+		double ComputeElasticPotential(); // compute elastic potential energy
 
 		size_t N = 0;
 		std::vector<MaterialPoint> points;
@@ -123,5 +126,7 @@ namespace mpm {
 		GLuint ssbo = 0;
 
 		bool fixed = false;
+
+		double totalMass;
 	};
 }

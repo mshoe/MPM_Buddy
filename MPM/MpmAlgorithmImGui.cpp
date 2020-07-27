@@ -187,7 +187,7 @@ void mpm::MpmAlgorithmEngine::ImGuiCPUMode()
 {
 	if (ImGui::Begin("CPU Mode", &m_imguiCPUMode)) {
 		ImGui::Text("MLS-MPM and Fixed Corotational Elasticity are implemented");
-		static bool cpu_mode = false;
+		static bool cpu_mode = true;
 		ImGui::Checkbox("CPU Mode", &cpu_mode);
 		if (cpu_mode) {
 			m_algo_code = MPM_ALGORITHM_CODE::CPP;

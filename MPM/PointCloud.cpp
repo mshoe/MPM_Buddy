@@ -182,29 +182,6 @@ void mpm::MaterialPoint::LoadFromFile(std::ifstream& myFile)
 	}
 }
 
-std::ostream& mpm::operator<<(std::ostream& out, const MaterialPoint& c)
-{
-	out << std::setprecision(std::numeric_limits<double>::digits10 + 1);
-	out << "x: " << glm::to_string(c.x) << "\n";
-	out << "v: " << glm::to_string(c.v) << "\n";
-	out << "m: " << c.m << "\n";
-	out << "vol: " << c.vol << "\n";
-	out << "Lz: " << c.Lz << "\n";
-	out << "B: " << glm::to_string(c.B) << "\n";
-	out << "Fe: " << glm::to_string(c.Fe) << "\n";
-	out << "Fe (highp): " << "(" << c.Fe[0][0] << ", " << c.Fe[0][1] << "), (" << c.Fe[1][0] << ", " << c.Fe[1][1] << ")" << "\n";
-	out << "Fp: " << glm::to_string(c.Fp) << "\n";
-	out << "P: " << glm::to_string(c.P) << "\n";
-	out << "FePolar_R: " << glm::to_string(c.FePolar_R) << "\n";
-	out << "FePolar_S: " << glm::to_string(c.FePolar_S) << "\n";
-	out << "FeSVD_U: " << glm::to_string(c.FeSVD_U) << "\n";
-	out << "FeSVD_S: " << glm::to_string(c.FeSVD_S) << "\n";
-	out << "FeSVD_V: " << glm::to_string(c.FeSVD_V) << "\n";
-	out << "energy: " << c.energy << "\n";
-	out << "selectedWpg: " << c.selected << "\n";
-	return out;
-}
-
 mpm::PointCloud::~PointCloud()
 {
 	points.clear();
@@ -240,6 +217,7 @@ void mpm::PointCloud::GenPointCloudSSBO()
 		&(points.front().x.x),
 		GL_MAP_READ_BIT | GL_MAP_WRITE_BIT // add write bit for cpu mode
 	);
+	ComputeTotalMass(); // adding this here because every time a point cloud is gen, this function will be called
 }
 
 void mpm::PointCloud::SaveToFile(std::string fileName)
@@ -317,3 +295,71 @@ void mpm::PointCloud::LoadFromFile(std::string fileName)
 
 }
 
+double mpm::PointCloud::ComputeTotalMass()
+{
+	totalMass = 0.0;
+	for (int i = 0; i < points.size(); i++) {
+		totalMass += points[i].m;
+	}
+	return totalMass;
+}
+
+double mpm::PointCloud::ComputeCOMKE()
+{
+	vec2 average_v = vec2(0.0);
+
+	// assume totalMass is already calculated
+
+	for (size_t p = 0; p < points.size(); p++) {
+		MaterialPoint& mp = points[p];
+
+		average_v += mp.v;
+	}
+
+	average_v = average_v / double(points.size());
+
+
+
+	return 0.5 * glm::dot(average_v, average_v) * totalMass;
+}
+
+double mpm::PointCloud::ComputeMPKE()
+{
+	double MPKE = 0.0;
+	for (size_t p = 0; p < points.size(); p++) {
+		MaterialPoint& mp = points[p];
+
+		MPKE += 0.5 * glm::dot(mp.v, mp.v) * mp.m;
+	}
+	return MPKE;
+}
+
+double mpm::PointCloud::ComputeElasticPotential()
+{
+	return 0.0;
+}
+
+
+
+std::ostream& operator<<(std::ostream& out, const mpm::MaterialPoint& c)
+{
+	out << std::setprecision(std::numeric_limits<double>::digits10 + 1);
+	out << "x: " << glm::to_string(c.x) << "\n";
+	out << "v: " << glm::to_string(c.v) << "\n";
+	out << "m: " << c.m << "\n";
+	out << "vol: " << c.vol << "\n";
+	out << "Lz: " << c.Lz << "\n";
+	out << "B: " << glm::to_string(c.B) << "\n";
+	out << "Fe: " << glm::to_string(c.Fe) << "\n";
+	out << "Fe (highp): " << "(" << c.Fe[0][0] << ", " << c.Fe[0][1] << "), (" << c.Fe[1][0] << ", " << c.Fe[1][1] << ")" << "\n";
+	out << "Fp: " << glm::to_string(c.Fp) << "\n";
+	out << "P: " << glm::to_string(c.P) << "\n";
+	out << "FePolar_R: " << glm::to_string(c.FePolar_R) << "\n";
+	out << "FePolar_S: " << glm::to_string(c.FePolar_S) << "\n";
+	out << "FeSVD_U: " << glm::to_string(c.FeSVD_U) << "\n";
+	out << "FeSVD_S: " << glm::to_string(c.FeSVD_S) << "\n";
+	out << "FeSVD_V: " << glm::to_string(c.FeSVD_V) << "\n";
+	out << "energy: " << c.energy << "\n";
+	out << "selectedWpg: " << c.selected << "\n";
+	return out;
+}

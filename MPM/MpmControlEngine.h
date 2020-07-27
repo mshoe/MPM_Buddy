@@ -31,7 +31,7 @@ namespace mpm {
 	public:
 		MpmControlEngine() {
 			InitShaders(); 
-			InitSTCG(); 
+			//InitSTCG(); 
 		}
 		~MpmControlEngine() { CleanupShaders(); }
 
@@ -41,8 +41,7 @@ namespace mpm {
 		// for ImGui menu bar
 		void Menu();
 
-		void Render(vec2 zoomPoint, real zoomFactor, std::shared_ptr<OpenGLScreen> openGLScreen);
-
+		
 
 		// for mpm engine
 		/*void ProcessMouseInput();
@@ -70,9 +69,6 @@ namespace mpm {
 		void ImGuiExternalForceController();
 		void ImGuiDeformationGradientController();
 		void ImGuiMaterialParameterController();
-		void ImGuiControlPointViewer();
-		void ImGuiControlGridViewer();
-		void ImGuiGradientDescentPlot();
 
 		// control
 		bool m_imguiExternalForceController = false;
@@ -121,34 +117,7 @@ namespace mpm {
 
 
 
-		/******************** DEFORMATION GRADIENT SPACETIME CONTROL ********************/
-		/*
 		
-
-		std::vector<MaterialPoint> m_controlPointCloudOriginalPoints;
-		
-		void SaveControlPointCloudOriginalPoints(std::shared_ptr<PointCloud> pointCloud);
-		void ResetControlPointCloudPointsToSaved(std::shared_ptr<PointCloud> pointCloud);
-		*/
-		
-		
-
-		bool m_renderOutputPointCloud = true;
-		bool m_renderControlPointCloud = true;
-		bool m_renderTargetPointCloud = false;
-
-
-		void ImGuiDeformationGradientSpaceTimeController();
-		bool m_imguiDeformationGradientSpaceTimeController = false;
-
-
-		// Using new control framework:
-		//void CreateControlPointCloud(std::shared_ptr<control::ControlPointCloud> controlPointCloud, std::shared_ptr<const PointCloud> pointCloud);
-		/*std::shared_ptr<control::ControlPointCloud> m_targetPointCloud = nullptr;
-		std::shared_ptr<control::ControlPointCloud> m_controlPointCloud = nullptr;
-		std::shared_ptr<control::ControlGrid> m_controlGrid = nullptr;*/
-		std::shared_ptr<control::MPMSpaceTimeComputationGraph> m_stcg = nullptr;
-		void InitSTCG();
 	};
 
 }

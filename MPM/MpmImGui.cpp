@@ -60,6 +60,9 @@ void mpm::MpmEngine::RenderGUI()
 				if (ImGui::MenuItem("Grid Node Viewer", "", m_imguiGridNodeViewer)) {
 					m_imguiGridNodeViewer = !m_imguiGridNodeViewer;
 				}
+				if (ImGui::MenuItem("Energy Viewer", "", m_imguiEnergyViewer)) {
+					m_imguiEnergyViewer = !m_imguiEnergyViewer;
+				}
 				ImGui::EndMenu();
 			}
 
@@ -86,6 +89,7 @@ void mpm::MpmEngine::RenderGUI()
 		if (m_imguiZoomWindow) ImGuiZoomWindow();
 		if (m_imguiPointCloudSaver) ImGuiPointCloudSaver();
 		if (m_imguiPointCloudLoader) ImGuiPointCloudLoader();
+		if (m_imguiEnergyViewer) ImGuiEnergyViewer();
 		
 		
 		if (imguiImGuiDemo) { ImGui::ShowDemoWindow(); }
@@ -419,6 +423,23 @@ void mpm::MpmEngine::ImGuiMaterialPointViewer()
 		}
 
 		
+	}
+	ImGui::End();
+}
+
+void mpm::MpmEngine::ImGuiEnergyViewer()
+{
+	static double total_kinetic_energy = 0.0;
+	if (ImGui::Begin("Energy Viewer", &m_imguiEnergyViewer)) {
+	
+		total_kinetic_energy = 0.0;
+		for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+			total_kinetic_energy += pointCloudPair.second->ComputeMPKE();
+		}
+		ImGui::DisplayNamedGlmRealColor("total kinetic energy", total_kinetic_energy, glm::highp_fvec4(1.0));
+		/*if (ImGui::Button("Compute Total Kinetic Energy")) {
+			
+		}*/
 	}
 	ImGui::End();
 }

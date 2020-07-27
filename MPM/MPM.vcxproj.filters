@@ -79,9 +79,6 @@
     <Filter Include="Header Files\MPM\Control">
       <UniqueIdentifier>{12d8abe6-2339-4205-9b25-1759ec6ae706}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\MPM\SpaceTime Control">
-      <UniqueIdentifier>{c844db4b-7afd-47d5-bf69-96851c0955dd}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\MPM\Control\SpaceTime">
       <UniqueIdentifier>{8eecdf49-62b9-4320-8a25-0ebf69bc2835}</UniqueIdentifier>
     </Filter>
@@ -207,24 +204,6 @@
     <ClCompile Include="MpmEigenRender.cpp">
       <Filter>Source Files\MPM\Algorithm</Filter>
     </ClCompile>
-    <ClCompile Include="MpmDeformationGradientSpaceTimeControl.cpp">
-      <Filter>Source Files\MPM\Control</Filter>
-    </ClCompile>
-    <ClCompile Include="MpmControlRender.cpp">
-      <Filter>Source Files\MPM\Control</Filter>
-    </ClCompile>
-    <ClCompile Include="MpmSpaceTimeControl.cpp">
-      <Filter>Source Files\MPM\SpaceTime Control</Filter>
-    </ClCompile>
-    <ClCompile Include="MpmSpaceTimeControlStructs.cpp">
-      <Filter>Source Files\MPM\SpaceTime Control</Filter>
-    </ClCompile>
-    <ClCompile Include="MpmSpaceTimeControlForwardSimulation.cpp">
-      <Filter>Source Files\MPM\SpaceTime Control</Filter>
-    </ClCompile>
-    <ClCompile Include="MpmSpaceTimeControlBackPropogation.cpp">
-      <Filter>Source Files\MPM\SpaceTime Control</Filter>
-    </ClCompile>
     <ClCompile Include="PointCloud.cpp">
       <Filter>Header Files\MPM\Data Structures</Filter>
     </ClCompile>
@@ -310,9 +289,6 @@
     </ClInclude>
     <ClInclude Include="MpmControlEngine.h">
       <Filter>Header Files\MPM\Control</Filter>
-    </ClInclude>
-    <ClInclude Include="MpmSpaceTimeControl.h">
-      <Filter>Header Files\MPM\Control\SpaceTime</Filter>
     </ClInclude>
     <ClInclude Include="Structures.h">
       <Filter>Header Files\MPM\Data Structures</Filter>

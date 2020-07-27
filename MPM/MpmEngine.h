@@ -136,6 +136,7 @@ namespace mpm {
 		void ImGuiGridOptions();
 		void ImGuiGridNodeViewer();
 		void ImGuiMaterialPointViewer();
+		void ImGuiEnergyViewer();
 		
 
 		// state variables for rendering different windows
@@ -150,6 +151,8 @@ namespace mpm {
 
 		// material point
 		bool m_imguiMaterialPointViewer = false;
+
+		bool m_imguiEnergyViewer = false;
 
 		// save/load
 		bool m_imguiPointCloudSaver = false;

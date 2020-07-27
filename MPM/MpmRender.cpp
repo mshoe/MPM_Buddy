@@ -41,7 +41,7 @@ void mpm::MpmEngine::MpmRender()
 	}
 
 	m_mpmGeometryEngine->Render(m_zoomPoint, 1.0, m_mpmRenderWindow);
-	m_mpmControlEngine->Render(m_zoomPoint, 1.0, m_mpmRenderWindow);
+	//m_mpmControlEngine->Render(m_zoomPoint, 1.0, m_mpmRenderWindow);
 
 
 	RenderGridBorder(m_zoomPoint, 1.0, m_mpmRenderWindow, m_borderShader);
@@ -74,7 +74,7 @@ void mpm::MpmEngine::ZoomRender()
 	// Render polygon
 
 	//m_mpmGeometryEngine->Render(m_zoomPoint, m_zoomFactor, m_zoomWindow);
-	m_mpmControlEngine->Render(m_zoomPoint, m_zoomFactor, m_zoomWindow);
+	//m_mpmControlEngine->Render(m_zoomPoint, m_zoomFactor, m_zoomWindow);
 
 	RenderGridBorder(m_zoomPoint, m_zoomFactor, m_zoomWindow, m_borderShader);
 

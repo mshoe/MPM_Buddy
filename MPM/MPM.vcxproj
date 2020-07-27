@@ -145,8 +145,6 @@
     <ClCompile Include="MpmAlgorithmSemiImplicit_CPP.cpp" />
     <ClCompile Include="MpmControlImGui.cpp" />
     <ClCompile Include="MpmControlEngineInit.cpp" />
-    <ClCompile Include="MpmControlRender.cpp" />
-    <ClCompile Include="MpmDeformationGradientSpaceTimeControl.cpp" />
     <ClCompile Include="MpmEigenRender.cpp" />
     <ClCompile Include="MpmEngineInit.cpp" />
     <ClCompile Include="MpmFunctions.cpp" />
@@ -163,10 +161,6 @@
     <ClCompile Include="MpmGeometrySelection.cpp" />
     <ClCompile Include="MpmRender.cpp" />
     <ClCompile Include="MpmRenderImgui.cpp" />
-    <ClCompile Include="MpmSpaceTimeControl.cpp" />
-    <ClCompile Include="MpmSpaceTimeControlBackPropogation.cpp" />
-    <ClCompile Include="MpmSpaceTimeControlForwardSimulation.cpp" />
-    <ClCompile Include="MpmSpaceTimeControlStructs.cpp" />
     <ClCompile Include="OpenGLScreen.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainEngine.cpp" />
@@ -198,7 +192,6 @@
     <ClInclude Include="MainEngine.h" />
     <ClInclude Include="MpmAlgorithmEngine.h" />
     <ClInclude Include="MpmControlEngine.h" />
-    <ClInclude Include="MpmSpaceTimeControl.h" />
     <ClInclude Include="MpmEngine.h" />
     <ClInclude Include="MpmFunctions.h" />
     <ClInclude Include="MpmGeometryEngine.h" />

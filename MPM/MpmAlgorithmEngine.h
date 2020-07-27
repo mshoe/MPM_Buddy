@@ -81,7 +81,7 @@ namespace mpm {
 			CPP = 1
 		};
 
-		volatile MPM_ALGORITHM_CODE m_algo_code = MPM_ALGORITHM_CODE::GLSL;
+		volatile MPM_ALGORITHM_CODE m_algo_code = MPM_ALGORITHM_CODE::CPP;
 	private:
 
 		// Other Engines
