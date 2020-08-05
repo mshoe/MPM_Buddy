@@ -37,7 +37,10 @@ void mpm::MpmGeometryEngine::InitShaders()
 	m_polygon = std::make_shared<sdf::Polygon>();
 	m_pwLine = std::make_shared<sdf::PWLine>();
 
-
+	m_meshShader = std::make_shared<StandardShader>(
+		std::vector<std::string>{graphicsPath + "mesh.vs"},
+		std::vector<std::string>{graphicsPath + "mesh.fs"},
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
 
 	m_imageScreen = std::make_shared<ImGuiScreen>(vec2(320.0, 320.0));
 	m_imageScreen->center = vec2(160.0, 160.0);

@@ -94,7 +94,7 @@ namespace mpm {
 
 		
 
-		/******************** MPM FUNCTIONS GLSL COMPUTE SHADER IMPLEMENTATION ********************/
+		/******************** MLS MPM GLSL COMPUTE SHADER IMPLEMENTATION ********************/
 	public:
 		void MpmReset_GLSL();
 		void MpmTimeStep_GLSL(real dt);
@@ -108,25 +108,32 @@ namespace mpm {
 		void MpmCREnd_GLSL(real dt);
 		void CalculatePointCloudVolumes_GLSL(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
 
-		/******************** MPM FUNCTIONS CPU C++ IMPLEMENTATION ********************/
+		/******************** MLS MPM CPU C++ IMPLEMENTATION ********************/
 	public:
 		void RunMPMSimulationCPP(real dt, size_t num_steps, bool debugOutput, bool renderAfter);
 		void MpmReset_CPP();
 		void MpmTimeStep_CPP(real dt);
 	private:
+		void MpmTimeStepP1_CPP(real dt);
 		void MpmTimeStepP2G_CPP(real dt);
 		void MpmTimeStepExplicitGridUpdate_CPP(real dt);
 		void MpmTimeStepSemiImplicitGridUpdate_CPP(real dt, real beta);
 		void MpmTimeStepG2P_CPP(real dt);
+		void MpmTimeStepP2_CPP(real dt);
 
-		/******************** MPM GRADIENTS CPU C++ IMPLEMENTATION ********************/
+		/******************** MUSL MPM CPU C++ IMPLEMENTATION ********************/
 
+	public:
+		void MpmTimeStep_MUSL(real dt);
+	private:
+		void MpmTimeStepP2G_MUSL(real dt);
+		void MpmTimeStepG_Update_MUSL(real dt);
+		void MpmTimeStepG2P_Velocity_MUSL(real dt);
+		void MpmTimeStepP2G_Velocity_MUSL(real dt);
+		void MpmTimeStepG_Velocity_MUSL(real dt);
+		void MpmTimeStepG2P_Position_MUSL(real dt);
 
-
-
-
-
-
+		bool m_USL = true;
 
 
 

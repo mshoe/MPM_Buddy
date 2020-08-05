@@ -2,15 +2,15 @@
 #include <iostream>
 
 namespace mpm {
-	mat2 NeoHookeanPKTensor(mat2 Fe, real lam, real mew) {
+	mat2 NeoHookeanPKTensor(mat2 Fe, double lam, double mew) {
 		mat2 Fit = glm::transpose(glm::inverse(Fe));
-		real J = glm::determinant(Fe);
-		real logJ = real(glm::log(J));
+		double J = glm::determinant(Fe);
+		double logJ = double(glm::log(J));
 		mat2 P = mew * (Fe - Fit) + lam * logJ * Fit;
 		return P;
 	}
 
-	mat2 SimpleSnowPKTensor(mat2& Fe, mat2& Fp, real mew, real lam, real crit_c, real crit_s, real hardening) {
+	mat2 SimpleSnowPKTensor(mat2& Fe, mat2& Fp, double mew, double lam, double crit_c, double crit_s, double hardening) {
 		mat2 F_total = Fe * Fp;
 
 		// calculate the polar decomposition Fe = RU.
@@ -20,7 +20,7 @@ namespace mpm {
 		PolarDecomp(Fe, R, S);
 
 		mat2 U, V;
-		real sig1, sig2;
+		double sig1, sig2;
 		SVD(R, S, U, sig1, sig2, V);
 
 		sig1 = glm::clamp(sig1, 1.0 - crit_c, 1.0 + crit_s);
@@ -33,21 +33,80 @@ namespace mpm {
 		Fp = V * inverse(sigMat) * transpose(U) * F_total;
 
 		mat2 Feit = glm::transpose(glm::inverse(Fe));
-		real Je = glm::determinant(Fe);
-		real Jp = glm::determinant(Fp);
+		double Je = glm::determinant(Fe);
+		double Jp = glm::determinant(Fp);
 
-		real pcof = real(glm::exp(hardening * (1.0 - Jp)));
+		double pcof = double(glm::exp(hardening * (1.0 - Jp)));
 
 		mat2 P = 2.0 * mew * (Fe - R) + lam * (Je - 1.0) * Je * Feit;
 		P *= pcof;
 		return P;
 	}
+
+	mat3 ElasticityMatrix(double E, double nu, bool stress_state)
+	{
+		/*
+		function C = elasticityMatrix(E0, nu0, stressState)
+			%
+			%Elasticity matrix for isotropic elastic materials.
+			%
+			% VP Nguyen
+			% Cardiff University, UK
+
+			if (strcmp(stressState, 'PLANE_STRESS')) % Plane Stress case
+				C = E0 / (1 - nu0 ^ 2) * [1      nu0         0;
+				nu0     1          0;
+				0       0  (1 - nu0) / 2];
+			elseif(strcmp(stressState, 'PLANE_STRAIN')) % Plane Strain case
+				C = E0 / (1 + nu0) / (1 - 2 * nu0) * [1 - nu0   nu0        0;
+														nu0    1 - nu0       0;
+														0      0  1 / 2 - nu0];
+			else % 3D
+				C = zeros(6, 6);
+				C(1:3, 1 : 3) = E0 / (1 + nu0) / (1 - 2 * nu0) * [1 - nu0 nu0 nu0;
+				nu0 1 - nu0 nu0;
+				nu0 nu0 1 - nu0];
+				C(4:6, 4 : 6) = E0 / 2 / (1 + nu0) * eye(3);
+			end
+		*/
+
+		mat3 C = mat3(0.0);
+
+		if (stress_state == true) { // PLAIN STRAIN
+
+			
+			C[0][0] = 1.0 - nu;
+			C[1][0] = nu;
+			C[0][1] = nu;
+			C[1][1] = 1.0 - nu;
+			C[2][2] = 0.5 - nu;
+
+			C = C * E / (1.0 + nu) / (1.0 - 2.0 * nu);
+		}
+
+
+		return C;
+	}
 }
 
-mat2 mpm::FixedCorotationalElasticity::PKTensor(mat2 Fe, real lam, real mew)
+double mpm::FixedCorotationalElasticity::EnergyDensity(mat2 Fe, double lam, double mew)
+{
+	mat2 R, S;
+	PolarDecomp(Fe, R, S);
+
+	mat2 U, V;
+	double sig1, sig2;
+	SVD(R, S, U, sig1, sig2, V);
+
+	double J = glm::determinant(Fe);
+
+	return mew * ((sig1 - 1.0)*(sig1 - 1.0) + (sig2 - 1.0)*(sig2 - 1.0)) + lam * 0.5 * (J - 1.0) * (J - 1.0);
+}
+
+mat2 mpm::FixedCorotationalElasticity::PKTensor(mat2 Fe, double lam, double mew)
 {
 	mat2 Fit = glm::transpose(glm::inverse(Fe));
-	real J = glm::determinant(Fe);
+	double J = glm::determinant(Fe);
 
 	// calculate the polar decomposition F = RU.
 	// Then calculate P using F and R
@@ -61,7 +120,7 @@ mat2 mpm::FixedCorotationalElasticity::PKTensor(mat2 Fe, real lam, real mew)
 mat2 mpm::FixedCorotationalElasticity::dPdlam(mat2 Fe)
 {
 	mat2 Fit = glm::transpose(glm::inverse(Fe));
-	real J = glm::determinant(Fe);
+	double J = glm::determinant(Fe);
 
 	return (J - 1.0) * J * Fit;
 }
@@ -74,23 +133,23 @@ mat2 mpm::FixedCorotationalElasticity::dPdmew(mat2 Fe)
 	return 2.0 * (Fe - R);
 }
 
-mat4 mpm::FixedCorotationalElasticity::d2Psi_dF2_Mat4(mat2 Fe, real lam, real mew)
+mat4 mpm::FixedCorotationalElasticity::d2Psi_dF2_Mat4(mat2 Fe, double lam, double mew)
 {
 	mat2 R, S, U, V;
-	real s1, s2;
+	double s1, s2;
 	PolarDecomp(Fe, R, S);
 	SVD(R, S, U, s1, s2, V);
 
-	real u1 = ExtractRotationAngle(U);
-	real v1 = ExtractRotationAngle(V);
+	double u1 = ExtractRotationAngle(U);
+	double v1 = ExtractRotationAngle(V);
 
 	// pooped out from MATLAB script: MATLAB/P_SVD.mlx
 	// Assuming release mode will optimize this bad boy
 
-	real cosu1 = cos(u1);
-	real sinu1 = sin(u1);
-	real cosv1 = cos(v1);
-	real sinv1 = sin(v1);
+	double cosu1 = cos(u1);
+	double sinu1 = sin(u1);
+	double cosv1 = cos(v1);
+	double sinv1 = sin(v1);
 
 	mat4 dPdF;
 	dPdF[0][0] = mew * cosu1 * cosv1 * 2.0 - lam * sinu1 * sinv1 + lam * (s2 * s2) * cosu1 * cosv1 + lam * s1 * s2 * sinu1 * sinv1 * 2.0;
@@ -113,11 +172,11 @@ mat4 mpm::FixedCorotationalElasticity::d2Psi_dF2_Mat4(mat2 Fe, real lam, real me
 	return dPdF; // NOTE: glm is column-major. Accessing from this matrix will be the same, but multiplication will need to be done using the transpose of this
 }
 
-mat2 mpm::FixedCorotationalElasticity::d2Psi_dF2_multbydF(mat2 Fe, real mew, real lam, mat2 dF)
+mat2 mpm::FixedCorotationalElasticity::d2Psi_dF2_multbydF(mat2 Fe, double lam, double mew, mat2 dF)
 {
 	mat2 R, S;
 	PolarDecomp(Fe, R, S);
-	real J = glm::determinant(Fe);
+	double J = glm::determinant(Fe);
 	mat2 Fit = glm::transpose(glm::inverse(Fe));
 
 	mat2 A = mat2(0.0);
@@ -128,8 +187,8 @@ mat2 mpm::FixedCorotationalElasticity::d2Psi_dF2_multbydF(mat2 Fe, real mew, rea
 
 	A += 2.0 * mew * dF;
 
-	real b = R[1][0] * dF[0][0] + R[1][1] * dF[0][1] - (dF[1][0] * R[0][0] + dF[1][1] * R[0][1]);
-	real a = b / (S[0][0] + S[1][1]);
+	double b = R[1][0] * dF[0][0] + R[1][1] * dF[0][1] - (dF[1][0] * R[0][0] + dF[1][1] * R[0][1]);
+	double a = b / (S[0][0] + S[1][1]);
 	mat2 dR = R * mat2(0, a, -a, 0); // column major
 
 	A -= 2.0 * mew * dR;
@@ -137,7 +196,7 @@ mat2 mpm::FixedCorotationalElasticity::d2Psi_dF2_multbydF(mat2 Fe, real mew, rea
 	return A;
 }
 
-mat4 mpm::FixedCorotationalElasticity::d2Psi_dF2_Mat4_trick(mat2 Fe, real mew, real lam)
+mat4 mpm::FixedCorotationalElasticity::d2Psi_dF2_Mat4_trick(mat2 Fe, double lam, double mew)
 {
 	mat4 dPdF;
 
@@ -153,16 +212,16 @@ mat4 mpm::FixedCorotationalElasticity::d2Psi_dF2_Mat4_trick(mat2 Fe, real mew, r
 
 	// |1, 0|
 	// |0, 0|
-	mat2 dPdF00 = d2Psi_dF2_multbydF(Fe, mew, lam, m00);
+	mat2 dPdF00 = d2Psi_dF2_multbydF(Fe, lam, mew, m00);
 
 	// NOTE: My math says these are the correct matrices, but when I run the code, the other way is correct
 	// |0, 0|
 	// |1, 0|
-	mat2 dPdF01 = d2Psi_dF2_multbydF(Fe, mew, lam, m01);
+	mat2 dPdF01 = d2Psi_dF2_multbydF(Fe, lam, mew, m01);
 
 	// |0, 1|
 	// |0, 0|
-	mat2 dPdF10 = d2Psi_dF2_multbydF(Fe, mew, lam, m10);
+	mat2 dPdF10 = d2Psi_dF2_multbydF(Fe, lam, mew, m10);
 
 
 	// swap these around??? did I make a mistake somewhere
@@ -176,7 +235,7 @@ mat4 mpm::FixedCorotationalElasticity::d2Psi_dF2_Mat4_trick(mat2 Fe, real mew, r
 
 	// |0, 0|
 	// |0, 1|
-	mat2 dPdF11 = d2Psi_dF2_multbydF(Fe, mew, lam, m11);
+	mat2 dPdF11 = d2Psi_dF2_multbydF(Fe, lam, mew, m11);
 
 	/*dPdF[0][0] = dPdF00[0][0];
 	dPdF[0][1] = dPdF00[0][1];
@@ -220,4 +279,30 @@ mat4 mpm::FixedCorotationalElasticity::d2Psi_dF2_Mat4_trick(mat2 Fe, real mew, r
 	dPdF[3][3] = dPdF11[1][1];
 
 	return dPdF;
+}
+
+mat4 mpm::FixedCorotationalElasticity::d2Psi_dF2_Mat4_fd(mat2 F, double lam, double mew)
+{
+	mat4 fddPdF;
+
+	for (int i = 0; i < 2; i++) {
+		for (int j = 0; j < 2; j++) {
+			double originalValue = F[i][j];
+
+			F[i][j] = originalValue + 0.000001;
+			mat2 P1 = FixedCorotationalElasticity::PKTensor(F, lam, mew);
+
+			F[i][j] = originalValue - 0.000001;
+			mat2 P2 = FixedCorotationalElasticity::PKTensor(F, lam, mew);
+
+			mat2 dPdF_ij = (P1 - P2) / (2.0 * 0.000001);
+
+			for (int a = 0; a < 2; a++) {
+				for (int b = 0; b < 2; b++) {
+					fddPdF[i * 2 + a][j * 2 + b] = dPdF_ij[a][b];
+				}
+			}
+		}
+	}
+	return fddPdF;
 }

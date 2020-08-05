@@ -99,12 +99,11 @@ namespace mpm {
 		bool m_renderControlDeformationGradients = false;
 		real m_pointCircleRadius = 0.075;
 
-		void RenderControlPointCloud(vec2 zoomPoint, real zoomFactor, std::shared_ptr<control::ControlPointCloud> pointCloud, GLuint ssbo);
-		void RenderControlPointCloudCircles(vec2 zoomPoint, real zoomFactor, std::shared_ptr<control::ControlPointCloud> pointCloud, GLuint ssbo);
+
 		/******************** EXTERNAL FORCE CONTROLLER ********************/
 	public:
-		real m_drag = 0.5;
-		vec2 m_globalForce = vec2(0.0, -9.81);
+		real m_drag = 0.0; // usually 0.5
+		vec2 m_globalForce = vec2(0.0, 0.0); // usually -9.81
 		GLreal m_mousePower = 25.0;
 	private:
 

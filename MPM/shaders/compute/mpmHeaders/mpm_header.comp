@@ -16,8 +16,8 @@ struct materialPoint {
 	dvec2 v; // velocity
 	double m; // mass
 	double vol; // volume
+	double vol0; // initial volume
 	double Lz; // angular momentum (for RPIC)
-	double padding;
 	dmat2 B; // for APIC
 	dmat2 Fe; // elastic deformation gradient
 	dmat2 Fp; // plastic deformation gradient
@@ -42,13 +42,19 @@ struct materialPoint {
 	double selected;
 
 	dvec4 rgba;
+
+	// FOR MUSL, ONLY USING FIRST 3 COMPONENTS
+	dvec4 stress;
+	dvec4 strain;
 };
 
 struct gridNode {
 	double m;
 	double opengl_padding;
+	dvec2 x;
 	dvec2 v;
 	dvec2 momentum;
+	dvec2 f_int;
 	dvec2 force;
 	dvec2 nodalAcceleration;
 

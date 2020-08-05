@@ -30,6 +30,7 @@ void mpm::MpmEngine::ProcessKeyboardInput(GLFWwindow* window, real lag)
 	m_mpmGeometryEngine->ProcessKeyboardInput(window, lag);
 	m_mpmAlgorithmEngine->ProcessKeyboardInput(window, lag);
 
+
 	if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS) {
 		m_selectNodeState = true;
 	}

@@ -63,6 +63,7 @@ void mpm::MpmEngine::RenderGUI()
 				if (ImGui::MenuItem("Energy Viewer", "", m_imguiEnergyViewer)) {
 					m_imguiEnergyViewer = !m_imguiEnergyViewer;
 				}
+				
 				ImGui::EndMenu();
 			}
 
@@ -90,6 +91,7 @@ void mpm::MpmEngine::RenderGUI()
 		if (m_imguiPointCloudSaver) ImGuiPointCloudSaver();
 		if (m_imguiPointCloudLoader) ImGuiPointCloudLoader();
 		if (m_imguiEnergyViewer) ImGuiEnergyViewer();
+		
 		
 		
 		if (imguiImGuiDemo) { ImGui::ShowDemoWindow(); }
@@ -429,20 +431,150 @@ void mpm::MpmEngine::ImGuiMaterialPointViewer()
 
 void mpm::MpmEngine::ImGuiEnergyViewer()
 {
+	static bool kinetic_energy = true;
+	static bool elastic_potential_energy = true;
+	static bool gravity_potential_energy = true;
+
 	static double total_kinetic_energy = 0.0;
-	if (ImGui::Begin("Energy Viewer", &m_imguiEnergyViewer)) {
+	static double total_elastic_potential_energy = 0.0;
+	static double total_gravity_potential_energy = 0.0;
+
+	static double max_total_kinetic_energy = 0.0;
+	static double max_total_elastic_potential_energy = 0.0;
+	static double max_total_gravity_potential_energy = 0.0;
 	
-		total_kinetic_energy = 0.0;
-		for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
-			total_kinetic_energy += pointCloudPair.second->ComputeMPKE();
+	static double total_energy = 0.0;
+	static double max_total_energy = 0.0;
+
+	if (ImGui::Begin("Energy Viewer", &m_imguiEnergyViewer)) {
+
+		if (ImGui::Button("Clear max energy values")) {
+			max_total_kinetic_energy = 0.0;
+			max_total_elastic_potential_energy = 0.0;
+			max_total_gravity_potential_energy = 0.0;
+			max_total_energy = 0.0;
 		}
-		ImGui::DisplayNamedGlmRealColor("total kinetic energy", total_kinetic_energy, glm::highp_fvec4(1.0));
+
+		ImGui::Checkbox("kinetic energy", &kinetic_energy);
+		ImGui::Checkbox("elastic potential energy", &elastic_potential_energy);
+		ImGui::Checkbox("gravity potential energy", &gravity_potential_energy);
+		
+		static const int energy_values_size = 100;
+		
+		static float Kenergy_values[energy_values_size];
+		static float EPenergy_values[energy_values_size];
+		static float GPenergy_values[energy_values_size];
+		static float total_energy_values[energy_values_size];
+		
+		static double refresh_time = 0.0;
+		if (m_mpmAlgorithmEngine->m_paused || refresh_time == 0.0f)
+			refresh_time = ImGui::GetTime();
+		while (refresh_time < ImGui::GetTime()) // Create dummy data at fixed 60 hz rate for the demo
+		{
+			total_energy = 0.0;	
+			
+			if (kinetic_energy) {
+				total_kinetic_energy = 0.0;
+				for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+					total_kinetic_energy += pointCloudPair.second->ComputeMPKE();
+				}
+				total_energy += total_kinetic_energy;
+
+				// O(n): push values to the front
+				for (int i = 0; i <= energy_values_size - 2; i++) {
+					Kenergy_values[i] = Kenergy_values[i + 1];
+				}
+				Kenergy_values[energy_values_size - 1] = (float)total_kinetic_energy;
+
+				if (total_kinetic_energy > max_total_kinetic_energy) {
+					max_total_kinetic_energy = total_kinetic_energy;
+				}
+			}
+
+			if (elastic_potential_energy) {
+				total_elastic_potential_energy = 0.0;
+				for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+					/*total_elastic_potential_energy += pointCloudPair.second->ComputeElasticPotential();*/
+					total_elastic_potential_energy += pointCloudPair.second->ComputeLinearElasticPotentialMUSL();
+				}
+
+				total_energy += total_elastic_potential_energy;
+
+				// O(n): push values to the front
+				for (int i = 0; i <= energy_values_size - 2; i++) {
+					EPenergy_values[i] = EPenergy_values[i + 1];
+				}
+				EPenergy_values[energy_values_size - 1] = (float)total_elastic_potential_energy;
+
+				if (total_elastic_potential_energy > max_total_elastic_potential_energy) {
+					max_total_elastic_potential_energy = total_elastic_potential_energy;
+				}
+			}
+
+			if (gravity_potential_energy) {
+				total_gravity_potential_energy = 0.0;
+				for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+					total_gravity_potential_energy += pointCloudPair.second->ComputeGravitionalPotential();
+				}
+
+				total_energy += total_gravity_potential_energy;
+
+				// O(n): push values to the front
+				for (int i = 0; i <= energy_values_size - 2; i++) {
+					GPenergy_values[i] = GPenergy_values[i + 1];
+				}
+				GPenergy_values[energy_values_size - 1] = (float)total_gravity_potential_energy;
+
+				if (total_gravity_potential_energy > max_total_gravity_potential_energy) {
+					max_total_gravity_potential_energy = total_gravity_potential_energy;
+				}
+			}
+
+			// O(n): push values to the front
+			for (int i = 0; i <= energy_values_size - 2; i++) {
+				total_energy_values[i] = total_energy_values[i + 1];
+			}
+			total_energy_values[energy_values_size - 1] = (float)total_energy;
+
+			if (total_energy > max_total_energy) {
+				max_total_energy = total_energy;
+			}
+
+			refresh_time += 1.0/60;
+			
+		}
+		
+		if (kinetic_energy) {
+			ImGui::DisplayNamedGlmRealColor("total kinetic energy", total_kinetic_energy, glm::highp_fvec4(1.0));
+			ImGui::DisplayNamedGlmRealColor("max total kinetic energy", max_total_kinetic_energy, glm::highp_fvec4(0.0, 1.0, 0.0, 1.0));
+			ImGui::PlotLines("Total Kinetic Energy", Kenergy_values, IM_ARRAYSIZE(Kenergy_values), 0, "", 0.0f, (float)max_total_kinetic_energy, ImVec2(0, 160));
+		}
+
+		if (elastic_potential_energy) {
+			ImGui::DisplayNamedGlmRealColor("total elastic potential energy", total_elastic_potential_energy, glm::highp_fvec4(1.0));
+			ImGui::DisplayNamedGlmRealColor("max total elastic potential energy", max_total_elastic_potential_energy, glm::highp_fvec4(0.0, 1.0, 0.0, 1.0));
+			ImGui::PlotLines("Total Elastic Potential Energy", EPenergy_values, IM_ARRAYSIZE(EPenergy_values), 0, "", 0.0f, (float)max_total_elastic_potential_energy, ImVec2(0, 160));
+		}
+
+		if (gravity_potential_energy) {
+			ImGui::DisplayNamedGlmRealColor("total gravitational potential energy", total_gravity_potential_energy, glm::highp_fvec4(1.0));
+			ImGui::DisplayNamedGlmRealColor("max total gravitational potential energy", max_total_gravity_potential_energy, glm::highp_fvec4(0.0, 1.0, 0.0, 1.0));
+			ImGui::PlotLines("Total Gravity Potential Energy", GPenergy_values, IM_ARRAYSIZE(GPenergy_values), 0, "", 0.0f, (float)max_total_gravity_potential_energy, ImVec2(0, 160));
+		}
+
+		ImGui::DisplayNamedGlmRealColor("total energy", total_energy, glm::highp_fvec4(1.0));
+		ImGui::DisplayNamedGlmRealColor("max energy", max_total_energy, glm::highp_fvec4(0.0, 1.0, 0.0, 1.0));
+		ImGui::PlotLines("Total Energy", total_energy_values, IM_ARRAYSIZE(total_energy_values), 0, "", 0.0f, (float)max_total_energy, ImVec2(0, 160));
+
+
 		/*if (ImGui::Button("Compute Total Kinetic Energy")) {
 			
 		}*/
 	}
 	ImGui::End();
 }
+
+
 
 void mpm::MpmEngine::ImGuiSelectPointCloud(std::string& pointCloudSelectStr, const std::string& selectMsg)
 {

@@ -79,14 +79,17 @@
     <Filter Include="Header Files\MPM\Control">
       <UniqueIdentifier>{12d8abe6-2339-4205-9b25-1759ec6ae706}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\MPM\Control\SpaceTime">
-      <UniqueIdentifier>{8eecdf49-62b9-4320-8a25-0ebf69bc2835}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Resource Files\imgui\extensions">
       <UniqueIdentifier>{73c11e64-643a-4f06-9eab-d7d2fc236b95}</UniqueIdentifier>
     </Filter>
     <Filter Include="Resource Files\stb">
       <UniqueIdentifier>{768bab3e-9c56-43f4-b511-caaea609c70b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\igl">
+      <UniqueIdentifier>{36e1c00e-66b7-4bed-8618-c8d1da068ec3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\triangle">
+      <UniqueIdentifier>{fddd4a6f-6b71-4530-bc9e-907bb5ba1b83}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -207,6 +210,12 @@
     <ClCompile Include="PointCloud.cpp">
       <Filter>Header Files\MPM\Data Structures</Filter>
     </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmAlgorithmMUSL.cpp">
+      <Filter>Source Files\MPM\Algorithm</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainEngine.h">
@@ -298,6 +307,9 @@
     </ClInclude>
     <ClInclude Include="external\include\stb\stb_image.h">
       <Filter>Resource Files\stb</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>Header Files\Math</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

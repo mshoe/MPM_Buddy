@@ -4,6 +4,30 @@ bool mpm::InBounds(int node_i, int node_j, int x_bound, int y_bound) {
 	return (node_i >= 0 && node_i < x_bound && node_j >= 0 && node_j < y_bound);
 }
 
+real mpm::LinearShape(real x)
+{
+	x = abs(x);
+	if (x > 1.0) {
+		return 0.0;
+	}
+	else {
+		return 1.0 - x;
+	}
+}
+
+real mpm::LinearShapeSlope(real x)
+{
+	if (-1.0 <= x && x < 0.0) {
+		return 1.0;
+	}
+	else if (0.0 < x && x <= 1.0) {
+		return -1.0;
+	}
+	else {
+		return 0.0;
+	}
+}
+
 real mpm::CubicBSpline(real x) {
 	using glm::step;
 	x = abs(x);

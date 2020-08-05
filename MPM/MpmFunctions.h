@@ -6,6 +6,11 @@ namespace mpm {
 
 	bool InBounds(int node_i, int node_j, int x_bound, int y_bound);
 
+
+	real LinearShape(real x);
+	real LinearShapeSlope(real x);
+
+
 	real CubicBSpline(real x);
 	real CubicBSplineSlope(real x);
 

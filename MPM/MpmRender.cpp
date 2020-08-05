@@ -43,6 +43,9 @@ void mpm::MpmEngine::MpmRender()
 	m_mpmGeometryEngine->Render(m_zoomPoint, 1.0, m_mpmRenderWindow);
 	//m_mpmControlEngine->Render(m_zoomPoint, 1.0, m_mpmRenderWindow);
 
+	
+
+
 
 	RenderGridBorder(m_zoomPoint, 1.0, m_mpmRenderWindow, m_borderShader);
 

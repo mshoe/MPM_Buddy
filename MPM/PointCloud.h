@@ -48,9 +48,9 @@ namespace mpm {
 		vec2 x = vec2(0.0);
 		vec2 v = vec2(0.0);
 		GLreal m = 0.0;
-		GLreal vol = 0.0; // initial volume
+		GLreal vol = 0.0; 
+		GLreal vol0 = 0.0; // initial volume
 		real Lz = 0.0; // angular momentum (for RPIC)
-		real padding = 1.5; // padding
 		mat2 B = mat2(0.0); // for APIC
 		mat2 Fe = mat2(1.0);
 		mat2 Fp = mat2(1.0);
@@ -77,6 +77,11 @@ namespace mpm {
 		real selected = 0.0;
 
 		vec4 rgba = vec4(1.0, 1.0, 0.0, 1.0);
+
+		// FOR MUSL
+		vec4 stress = vec4(0.0);
+		vec4 strain = vec4(0.0);
+
 
 		void SetMaterialParameters(const MaterialParameters& parameters);
 
@@ -109,6 +114,8 @@ namespace mpm {
 		double ComputeCOMKE(); // compute center of mass kinetic energy
 		double ComputeMPKE(); // compute total material point kinetic energy
 		double ComputeElasticPotential(); // compute elastic potential energy
+		double ComputeLinearElasticPotentialMUSL(); 
+		double ComputeGravitionalPotential();
 
 		size_t N = 0;
 		std::vector<MaterialPoint> points;

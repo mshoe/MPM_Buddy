@@ -13,6 +13,8 @@
 #include "MpmEngine.h"
 #include "MpmAlgorithmEngine.h"
 
+#include "Mesh.h"
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -22,6 +24,10 @@
 #include <unordered_map>
 #include <map>
 #include <tuple>
+
+//extern "C" {
+//#include "external/triangle/triangle.h"
+//}
 
 namespace mpm {
 	class MpmGeometryEngine {
@@ -77,19 +83,21 @@ namespace mpm {
 		void ImGuiPWLineEditor();
 		void ImGuiPointSelector();
 		void ImGuiImageLoader();
+		void ImGuiMesh();
 
 		bool m_imguiBasicShapesEditor = false;
 		bool m_imguiPolygonEditor = false;
 		bool m_imguiPWLineEditor = false;
 		bool m_imguiPointSelector = false;
 		bool m_imguiImageLoader = false;
+		bool m_imguiMesh = false;
 
 		// graphics shaders
 		std::shared_ptr<StandardShader> m_circleShader = nullptr;
 		std::shared_ptr<StandardShader> m_polygonShader = nullptr;
 		std::shared_ptr<StandardShader> m_pwLineShader = nullptr;
 		std::shared_ptr<StandardShader> m_polygonEditorShader = nullptr;
-
+		std::shared_ptr<StandardShader> m_meshShader = nullptr;
 
 		// compute shaders
 		std::unique_ptr<ComputeShader> m_pLassoTool = nullptr;
@@ -174,5 +182,8 @@ namespace mpm {
 		real m_iso_tri_h = 3.0;
 		real m_iso_tri_inner_radius = 0.0;
 		real m_iso_tri_rounding = 2.0;
+
+		/************ MESHER ************/
+		std::vector<std::shared_ptr<Mesh>> m_meshes;
 	};
 }

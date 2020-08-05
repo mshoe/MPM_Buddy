@@ -19,8 +19,10 @@ namespace mpm {
 		// With a padding, we can read GridNode structs easily.
 		GLreal glsl_padding = 0.0;
 
+		vec2 x = vec2(0.0);
 		vec2 v = vec2(0.0);
 		vec2 momentum = vec2(0.0);
+		vec2 f_int = vec2(0.0);
 		vec2 force = vec2(0.0);
 		vec2 nodalAcceleration = vec2(0.0);
 
@@ -86,9 +88,22 @@ namespace mpm {
 	struct Grid {
 		Grid() {
 			nodes = std::vector<GridNode>(GRID_SIZE_X * GRID_SIZE_Y, GridNode());
+
+			for (int i = 0; i < GRID_SIZE_X; i++) {
+				for (int j = 0; j < GRID_SIZE_Y; j++) {
+					nodes[i + j *GRID_SIZE_Y].x = vec2(i, j);
+				}
+			}
+
 		}
 		Grid(size_t grid_size_x, size_t grid_size_y) {
 			nodes = std::vector<GridNode>(grid_size_x * grid_size_y, GridNode());
+
+			for (int i = 0; i < grid_size_x; i++) {
+				for (int j = 0; j < grid_size_y; j++) {
+					nodes[i + j * grid_size_y].x = vec2(i, j);
+				}
+			}
 		}
 		~Grid() {}
 

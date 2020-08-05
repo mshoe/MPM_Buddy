@@ -17,6 +17,16 @@ void mpm::MpmGeometryEngine::Render(vec2 zoomPoint, real zoomFactor, std::shared
 	if (m_renderPWLine) {
 		RenderPWLine(zoomPoint, 1.0, openGLScreen, m_pwLineShader);
 	}
+
+
+	// meshes
+	m_meshShader->Use();
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	for (std::shared_ptr<Mesh>& mesh : m_meshes) {
+		mesh->Draw();
+	}
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
 }
 
 void mpm::MpmGeometryEngine::RenderCircle(vec2 zoomPoint, real zoomFactor, 

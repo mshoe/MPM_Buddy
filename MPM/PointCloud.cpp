@@ -31,8 +31,9 @@ void mpm::MaterialPoint::ImGuiDisplay(bool calcDecomp, bool calcdPdF, bool calcV
 	ImGui::DisplayNamedGlmVecMixColor("v", v, min_color, max_color);
 	ImGui::DisplayNamedGlmRealColor("m", m, max_color);
 	ImGui::DisplayNamedGlmRealColor("vol", vol, max_color);
+	ImGui::DisplayNamedGlmRealColor("vol0", vol, max_color);
 	ImGui::DisplayNamedGlmRealColor("Lz", Lz, max_color);
-	ImGui::DisplayNamedGlmRealColor("padding", padding, max_color);
+	
 	ImGui::DisplayNamedGlmRealColor("lam", lam, max_color);
 	ImGui::DisplayNamedGlmRealColor("mew", mew, max_color);
 	ImGui::DisplayNamedGlmRealColor("crit_c", crit_c, max_color);
@@ -43,6 +44,9 @@ void mpm::MaterialPoint::ImGuiDisplay(bool calcDecomp, bool calcdPdF, bool calcV
 	ImGui::DisplayNamedGlmMatrixMixColor("Fe", Fe, min_color, max_color);
 	ImGui::DisplayNamedGlmMatrixMixColor("Fp", Fp, min_color, max_color);
 	ImGui::DisplayNamedGlmMatrixMixColor("P", P, min_color, max_color);
+
+	ImGui::DisplayNamedGlmVecColor("stress", stress, min_color);
+	ImGui::DisplayNamedGlmVecColor("strain", strain, min_color);
 
 	if (calcDecomp) {
 		mat2 R, S;
@@ -336,7 +340,36 @@ double mpm::PointCloud::ComputeMPKE()
 
 double mpm::PointCloud::ComputeElasticPotential()
 {
-	return 0.0;
+	double EPE = 0.0;
+	for (size_t p = 0; p < points.size(); p++) {
+		MaterialPoint& mp = points[p];
+
+		EPE += mp.vol * FixedCorotationalElasticity::EnergyDensity(mp.Fe, mp.lam, mp.mew);
+	}
+	return EPE;
+}
+
+double mpm::PointCloud::ComputeLinearElasticPotentialMUSL()
+{
+	double EPE = 0.0;
+	for (size_t p = 0; p < points.size(); p++) {
+		MaterialPoint& mp = points[p];
+
+		EPE += 0.5 * mp.vol * glm::dot(mp.stress, mp.strain);
+	}
+	return EPE;
+}
+
+double mpm::PointCloud::ComputeGravitionalPotential()
+{
+	// ASSUME GRAVITY IS POINTING DOWN AND IS 9.81
+	double GPE = 0.0;
+	for (size_t p = 0; p < points.size(); p++) {
+		MaterialPoint& mp = points[p];
+
+		GPE += mp.m * mp.x.y * 9.81;
+	}
+	return GPE;
 }
 
 

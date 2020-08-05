@@ -16,6 +16,7 @@ void mpm::MpmAlgorithmEngine::MpmReset_GLSL()
 	m_gReset->Use();
 	glDispatchCompute(m_mpmEngine->m_chunks_x, m_mpmEngine->m_chunks_y, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+	
 }
 
 void mpm::MpmAlgorithmEngine::MpmTimeStep_GLSL(real dt)

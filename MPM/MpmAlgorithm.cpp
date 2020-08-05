@@ -20,7 +20,8 @@ void mpm::MpmAlgorithmEngine::Update()
 			break;
 		case MPM_ALGORITHM_CODE::CPP:
 			if (!m_rt) {
-				MpmTimeStep_CPP(m_dt);
+				//MpmTimeStep_CPP(m_dt);
+				MpmTimeStep_MUSL(m_dt);
 				m_mpmEngine->MapCPUPointCloudsToGPU();
 				m_mpmEngine->MapCPUGridToGPU();
 			}
@@ -28,7 +29,8 @@ void mpm::MpmAlgorithmEngine::Update()
 				real curr_dt = 0.0;
 				real rt_dt = 1.0 / 60.0;
 				while (curr_dt < rt_dt) {
-					MpmTimeStep_CPP(m_dt);
+					//MpmTimeStep_CPP(m_dt);
+					MpmTimeStep_MUSL(m_dt);
 					curr_dt += m_dt;
 				}
 				m_mpmEngine->MapCPUPointCloudsToGPU();
@@ -49,6 +51,11 @@ void mpm::MpmAlgorithmEngine::CalculatePointCloudVolumes(std::string pointCloudI
 	if (m_algo_code == MPM_ALGORITHM_CODE::CPP) {
 		// for CPU mode calculate volumes
 		GetPointCloudVolumesFromGPUtoCPU(pointCloudID, pointCloud);
+	}
+
+	// Set initial volumes too (vol0)
+	for (int i = 0; i < pointCloud->points.size(); i++) {
+		pointCloud->points[i].vol0 = pointCloud->points[i].vol;
 	}
 }
 

@@ -81,6 +81,8 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 		std::vector<std::string>{graphicsGeometryPath + "polygon.fs"},
 		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
 
+	
+
 
 	m_openGLScreen = std::make_shared<OpenGLScreen>();
 	m_openGLScreen->center = vec2(1350.0, 450.0);

@@ -42,6 +42,11 @@ void mpm::MpmAlgorithmEngine::MpmTimeStep_CPP(real dt)
 	time_point<high_resolution_clock> t2;
 	t1 = high_resolution_clock::now();
 #endif
+
+	if (m_USL) {
+		MpmTimeStepP1_CPP(dt);
+	}
+
 	MpmTimeStepP2G_CPP(dt);
 
 	MpmTimeStepExplicitGridUpdate_CPP(dt);
@@ -50,7 +55,13 @@ void mpm::MpmAlgorithmEngine::MpmTimeStep_CPP(real dt)
 		MpmTimeStepSemiImplicitGridUpdate_CPP(dt, m_beta);
 	}
 
+	if (!m_USL) {
+		MpmTimeStepP1_CPP(dt);
+	}
+
 	MpmTimeStepG2P_CPP(dt);
+
+	MpmTimeStepP2_CPP(dt);
 
 	m_timeStep++;
 	m_time += m_dt;
@@ -58,6 +69,17 @@ void mpm::MpmAlgorithmEngine::MpmTimeStep_CPP(real dt)
 	t2 = high_resolution_clock::now();
 	std::cout << "Finished calculating timestep in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
 #endif
+}
+
+void mpm::MpmAlgorithmEngine::MpmTimeStepP1_CPP(real dt)
+{
+	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_mpmEngine->m_pointCloudMap) {
+
+		for (MaterialPoint& point : pointCloudPair.second->points) {
+
+			point.P = FixedCorotationalElasticity::PKTensor(point.Fe, point.lam, point.mew);
+		}
+	}
 }
 
 void mpm::MpmAlgorithmEngine::MpmTimeStepP2G_CPP(real dt)
@@ -84,11 +106,6 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepP2G_CPP(real dt)
 			int botLeftNode_j = int(glm::floor(point.x.y)) - 1;
 
 			vec2 xp = point.x;
-
-			mat2 P = FixedCorotationalElasticity::PKTensor(point.Fe, point.lam, point.mew);
-			
-			// just store it for possible debugging purposes
-			point.P = P;
 
 			for (int i = 0; i <= 3; i++) {
 				for (int j = 0; j <= 3; j++) {
@@ -196,12 +213,32 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepG2P_CPP(real dt)
 
 			point.v = vp;
 			point.B = Dp_inv * bp; // for APIC
-			point.x += dt * vp; // update position
+		}
+	}
+}
+
+void mpm::MpmAlgorithmEngine::MpmTimeStepP2_CPP(real dt)
+{
+	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_mpmEngine->m_pointCloudMap) {
+
+		for (MaterialPoint& point : pointCloudPair.second->points) {
+			
+			vec2 dx = dt * point.v;
+			if (dx.x >= 1.0 || dx.y >= 1.0) {
+				m_paused = true; // GRID CROSSING INSTABILITY
+			}
+
+			point.x += dt * point.v; // update position
 			mat2 dfp = mat2(1.0) + dt * point.B; // for MLS
 			point.Fe = dfp * point.Fe; // update deformation gradient
 		}
 	}
+
+	if (m_paused) {
+		std::cout << "grid crossing instability, simulation paused" << std::endl;
+	}
 }
+
 
 
 

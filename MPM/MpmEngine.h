@@ -153,6 +153,7 @@ namespace mpm {
 		bool m_imguiMaterialPointViewer = false;
 
 		bool m_imguiEnergyViewer = false;
+		
 
 		// save/load
 		bool m_imguiPointCloudSaver = false;
@@ -196,6 +197,9 @@ namespace mpm {
 		std::shared_ptr<StandardShader> m_gridShaderVector = nullptr;
 		std::shared_ptr<StandardShader> m_gridShaderMarchingSquares = nullptr;
 		std::shared_ptr<StandardShader> m_gridDensityShader = nullptr;
+		
+
+
 		
 		real m_gridMaxMass = 4.0;
 		real m_gridMediumMass = 2.0;
@@ -277,8 +281,24 @@ namespace mpm {
 
 
 		
+		/************* ENERGY VIEWER *************/
+		double total_kinetic_energy = 0.0;
+		double total_elastic_potential_energy = 0.0;
+		double total_gravity_potential_energy = 0.0;
+
+		double max_total_kinetic_energy = 0.0;
+		double max_total_elastic_potential_energy = 0.0;
+		double max_total_gravity_potential_energy = 0.0;
+
+		double total_energy = 0.0;
+		double max_total_energy = 0.0;
+
+
+
 
 		
+
+
 		
 	
 		// imgui stuff

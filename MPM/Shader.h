@@ -185,6 +185,69 @@ protected:
 
 class StandardShader : public AdvancedShader {
 public:
+	StandardShader(const std::vector<std::string>& vertexPaths, const std::vector<std::string>& fragmentPaths, const std::vector<std::string>& headerPaths)
+	{
+		using namespace std::chrono;
+		std::cout << "Reading headers...\n";
+		high_resolution_clock clock;
+		time_point<high_resolution_clock> t1 = clock.now();
+
+		// First get the header file str into a std::string
+		std::string headerCode = "";
+		std::ifstream headerFile;
+		headerFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+		try
+		{
+			for (size_t i = 0; i < headerPaths.size(); i++) {
+				headerFile.open(headerPaths[i]);
+				std::stringstream headerStream;
+				headerStream << headerFile.rdbuf();
+				headerFile.close();
+				headerCode += headerStream.str() + "\n";
+			}
+		}
+		catch (std::ifstream::failure e) {
+			std::cout << "ERROR::SHADER::HEADER_FILE_NOT_SUCCESFULLY_READ" << std::endl;
+		}
+		time_point<high_resolution_clock> t2 = clock.now();
+		std::cout << "Finished reading headers in " << duration_cast<seconds>(t2 - t1).count() << " seconds." << std::endl;
+
+		// 1. Vertex shader
+		std::vector<GLuint> vertexShaders;
+		CompileShaders(vertexShaders, vertexPaths, headerCode, GL_VERTEX_SHADER);
+
+		// 2. Fragment shaders
+		std::vector<GLuint> fragmentShaders;
+		CompileShaders(fragmentShaders, fragmentPaths, headerCode, GL_FRAGMENT_SHADER);
+
+		std::cout << "Linking program...\n";
+		t1 = clock.now();
+
+		// 3. Create program, link
+		// shader Program
+		m_ID = glCreateProgram();
+		for (GLuint vert : vertexShaders) {
+			glAttachShader(m_ID, vert);
+		}
+		for (GLuint frag : fragmentShaders) {
+			glAttachShader(m_ID, frag);
+		}
+		glLinkProgram(m_ID);
+		checkCompileErrors(m_ID, "PROGRAM");
+
+		t2 = clock.now();
+		std::cout << "Finished linking program in " << duration_cast<seconds>(t2 - t1).count() << " seconds." << std::endl << std::endl;
+
+		// delete the shaders as they're linked into our program now and no longer necessary
+		for (GLuint vert : vertexShaders) {
+			glDeleteShader(vert);
+		}
+		for (GLuint frag : fragmentShaders) {
+			glDeleteShader(frag);
+		}
+
+	}
+
 	StandardShader(const std::vector<std::string> &vertexPaths, const std::vector<std::string> &geometryPaths, const std::vector<std::string> &fragmentPaths, const std::vector<std::string> &headerPaths)
 	{
 		using namespace std::chrono;

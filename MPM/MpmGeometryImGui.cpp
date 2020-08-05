@@ -2,6 +2,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
 #include "imgui/imfilebrowser.h"
+#include <fstream>
+#include <sstream>
 
 void mpm::MpmGeometryEngine::GUI()
 {
@@ -10,6 +12,7 @@ void mpm::MpmGeometryEngine::GUI()
 	if (m_imguiBasicShapesEditor) ImGuiBasicShapesEditor();
 	if (m_imguiPointSelector) ImGuiPointSelector();
 	if (m_imguiImageLoader) ImGuiImageLoader();
+	if (m_imguiMesh) ImGuiMesh();
 }
 
 void mpm::MpmGeometryEngine::Menu()
@@ -29,6 +32,9 @@ void mpm::MpmGeometryEngine::Menu()
 		}
 		if (ImGui::MenuItem("Image Loader", "", m_imguiImageLoader)) {
 			m_imguiImageLoader = !m_imguiImageLoader;
+		}
+		if (ImGui::MenuItem("Mesher", "", m_imguiMesh)) {
+			m_imguiMesh = !m_imguiMesh;
 		}
 		ImGui::EndMenu();
 	}
@@ -314,6 +320,113 @@ void mpm::MpmGeometryEngine::ImGuiImageLoader()
 				ImVec2((float)image_width, (float)image_height)
 			);
 		}
+	}
+	ImGui::End();
+}
+
+void mpm::MpmGeometryEngine::ImGuiMesh()
+{
+	if (ImGui::Begin("Mesher", &m_imguiMesh)) {
+
+		if (ImGui::Button("load mesh file")) {
+			/*std::vector<vec2> vertices;
+			vertices.push_back(vec2(0.5, 0.5));
+			vertices.push_back(vec2(0.5, -0.5));
+			vertices.push_back(vec2(-0.5, -0.5));
+			vertices.push_back(vec2(-0.5, 0.5));
+
+			std::vector<unsigned int> indices = {
+				0, 1, 3,
+				1, 2, 3
+			};
+
+			m_meshes.push_back(std::make_shared<Mesh>(vertices, indices));*/
+
+
+			std::shared_ptr<PointCloud> pointCloud = std::make_shared<PointCloud>();
+			
+			/* from MATLAB example
+			E = 1000;% Young's modulus
+			nu = 0.3;% Poisson ratio
+			rho = 1000;% density
+			kappa = 3 - 4 * nu;% Kolosov constant
+			mu = E / 2 / (1 + nu); % shear modulus*/
+
+
+			pointCloud->color = glm::highp_fvec4(1.0, 0.0, 0.0, 1.0);
+			pointCloud->parameters = m_mpmAlgorithmEngine->m_mpParameters;
+			pointCloud->parameters.youngMod = 1000000;
+			pointCloud->parameters.poisson = 0.3;
+			pointCloud->parameters.density = 1000;
+			pointCloud->parameters.CalculateLameParameters();
+
+			pointCloud->comodel = m_mpmAlgorithmEngine->m_comodel;
+
+			pointCloud->fixed = false;
+
+			std::ifstream mpmfile;
+			mpmfile.open("..\\points.txt", std::ios::in);
+			
+			std::string line;
+			std::string valueStr;
+			std::stringstream ss;
+
+			getline(mpmfile, line);
+			int numPoints = std::stoi(line);
+			std::cout << "numPoints = " << numPoints << std::endl;
+
+			for (int i = 0; i < numPoints; i++) {
+				MaterialPoint mp;
+				ss.clear();
+				mp.rgba = pointCloud->color;
+
+				mp.lam = pointCloud->parameters.lam;
+				mp.mew = pointCloud->parameters.mew;
+
+				getline(mpmfile, line);
+				ss.str(line);
+				getline(ss, valueStr, ' ');
+				mp.x.x = std::stod(valueStr);
+				getline(ss, valueStr, ' ');
+				mp.x.y = std::stod(valueStr);
+				pointCloud->points.push_back(mp);
+
+				//std::cout << mp.x.x << ", " << mp.x.y << std::endl;
+			}
+
+			for (int i = 0; i < numPoints; i++) {
+				MaterialPoint& mp = pointCloud->points[i];
+				ss.clear();
+				getline(mpmfile, line);
+				ss.str(line);
+				getline(ss, valueStr, ' ');
+				mp.v.x = std::stod(valueStr);
+				getline(ss, valueStr, ' ');
+				mp.v.y = std::stod(valueStr);
+			}
+
+			for (int i = 0; i < numPoints; i++) {
+				MaterialPoint& mp = pointCloud->points[i];
+				ss.clear();
+				getline(mpmfile, line);
+				ss.str(line);
+				getline(ss, valueStr, ' ');
+				mp.vol = std::stod(valueStr);
+				mp.vol0 = mp.vol;
+				mp.m = mp.vol * pointCloud->parameters.density;
+			}
+
+			pointCloud->N = numPoints;
+			pointCloud->GenPointCloudSSBO();
+
+			m_mpmEngine->m_pointCloudMap["loadedMesh"] = pointCloud;
+
+			mpmfile.close();
+			
+		}
+
+
+		ImGui::DisplayNamedGlmRealColor("number of meshes", (real)m_meshes.size(), glm::highp_fvec4(1.0));
 	}
 	ImGui::End();
 }
