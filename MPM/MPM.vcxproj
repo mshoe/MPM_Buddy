@@ -145,8 +145,8 @@
     <ClCompile Include="MpmAlgorithmEngine.cpp" />
     <ClCompile Include="MpmAlgorithmEngineInit.cpp" />
     <ClCompile Include="MpmAlgorithmImGui.cpp" />
-    <ClCompile Include="MpmAlgorithmMUSL.cpp" />
-    <ClCompile Include="MpmAlgorithmSemiImplicit_CPP.cpp" />
+    <ClCompile Include="MpmAlgorithm_MUSL.cpp" />
+    <ClCompile Include="MpmAlgorithmSemiImplicit_MLS.cpp" />
     <ClCompile Include="MpmControlImGui.cpp" />
     <ClCompile Include="MpmControlEngineInit.cpp" />
     <ClCompile Include="MpmEigenRender.cpp" />
@@ -156,7 +156,7 @@
     <ClCompile Include="MpmGeometryImGui.cpp" />
     <ClCompile Include="glm_imgui.cpp" />
     <ClCompile Include="glm_MATLAB.cpp" />
-    <ClCompile Include="MpmAlgorithm_CPP.cpp" />
+    <ClCompile Include="MpmAlgorithm_MLS.cpp" />
     <ClCompile Include="MpmAlgorithmCR_GLSL.cpp" />
     <ClCompile Include="MpmGeometry.cpp" />
     <ClCompile Include="MpmControl.cpp" />
@@ -204,6 +204,7 @@
     <ClInclude Include="PointCloud.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Shape.h" />
+    <ClInclude Include="ShapeFunctions.h" />
     <ClInclude Include="Structures.h" />
   </ItemGroup>
   <ItemGroup>

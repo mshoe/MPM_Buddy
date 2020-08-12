@@ -15,6 +15,9 @@ void mpm::MaterialParameters::CalculateYongeAndPoisson()
 
 void mpm::MaterialPoint::SetMaterialParameters(const MaterialParameters& parameters)
 {
+	E = parameters.youngMod;
+	poisson = parameters.poisson;
+
 	lam = parameters.lam;
 	mew = parameters.mew;
 	crit_c = parameters.crit_c;
@@ -33,7 +36,11 @@ void mpm::MaterialPoint::ImGuiDisplay(bool calcDecomp, bool calcdPdF, bool calcV
 	ImGui::DisplayNamedGlmRealColor("vol", vol, max_color);
 	ImGui::DisplayNamedGlmRealColor("vol0", vol, max_color);
 	ImGui::DisplayNamedGlmRealColor("Lz", Lz, max_color);
+	ImGui::DisplayNamedGlmRealColor("energy", energy, max_color);
+	ImGui::DisplayNamedGlmRealColor("selected", selected, max_color);
 	
+	ImGui::DisplayNamedGlmRealColor("E", E, max_color);
+	ImGui::DisplayNamedGlmRealColor("poisson", poisson, max_color);
 	ImGui::DisplayNamedGlmRealColor("lam", lam, max_color);
 	ImGui::DisplayNamedGlmRealColor("mew", mew, max_color);
 	ImGui::DisplayNamedGlmRealColor("crit_c", crit_c, max_color);
@@ -45,8 +52,12 @@ void mpm::MaterialPoint::ImGuiDisplay(bool calcDecomp, bool calcdPdF, bool calcV
 	ImGui::DisplayNamedGlmMatrixMixColor("Fp", Fp, min_color, max_color);
 	ImGui::DisplayNamedGlmMatrixMixColor("P", P, min_color, max_color);
 
+	ImGui::DisplayNamedGlmMatrixMixColor("A", A, min_color, max_color);
+
 	ImGui::DisplayNamedGlmVecColor("stress", stress, min_color);
 	ImGui::DisplayNamedGlmVecColor("strain", strain, min_color);
+
+	ImGui::DisplayNamedGlmVecColor("rgba", rgba, min_color);
 
 	if (calcDecomp) {
 		mat2 R, S;
@@ -81,12 +92,6 @@ void mpm::MaterialPoint::ImGuiDisplay(bool calcDecomp, bool calcdPdF, bool calcV
 		ImGui::DisplayNamedGlmRealColor("J", glm::determinant(Fe), max_color);
 	}
 
-	ImGui::DisplayNamedGlmRealColor("energy", energy, max_color);
-	//ImGui::DisplayNamedBoolColor("padding1", padding1, max_color, min_color);
-	ImGui::DisplayNamedGlmRealColor("selected", selected, max_color);
-	ImGui::DisplayNamedGlmVecColor("rgba", rgba, min_color);
-	//ImGui::DisplayNamedBoolColor("padding2", padding2, max_color, min_color);
-	//ImGui::DisplayNamedBoolColor("padding3", padding3, max_color, min_color);
 }
 
 void mpm::MaterialPoint::WriteToFile(std::ofstream& myFile)

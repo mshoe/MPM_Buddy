@@ -3,11 +3,25 @@
 #include "MpmFunctions.h"
 
 namespace mpm {
-	mat2 NeoHookeanPKTensor(mat2 Fe, double lam, double mew);
 
-	
+	enum class ENERGY_MODEL {
+		LINEAR_ELASTICITY = 0,
+		NEO_HOOKEAN_ELASTICITY = 1,
+		FIXED_COROTATIONAL_ELASTICITY = 2,
+		SIMPLE_SNOW = 3,
+		Count
+	};
 
-	mat2 SimpleSnowPKTensor(mat2& Fe, mat2& Fp, double lam, double mew, double crit_c, double crit_s, double hardening);
+	namespace LinearElasticity {
+		double EnergyDensity(mat2 Fe, double lam, double mew);
+		mat2 PKTensor(mat2 Fe, double lam, double mew);
+
+		mat3 ElasticityMatrix(double E, double nu, bool stress_state);
+	}
+
+	namespace NeoHookean {
+		mat2 PKTensor(mat2 Fe, double lam, double mew);
+	}
 
 	namespace FixedCorotationalElasticity {
 		double EnergyDensity(mat2 Fe, double lam, double mew);
@@ -24,6 +38,12 @@ namespace mpm {
 		mat4 d2Psi_dF2_Mat4_fd(mat2 F, double lam, double mew);
 	}
 	
-	mat3 ElasticityMatrix(double E, double nu, bool stress_state);
+	namespace SimpleSnow {
+		mat2 PKTensor(mat2& Fe, mat2& Fp, double lam, double mew, double crit_c, double crit_s, double hardening);
+	}
+
+	
+
+	
 
 }

@@ -1,92 +1,70 @@
 #include "EnergyFunctions.h"
 #include <iostream>
 
-namespace mpm {
-	mat2 NeoHookeanPKTensor(mat2 Fe, double lam, double mew) {
-		mat2 Fit = glm::transpose(glm::inverse(Fe));
-		double J = glm::determinant(Fe);
-		double logJ = double(glm::log(J));
-		mat2 P = mew * (Fe - Fit) + lam * logJ * Fit;
-		return P;
+double mpm::LinearElasticity::EnergyDensity(mat2 Fe, double lam, double mew)
+{
+	mat2 sst = 0.5 * (Fe + glm::transpose(Fe)) - mat2(1.0); // small strain tensor
+	double energyDensity = mew * InnerProduct(sst, sst) + lam * 0.5 * Trace(sst) * Trace(sst);
+	return energyDensity;
+}
+
+mat2 mpm::LinearElasticity::PKTensor(mat2 Fe, double lam, double mew)
+{
+	return mew * (Fe + glm::transpose(Fe) - 2.0 * mat2(1.0)) + lam * Trace(Fe - mat2(1.0)) * mat2(1.0);
+}
+
+mat3 mpm::LinearElasticity::ElasticityMatrix(double E, double nu, bool stress_state)
+{
+	/*
+	function C = elasticityMatrix(E0, nu0, stressState)
+		%
+		%Elasticity matrix for isotropic elastic materials.
+		%
+		% VP Nguyen
+		% Cardiff University, UK
+
+		if (strcmp(stressState, 'PLANE_STRESS')) % Plane Stress case
+			C = E0 / (1 - nu0 ^ 2) * [1      nu0         0;
+			nu0     1          0;
+			0       0  (1 - nu0) / 2];
+		elseif(strcmp(stressState, 'PLANE_STRAIN')) % Plane Strain case
+			C = E0 / (1 + nu0) / (1 - 2 * nu0) * [1 - nu0   nu0        0;
+													nu0    1 - nu0       0;
+													0      0  1 / 2 - nu0];
+		else % 3D
+			C = zeros(6, 6);
+			C(1:3, 1 : 3) = E0 / (1 + nu0) / (1 - 2 * nu0) * [1 - nu0 nu0 nu0;
+			nu0 1 - nu0 nu0;
+			nu0 nu0 1 - nu0];
+			C(4:6, 4 : 6) = E0 / 2 / (1 + nu0) * eye(3);
+		end
+	*/
+
+	mat3 C = mat3(0.0);
+
+	if (stress_state == true) { // PLAIN STRAIN
+
+
+		C[0][0] = 1.0 - nu;
+		C[1][0] = nu;
+		C[0][1] = nu;
+		C[1][1] = 1.0 - nu;
+		C[2][2] = 0.5 - nu;
+
+		C = C * E / (1.0 + nu) / (1.0 - 2.0 * nu);
 	}
 
-	mat2 SimpleSnowPKTensor(mat2& Fe, mat2& Fp, double mew, double lam, double crit_c, double crit_s, double hardening) {
-		mat2 F_total = Fe * Fp;
 
-		// calculate the polar decomposition Fe = RU.
-		// then use polar decomp to calculate SVD of Fe
-
-		mat2 R, S;
-		PolarDecomp(Fe, R, S);
-
-		mat2 U, V;
-		double sig1, sig2;
-		SVD(R, S, U, sig1, sig2, V);
-
-		sig1 = glm::clamp(sig1, 1.0 - crit_c, 1.0 + crit_s);
-		sig2 = glm::clamp(sig2, 1.0 - crit_c, 1.0 + crit_s);
-
-		mat2 sigMat = mat2(sig1, 0.0, 0.0, sig2);
-
-		// finally calculate new Fe and Fp
-		Fe = U * sigMat * transpose(V);
-		Fp = V * inverse(sigMat) * transpose(U) * F_total;
-
-		mat2 Feit = glm::transpose(glm::inverse(Fe));
-		double Je = glm::determinant(Fe);
-		double Jp = glm::determinant(Fp);
-
-		double pcof = double(glm::exp(hardening * (1.0 - Jp)));
-
-		mat2 P = 2.0 * mew * (Fe - R) + lam * (Je - 1.0) * Je * Feit;
-		P *= pcof;
-		return P;
-	}
-
-	mat3 ElasticityMatrix(double E, double nu, bool stress_state)
-	{
-		/*
-		function C = elasticityMatrix(E0, nu0, stressState)
-			%
-			%Elasticity matrix for isotropic elastic materials.
-			%
-			% VP Nguyen
-			% Cardiff University, UK
-
-			if (strcmp(stressState, 'PLANE_STRESS')) % Plane Stress case
-				C = E0 / (1 - nu0 ^ 2) * [1      nu0         0;
-				nu0     1          0;
-				0       0  (1 - nu0) / 2];
-			elseif(strcmp(stressState, 'PLANE_STRAIN')) % Plane Strain case
-				C = E0 / (1 + nu0) / (1 - 2 * nu0) * [1 - nu0   nu0        0;
-														nu0    1 - nu0       0;
-														0      0  1 / 2 - nu0];
-			else % 3D
-				C = zeros(6, 6);
-				C(1:3, 1 : 3) = E0 / (1 + nu0) / (1 - 2 * nu0) * [1 - nu0 nu0 nu0;
-				nu0 1 - nu0 nu0;
-				nu0 nu0 1 - nu0];
-				C(4:6, 4 : 6) = E0 / 2 / (1 + nu0) * eye(3);
-			end
-		*/
-
-		mat3 C = mat3(0.0);
-
-		if (stress_state == true) { // PLAIN STRAIN
-
-			
-			C[0][0] = 1.0 - nu;
-			C[1][0] = nu;
-			C[0][1] = nu;
-			C[1][1] = 1.0 - nu;
-			C[2][2] = 0.5 - nu;
-
-			C = C * E / (1.0 + nu) / (1.0 - 2.0 * nu);
-		}
+	return C;
+}
 
 
-		return C;
-	}
+mat2 mpm::NeoHookean::PKTensor(mat2 Fe, double lam, double mew) {
+	mat2 Fit = glm::transpose(glm::inverse(Fe));
+	double J = glm::determinant(Fe);
+	double logJ = double(glm::log(J));
+	mat2 P = mew * (Fe - Fit) + lam * logJ * Fit;
+	return P;
 }
 
 double mpm::FixedCorotationalElasticity::EnergyDensity(mat2 Fe, double lam, double mew)
@@ -306,3 +284,37 @@ mat4 mpm::FixedCorotationalElasticity::d2Psi_dF2_Mat4_fd(mat2 F, double lam, dou
 	}
 	return fddPdF;
 }
+
+mat2 mpm::SimpleSnow::PKTensor(mat2& Fe, mat2& Fp, double mew, double lam, double crit_c, double crit_s, double hardening) {
+	mat2 F_total = Fe * Fp;
+
+	// calculate the polar decomposition Fe = RU.
+	// then use polar decomp to calculate SVD of Fe
+
+	mat2 R, S;
+	PolarDecomp(Fe, R, S);
+
+	mat2 U, V;
+	double sig1, sig2;
+	SVD(R, S, U, sig1, sig2, V);
+
+	sig1 = glm::clamp(sig1, 1.0 - crit_c, 1.0 + crit_s);
+	sig2 = glm::clamp(sig2, 1.0 - crit_c, 1.0 + crit_s);
+
+	mat2 sigMat = mat2(sig1, 0.0, 0.0, sig2);
+
+	// finally calculate new Fe and Fp
+	Fe = U * sigMat * transpose(V);
+	Fp = V * inverse(sigMat) * transpose(U) * F_total;
+
+	mat2 Feit = glm::transpose(glm::inverse(Fe));
+	double Je = glm::determinant(Fe);
+	double Jp = glm::determinant(Fp);
+
+	double pcof = double(glm::exp(hardening * (1.0 - Jp)));
+
+	mat2 P = 2.0 * mew * (Fe - R) + lam * (Je - 1.0) * Je * Feit;
+	P *= pcof;
+	return P;
+}
+

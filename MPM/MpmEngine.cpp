@@ -150,7 +150,7 @@ void mpm::MpmEngine::MapCPUGridToGPU()
 {
 	void* ptr = glMapNamedBuffer(gridSSBO, GL_WRITE_ONLY);
 	GridNode* data = static_cast<GridNode*>(ptr);
-	memcpy(data, m_grid.nodes.data(), m_grid.nodes.size() * sizeof(GridNode));
+	memcpy(data, m_grid->nodes.data(), m_grid->nodes.size() * sizeof(GridNode));
 	glUnmapNamedBuffer(gridSSBO);
 }
 
@@ -176,6 +176,6 @@ void mpm::MpmEngine::MapGPUGridToCPU()
 {
 	void* ptr = glMapNamedBuffer(gridSSBO, GL_READ_ONLY);
 	GridNode* data = static_cast<GridNode*>(ptr);
-	memcpy(m_grid.nodes.data(), data, m_grid.nodes.size() * sizeof(GridNode));
+	memcpy(m_grid->nodes.data(), data, m_grid->nodes.size() * sizeof(GridNode));
 	glUnmapNamedBuffer(gridSSBO);
 }

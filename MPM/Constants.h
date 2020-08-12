@@ -17,6 +17,7 @@ typedef glm::highp_dvec1 vec1;
 typedef glm::highp_dvec2 vec2;
 typedef glm::highp_dvec3 vec3;
 typedef glm::highp_dvec4 vec4;
+typedef glm::ivec2 ivec2;
 typedef GLdouble GLreal;
 namespace ImGui {
 	bool InputReal(const char* label, real* v, real step = 0.0, real step_fast = 0.0, const char* format = "%.6f", ImGuiInputTextFlags flags = 0);

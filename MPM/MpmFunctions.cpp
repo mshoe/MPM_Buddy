@@ -4,7 +4,9 @@ bool mpm::InBounds(int node_i, int node_j, int x_bound, int y_bound) {
 	return (node_i >= 0 && node_i < x_bound && node_j >= 0 && node_j < y_bound);
 }
 
-real mpm::LinearShape(real x)
+
+
+double mpm::LinearShape(double x)
 {
 	x = abs(x);
 	if (x > 1.0) {
@@ -15,7 +17,7 @@ real mpm::LinearShape(real x)
 	}
 }
 
-real mpm::LinearShapeSlope(real x)
+double mpm::LinearShapeSlope(double x)
 {
 	if (-1.0 <= x && x < 0.0) {
 		return 1.0;
@@ -28,8 +30,36 @@ real mpm::LinearShapeSlope(real x)
 	}
 }
 
-real mpm::CubicBSpline(real x) {
-	using glm::step;
+double mpm::QuadraticBSpline(double x)
+{
+	x = abs(x);
+	if (0.0 <= x && x < 0.5) {
+		return 0.75 - x * x;
+	}
+	else if (0.5 <= x && x < 1.5) {
+		return 0.5 * (1.5 - x) * (1.5 - x);
+	}
+	else {
+		return 0.0;
+	}
+}
+
+double mpm::QuadraticBSplineSlope(double x)
+{
+	double absx = abs(x);
+
+	if (0.0 <= absx && absx < 0.5) {
+		return -2.0 * x;
+	}
+	else if (0.5 <= absx && absx < 1.5) {
+		return -2.0 * x * (1.5 - absx) / absx;
+	}
+	else {
+		return 0.0;
+	}
+}
+
+double mpm::CubicBSpline(double x) {
 	x = abs(x);
 	if (0.0 <= x && x < 1.0) {
 		return 0.5 * x * x * x - x * x + 2.0 / 3.0;
@@ -42,13 +72,18 @@ real mpm::CubicBSpline(real x) {
 	}
 }
 
-real mpm::CubicBSplineSlope(real x) {
-	using glm::step;
-	// step(x) is 0 <= x means 1.0
+double mpm::CubicBSplineSlope(double x) {
+	double absx = abs(x);
 
-	real absx = abs(x);
-	return (absx < 1.0) ? step(0.0, absx) * (1.5 * x * absx - 2 * x) :
-		step(absx, 2.0) * (-x * absx / 2 + 2 * x - 2 * x / absx);
+	if (0.0 <= absx && absx < 1.0) {
+		return 1.5 * x * absx - 2.0 * x;
+	}
+	else if (1.0 <= absx && absx < 2.0) {
+		return -x * absx / 2.0 + 2.0 * x - 2.0 * x / absx;
+	}
+	else {
+		return 0.0;
+	}
 }
 
 void mpm::PolarDecomp(const mat2& F, mat2& R, mat2& S) {
@@ -156,4 +191,9 @@ real mpm::MatrixNormSqrd(mat2 X)
 			X[1][0] * X[1][0] +
 			X[0][1] * X[0][1] +
 			X[1][1] * X[1][1];
+}
+
+double mpm::Trace(mat2 X)
+{
+	return X[0][0] + X[1][1];
 }

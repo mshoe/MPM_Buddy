@@ -12,23 +12,12 @@ uniform double drag = 0.005;
 uniform double semi_implicit_eps = 0.00001;
 
 struct materialPoint {
-	dvec2 x; // position
-	dvec2 v; // velocity
-	double m; // mass
-	double vol; // volume
-	double vol0; // initial volume
-	double Lz; // angular momentum (for RPIC)
+	
+
 	dmat2 B; // for APIC
 	dmat2 Fe; // elastic deformation gradient
 	dmat2 Fp; // plastic deformation gradient
 	dmat2 P; // piola-kirchoff stress tensor
-
-	double lam;
-	double mew;
-	double crit_c;
-	double crit_s;
-	double hardening;
-	double padding2;
 
 	// extra not neccessary to store, but useful for debugging
 	dmat2 FePolar_R;
@@ -37,15 +26,31 @@ struct materialPoint {
 	dmat2 FeSVD_S;
 	dmat2 FeSVD_V;
 	dmat2 A;
-
-	double energy;
-	double selected;
-
+	
 	dvec4 rgba;
-
 	// FOR MUSL, ONLY USING FIRST 3 COMPONENTS
 	dvec4 stress;
 	dvec4 strain;
+
+	dvec2 x; // position
+	dvec2 v; // velocity
+
+	double m; // mass
+	double vol; // volume
+	double vol0; // initial volume
+	double Lz; // angular momentum (for RPIC)
+
+	double E;
+	double poisson;
+	double lam;
+	double mew;
+	double crit_c;
+	double crit_s;
+	double hardening;
+	double padding2;
+
+	double energy;
+	double selected;
 };
 
 struct gridNode {
@@ -71,7 +76,7 @@ struct gridNode {
 	bool selected;
 };
 
-layout (std430, binding = 1) buffer pointCloud {
+layout (std140, binding = 1) buffer pointCloud {
 	materialPoint points[];
 };
 

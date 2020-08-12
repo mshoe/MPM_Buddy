@@ -69,7 +69,7 @@ namespace mpm {
 		
 
 		// MPM DATA STRUCTURES
-		Grid m_grid;
+		std::shared_ptr<Grid> m_grid;
 		std::map<std::string, std::shared_ptr<PointCloud>> m_pointCloudMap;
 		
 		// MPM data structure interaction
@@ -93,7 +93,7 @@ namespace mpm {
 		int m_pwLineCount = 0;
 		int m_polygonCount = 0;
 
-		float m_backgroundColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		float m_backgroundColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 		float m_densityColor[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
 		float m_mediumDensityColor[4] = { 0.0f, 1.0f, 0.0f, 1.0f };
 		float m_minDensityColor[4] = { 0.0f, 0.0f, 1.0f, 1.0f };

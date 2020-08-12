@@ -50,9 +50,9 @@ void mpm::MpmAlgorithmEngine::ImGuiTimeIntegrator()
 		ImGui::InputInt("Max CR Iterations", &m_max_conj_res_iter);
 		ImGui::InputReal("L2 Norm Threshold", &m_L2_norm_threshold);
 
-		static size_t transferScheme = size_t(TRANSFER_SCHEME::APIC);
+		/*static size_t transferScheme = size_t(TRANSFER_SCHEME::APIC);
 		m_mpmEngine->ImGuiDropDown("Transfer Scheme", transferScheme, m_transferSchemeStrVec);
-		m_transferScheme = TRANSFER_SCHEME(transferScheme);
+		m_transferScheme = TRANSFER_SCHEME(transferScheme);*/
 
 
 
@@ -159,6 +159,11 @@ void mpm::MpmAlgorithmEngine::ImGuiMaterialParametersEditor()
 			ChangeEnergyModel(ENERGY_MODEL(energy_model));
 		}
 		switch (m_comodel) {
+		case ENERGY_MODEL::LINEAR_ELASTICITY:
+			ImGui::InputReal("Young's Modulus", &m_mpParameters.youngMod, 1.0, 10.0, "%.1f");
+			ImGui::InputReal("Poisson's Ratio", &m_mpParameters.poisson, 0.005, 0.05, "%.3f");
+			ImGui::InputReal("Density", &m_mpParameters.density, 0.01, 0.1, "%.2f");
+			break;
 		case ENERGY_MODEL::NEO_HOOKEAN_ELASTICITY:
 			ImGui::InputReal("Young's Modulus", &m_mpParameters.youngMod, 1.0, 10.0, "%.1f");
 			ImGui::InputReal("Poisson's Ratio", &m_mpParameters.poisson, 0.005, 0.05, "%.3f");
@@ -195,6 +200,19 @@ void mpm::MpmAlgorithmEngine::ImGuiCPUMode()
 		else {
 			m_algo_code = MPM_ALGORITHM_CODE::GLSL;
 		}
+
+		//const static std::vector<MPM_ALGO> mpmAlgoList = std::vector<MPM_ALGO
+		static size_t transferScheme = size_t(TRANSFER_SCHEME::APIC);
+		m_mpmEngine->ImGuiDropDown("Transfer Scheme", transferScheme, m_transferSchemeStrVec);
+		m_transferScheme = TRANSFER_SCHEME(transferScheme);
+
+		static size_t mpmAlgo = size_t(m_mpm_algo);
+		m_mpmEngine->ImGuiDropDown("MPM Algorithm", mpmAlgo, m_mpmAlgoStrVec);
+		m_mpm_algo = MPM_ALGO(mpmAlgo);
+
+		static size_t basisFn = size_t(m_basisFunction);
+		m_mpmEngine->ImGuiDropDown("MPM Basis Function", basisFn, m_basisFunctionStrVec);
+		m_basisFunction = Basis::BasisType(basisFn);
 
 		ImGui::InputInt("CPU Mode Chunk Size X", &m_cppChunkX, 1, 4);
 		ImGui::InputInt("CPU Mode Chunk Size Y", &m_cppChunkY, 1, 4);
@@ -238,13 +256,13 @@ void mpm::MpmAlgorithmEngine::ImGuiCPUMode()
 		m_beta = glm::max(glm::min(1.0, m_beta), 0.0);
 
 		if (ImGui::Button("Advance") && m_paused) {
-			MpmTimeStep_CPP(m_dt);
+			MpmTimeStep_MLS(m_dt);
 			m_mpmEngine->MapCPUPointCloudsToGPU();
 			m_mpmEngine->MapCPUGridToGPU();
 		}
 
 		if (ImGui::Button("Reset")) {
-			MpmReset_CPP();
+			MpmReset_MLS();
 		}
 
 

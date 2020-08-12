@@ -1,0 +1,70 @@
+const int GRID_SIZE_X = 32*4;
+const int GRID_SIZE_Y = 32*4;
+int CHUNK_WIDTH = 32;
+uniform int CHUNKS_X = 4;
+uniform int CHUNKS_Y = 4;
+
+struct ControlPoint {
+    dmat2 F;
+    dmat2 dFc;
+    dmat2 dLdF;
+
+    dmat2 P;
+    dmat2 dLdP;
+
+    dmat2 C;
+    dmat2 dLdC;
+
+    dvec2 x;
+    dvec2 dLdx;
+
+    dvec2 v;
+    dvec2 dLdv;
+
+    double m;
+    double dmc;
+    double dLdm;
+
+    double vol;
+    double dvolc;
+    double dLdvol;
+    
+    double lam;
+    double dlamc;
+    double dLdlam;
+
+    double mew;
+    double dmewc;
+    double dLdmew;
+
+    dvec4 rgba;
+    //vec3 rgb;
+    //float padding;
+
+};
+
+struct ControlGridNode {
+    dvec2 x; // this will never change, but storing cuz I can afford it
+
+    dvec2 v;
+    dvec2 dLdv;
+
+    dvec2 p;
+    dvec2 dLdp;
+
+    double m;
+    double dLdm;
+
+    dvec4 rgba;
+    //vec3 rgb;
+    //float padding;
+};
+
+layout (std430, binding = 7) buffer controlPointCloud {
+	ControlPoint points[];
+};
+
+
+layout (std430, binding = 8) buffer controlGrid {
+	ControlGridNode nodes[GRID_SIZE_X][GRID_SIZE_Y];
+};

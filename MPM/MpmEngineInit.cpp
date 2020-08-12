@@ -38,11 +38,19 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 
 	// RENDERING SHADERS
 
-	m_pPointCloudShader = std::make_shared<StandardShader>(
+	/*m_pPointCloudShader = std::make_shared<StandardShader>(
 		std::vector<std::string>{graphicsMPPath + "pointCloud.vs"},
 		std::vector<std::string>{graphicsMPPath + "pointCloudPassThrough.gs"},
 		std::vector<std::string>{graphicsMPPath + "pointCloud.fs"},
+		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});*/
+
+	m_pPointCloudShader = std::make_shared<StandardShader>(
+		std::vector<std::string>{graphicsMPPath + "MaterialPoints.vs"},
+		std::vector<std::string>{graphicsMPPath + "MaterialPoints.gs"},
+		std::vector<std::string>{graphicsMPPath + "MaterialPoints.fs"},
 		std::vector<std::string>{mpmHeadersPath + "mpm_header.comp"});
+
+
 	m_mouseShader = std::make_shared<StandardShader>(
 		std::vector<std::string>{graphicsPath + "mouseShader.vs"},
 		std::vector<std::string>{},
@@ -93,14 +101,14 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 	InitMpmRenderWindow();
 
 	// Initialize the grid SSBO on the GPU
-	m_grid = Grid(GRID_SIZE_X, GRID_SIZE_Y);
+	m_grid = std::make_shared<Grid>(GRID_SIZE_X, GRID_SIZE_Y);
 
 	glCreateBuffers(1, &gridSSBO);
 
 	glNamedBufferStorage(
 		gridSSBO,
 		sizeof(GridNode) * GRID_SIZE_X * GRID_SIZE_Y,
-		&(m_grid.nodes[0].m),
+		&(m_grid->nodes[0].m),
 		GL_MAP_READ_BIT | GL_MAP_WRITE_BIT // adding write bit for debug purposes
 	);
 

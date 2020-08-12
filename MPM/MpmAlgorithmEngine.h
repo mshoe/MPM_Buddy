@@ -8,6 +8,8 @@
 #include "PointCloud.h"
 #include "Grid.h"
 
+#include "ShapeFunctions.h"
+
 #include "OpenGLScreen.h"
 
 #include "MpmEngine.h"
@@ -24,6 +26,9 @@
 #include <tuple>
 
 namespace mpm {
+
+	
+
 
 	// for sparse matrix vis with opengl
 	struct EigenTriplet {
@@ -82,6 +87,44 @@ namespace mpm {
 		};
 
 		volatile MPM_ALGORITHM_CODE m_algo_code = MPM_ALGORITHM_CODE::CPP;
+
+
+		// MPM ALGORITHMS
+		enum class MPM_ALGO {
+			MLS = 0,
+			MUSL = 1
+		};
+		std::vector<std::string> m_mpmAlgoStrVec = {
+			"MLS",
+			"MUSL"
+		};
+		volatile MPM_ALGO m_mpm_algo = MPM_ALGO::MUSL;
+
+		// BASIS FUNCTIONS
+		// enum declared in ShapeFunctions.h
+		std::vector<std::string> m_basisFunctionStrVec = {
+			"Linear",
+			"Quadratic B-Spline",
+			"Cubic B-Spline"
+		};
+		Basis::BasisType m_basisFunction = Basis::BasisType::CUBIC_B_SPLINE;
+
+
+		// TRANSFER SCHEMES (PIC/RPIC/APIC)
+		enum class TRANSFER_SCHEME {
+			PIC = 0,
+			RPIC = 1,
+			APIC = 2,
+			MLS = 3
+		};
+		std::vector<std::string> m_transferSchemeStrVec = {
+			"PIC",
+			"RPIC (not working)",
+			"APIC",
+			"MLS"
+		};
+		TRANSFER_SCHEME m_transferScheme = TRANSFER_SCHEME::APIC;
+
 	private:
 
 		// Other Engines
@@ -110,31 +153,54 @@ namespace mpm {
 
 		/******************** MLS MPM CPU C++ IMPLEMENTATION ********************/
 	public:
-		void RunMPMSimulationCPP(real dt, size_t num_steps, bool debugOutput, bool renderAfter);
-		void MpmReset_CPP();
-		void MpmTimeStep_CPP(real dt);
+		void RunMPMSimulationMLS(real dt, size_t num_steps, bool debugOutput, bool renderAfter);
+		void MpmReset_MLS();
+		void MpmTimeStep_MLS(real dt);
 	private:
-		void MpmTimeStepP1_CPP(real dt);
-		void MpmTimeStepP2G_CPP(real dt);
-		void MpmTimeStepExplicitGridUpdate_CPP(real dt);
-		void MpmTimeStepSemiImplicitGridUpdate_CPP(real dt, real beta);
-		void MpmTimeStepG2P_CPP(real dt);
-		void MpmTimeStepP2_CPP(real dt);
+
+		void MassMomentumToNode_MLS(const mpm::MaterialPoint& mp, mpm::GridNode& node, real dt);
+		void UpdateNodeVelocity_MLS(mpm::GridNode& node, real dt);
+		void VelocityToParticle_MLS(const mpm::GridNode& node, mpm::MaterialPoint& mp, real dt);
+
+
+		void MpmTimeStepP1_MLS(real dt);
+		void MpmTimeStepP2G_MLS(real dt);
+		void MpmTimeStepExplicitGridUpdate_MLS(real dt);
+		void MpmTimeStepSemiImplicitGridUpdate_MLS(real dt, real beta);
+		void MpmTimeStepG2P_MLS(real dt);
+		void MpmTimeStepP2_MLS(real dt);
+
+		
+
+		bool m_USL = true;
 
 		/******************** MUSL MPM CPU C++ IMPLEMENTATION ********************/
-
 	public:
+
+		void MpmTimeStep(real dt);
+
 		void MpmTimeStep_MUSL(real dt);
 	private:
+		void MassToNode_MUSL(const mpm::MaterialPoint& mp, mpm::GridNode& node);
+		void UpdateNodeMomentum_MUSL(mpm::GridNode& node, vec2 f_ext, real dt);
+		void NodeToParticleVelocity_MUSL(const mpm::GridNode& node, mpm::MaterialPoint& mp, real dt);
+		void VelocityToNode_MUSL(const mpm::MaterialPoint& mp, mpm::GridNode& node);
+		void CalculateNodeVelocity_MUSL(mpm::GridNode& node, double dt);
+		void NodeToParticlePosition_MUSL(const mpm::GridNode& node, mpm::MaterialPoint& mp, mat2& Lp, double dt);
+		void ParticleUpdateStressStrain_MUSL(mpm::MaterialPoint& mp, const mat2& Lp, real dt);
+
 		void MpmTimeStepP2G_MUSL(real dt);
 		void MpmTimeStepG_Update_MUSL(real dt);
 		void MpmTimeStepG2P_Velocity_MUSL(real dt);
 		void MpmTimeStepP2G_Velocity_MUSL(real dt);
 		void MpmTimeStepG_Velocity_MUSL(real dt);
 		void MpmTimeStepG2P_Position_MUSL(real dt);
+		
+		Basis::NodeGetter nodeGetter;
+		
+		
 
-		bool m_USL = true;
-
+		
 
 
 
@@ -217,20 +283,7 @@ namespace mpm {
 
 		
 
-		// TRANSFER SCHEMES (PIC/RPIC/APIC)
-		enum class TRANSFER_SCHEME {
-			PIC = 0,
-			RPIC = 1,
-			APIC = 2,
-			MLS = 3
-		};
-		std::vector<std::string> m_transferSchemeStrVec = {
-			"PIC",
-			"RPIC (not working)",
-			"APIC",
-			"MLS"
-		};
-		TRANSFER_SCHEME m_transferScheme = TRANSFER_SCHEME::APIC;
+		
 
 	public:
 
@@ -239,6 +292,7 @@ namespace mpm {
 		MaterialParameters m_mpParameters;
 		std::vector<MaterialParameters> m_energyModels = std::vector<MaterialParameters>(size_t(ENERGY_MODEL::Count), MaterialParameters());
 		std::vector<std::string> m_energyModelsStrVec = {
+			"Linear Elasticity",
 			"Neohookean Elasticity",
 			"Fixed Corotational Elasticity",
 			"Snow (Stomakhin et. al 2013)"

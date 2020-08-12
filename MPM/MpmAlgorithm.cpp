@@ -1,5 +1,43 @@
 #include "MpmAlgorithmEngine.h"
 
+
+void mpm::MpmAlgorithmEngine::MpmTimeStep(real dt)
+{
+	switch (m_mpm_algo) {
+	case MPM_ALGO::MLS:
+		if (!m_rt) {
+			MpmTimeStep_MLS(m_dt);
+		}
+		else {
+			real curr_dt = 0.0;
+			real rt_dt = 1.0 / 60.0;
+			while (curr_dt < rt_dt) {
+				MpmTimeStep_MLS(m_dt);
+				curr_dt += m_dt;
+			}
+		}
+		break;
+	case MPM_ALGO::MUSL:
+		if (!m_rt) {
+			MpmTimeStep_MUSL(m_dt);
+		}
+		else {
+			real curr_dt = 0.0;
+			real rt_dt = 1.0 / 60.0;
+			while (curr_dt < rt_dt) {
+				MpmTimeStep_MUSL(m_dt);
+				curr_dt += m_dt;
+			}
+		}
+		break;
+	default:
+		break;
+	}
+
+	m_mpmEngine->MapCPUPointCloudsToGPU();
+	m_mpmEngine->MapCPUGridToGPU();
+}
+
 void mpm::MpmAlgorithmEngine::Update()
 {
 	if (!m_paused) {
@@ -19,23 +57,7 @@ void mpm::MpmAlgorithmEngine::Update()
 			}
 			break;
 		case MPM_ALGORITHM_CODE::CPP:
-			if (!m_rt) {
-				//MpmTimeStep_CPP(m_dt);
-				MpmTimeStep_MUSL(m_dt);
-				m_mpmEngine->MapCPUPointCloudsToGPU();
-				m_mpmEngine->MapCPUGridToGPU();
-			}
-			else {
-				real curr_dt = 0.0;
-				real rt_dt = 1.0 / 60.0;
-				while (curr_dt < rt_dt) {
-					//MpmTimeStep_CPP(m_dt);
-					MpmTimeStep_MUSL(m_dt);
-					curr_dt += m_dt;
-				}
-				m_mpmEngine->MapCPUPointCloudsToGPU();
-				m_mpmEngine->MapCPUGridToGPU();
-			}
+			MpmTimeStep(m_dt);
 			break;
 		default:
 			break;

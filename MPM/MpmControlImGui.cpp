@@ -40,6 +40,10 @@ void mpm::MpmControlEngine::ImGuiExternalForceController()
 		ImGui::InputReal("Global Force x", &m_globalForce.x, 0.1, 1.0, "%.15f");
 		ImGui::InputReal("Global Force y", &m_globalForce.y, 0.1, 1.0, "%.15f");
 
+		if (ImGui::Button("Gravity")) {
+			m_globalForce.y = -9.81;
+		}
+
 		if (ImGui::Button("Clear external forces")) {
 			m_globalForce.x = 0.0;
 			m_globalForce.y = 0.0;

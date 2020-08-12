@@ -355,9 +355,9 @@ void mpm::MpmGeometryEngine::ImGuiMesh()
 
 			pointCloud->color = glm::highp_fvec4(1.0, 0.0, 0.0, 1.0);
 			pointCloud->parameters = m_mpmAlgorithmEngine->m_mpParameters;
-			pointCloud->parameters.youngMod = 1000000;
+			/*pointCloud->parameters.youngMod = 1000000;
 			pointCloud->parameters.poisson = 0.3;
-			pointCloud->parameters.density = 1000;
+			pointCloud->parameters.density = 1000;*/
 			pointCloud->parameters.CalculateLameParameters();
 
 			pointCloud->comodel = m_mpmAlgorithmEngine->m_comodel;
@@ -380,6 +380,8 @@ void mpm::MpmGeometryEngine::ImGuiMesh()
 				ss.clear();
 				mp.rgba = pointCloud->color;
 
+				mp.E = pointCloud->parameters.youngMod;
+				mp.poisson = pointCloud->parameters.poisson;
 				mp.lam = pointCloud->parameters.lam;
 				mp.mew = pointCloud->parameters.mew;
 

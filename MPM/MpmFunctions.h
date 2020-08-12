@@ -7,12 +7,14 @@ namespace mpm {
 	bool InBounds(int node_i, int node_j, int x_bound, int y_bound);
 
 
-	real LinearShape(real x);
-	real LinearShapeSlope(real x);
+	double LinearShape(double x);
+	double LinearShapeSlope(double x);
 
+	double QuadraticBSpline(double x);
+	double QuadraticBSplineSlope(double x);
 
-	real CubicBSpline(real x);
-	real CubicBSplineSlope(real x);
+	double CubicBSpline(double x);
+	double CubicBSplineSlope(double x);
 
 	void PolarDecomp(const mat2& F, mat2& R, mat2& S);
 
@@ -29,4 +31,6 @@ namespace mpm {
 	real MatrixNorm(mat2 X);
 
 	real MatrixNormSqrd(mat2 X);
+
+	double Trace(mat2 X);
 }
