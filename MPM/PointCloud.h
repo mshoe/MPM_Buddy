@@ -40,28 +40,16 @@ namespace mpm {
 		MaterialPoint() {}
 		MaterialPoint(vec2 _x, vec2 _v, GLreal _m) : x(_x), v(_v), m(_m) {}
 
+		// to keep track of data alignment:
+		// # of mat2: 4
+		// # of vec4: 3
+		// # of vec2: 2
+		// # of double: 16
 		
 		
-		mat2 B = mat2(0.0); // for APIC
-		mat2 Fe = mat2(1.0);
-		mat2 Fp = mat2(1.0);
-		mat2 P = mat2(0.0);
+
 
 		
-
-		// extra not neccessary to store, but useful for debugging:
-		mat2 FePolar_R = mat2(1.0);
-		mat2 FePolar_S = mat2(1.0);
-		mat2 FeSVD_U = mat2(1.0);
-		mat2 FeSVD_S = mat2(1.0);
-		mat2 FeSVD_V = mat2(1.0);
-		mat2 A = mat2(0.0);
-
-		vec4 rgba = vec4(1.0, 1.0, 0.0, 1.0);
-
-		// FOR MUSL
-		vec4 stress = vec4(0.0);
-		vec4 strain = vec4(0.0);
 
 		vec2 x = vec2(0.0);
 		vec2 v = vec2(0.0);
@@ -75,6 +63,7 @@ namespace mpm {
 		double poisson = 0.0;
 		double lam = 0.0;
 		double mew = 0.0;
+
 		double crit_c = 0.0;
 		double crit_s = 0.0;
 		double hardening = 0.0;
@@ -82,6 +71,21 @@ namespace mpm {
 
 		double energy = 0.0;
 		double selected = 0.0;
+		double padding3 = 22;
+		double padding4 = 0.89;
+
+		mat2 B = mat2(0.0); // for APIC
+		mat2 Fe = mat2(1.0);
+		mat2 Fp = mat2(1.0);
+		mat2 P = mat2(0.0);
+
+		vec4 rgba = vec4(0.5, 1.0, 0.0, 1.0);
+
+		// FOR MUSL
+		vec4 stress = vec4(0.0);
+		vec4 strain = vec4(0.0);
+
+		
 
 		void SetMaterialParameters(const MaterialParameters& parameters);
 

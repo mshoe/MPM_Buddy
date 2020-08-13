@@ -26,8 +26,8 @@ namespace ImGui {
 #define real float;
 #endif
 
-const int SRC_WIDTH = 1800;
-const int SRC_HEIGHT = 900;
+const int SRC_WIDTH = 2400;
+const int SRC_HEIGHT = 1200;
 const real S_PER_UPDATE = 0.01666666666666667;
 
 const int CHUNK_WIDTH = 32; // chunks are square

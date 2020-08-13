@@ -149,6 +149,7 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepP1_MLS(real dt)
 				break;
 			case ENERGY_MODEL::FIXED_COROTATIONAL_ELASTICITY:
 				point.P = FixedCorotationalElasticity::PKTensor(point.Fe, point.lam, point.mew);
+				point.energy = FixedCorotationalElasticity::EnergyDensity(point.Fe, point.lam, point.mew);
 				break;
 			case ENERGY_MODEL::SIMPLE_SNOW:
 				point.P = SimpleSnow::PKTensor(point.Fe, point.Fp, point.lam, point.mew, point.crit_c, point.crit_s, point.hardening);

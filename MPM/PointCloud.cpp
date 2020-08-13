@@ -30,34 +30,41 @@ void mpm::MaterialPoint::ImGuiDisplay(bool calcDecomp, bool calcdPdF, bool calcV
 	glm::highp_fvec4 min_color = glm::highp_fvec4(1.0, 0.0, 0.0, 1.0);
 	glm::highp_fvec4 max_color = glm::highp_fvec4(0.0, 1.0, 0.0, 1.0);
 
-	ImGui::DisplayNamedGlmVecMixColor("x", x, min_color, max_color);
-	ImGui::DisplayNamedGlmVecMixColor("v", v, min_color, max_color);
-	ImGui::DisplayNamedGlmRealColor("m", m, max_color);
-	ImGui::DisplayNamedGlmRealColor("vol", vol, max_color);
-	ImGui::DisplayNamedGlmRealColor("vol0", vol, max_color);
-	ImGui::DisplayNamedGlmRealColor("Lz", Lz, max_color);
-	ImGui::DisplayNamedGlmRealColor("energy", energy, max_color);
-	ImGui::DisplayNamedGlmRealColor("selected", selected, max_color);
 	
-	ImGui::DisplayNamedGlmRealColor("E", E, max_color);
-	ImGui::DisplayNamedGlmRealColor("poisson", poisson, max_color);
-	ImGui::DisplayNamedGlmRealColor("lam", lam, max_color);
-	ImGui::DisplayNamedGlmRealColor("mew", mew, max_color);
-	ImGui::DisplayNamedGlmRealColor("crit_c", crit_c, max_color);
-	ImGui::DisplayNamedGlmRealColor("crit_s", crit_s, max_color);
-	ImGui::DisplayNamedGlmRealColor("hardening", hardening, max_color);
-	ImGui::DisplayNamedGlmRealColor("padding2", padding2, max_color);
 	ImGui::DisplayNamedGlmMatrixMixColor("B", B, min_color, max_color);
 	ImGui::DisplayNamedGlmMatrixMixColor("Fe", Fe, min_color, max_color);
 	ImGui::DisplayNamedGlmMatrixMixColor("Fp", Fp, min_color, max_color);
 	ImGui::DisplayNamedGlmMatrixMixColor("P", P, min_color, max_color);
 
-	ImGui::DisplayNamedGlmMatrixMixColor("A", A, min_color, max_color);
+	ImGui::DisplayNamedGlmVecColor("rgba", rgba, min_color);
 
 	ImGui::DisplayNamedGlmVecColor("stress", stress, min_color);
 	ImGui::DisplayNamedGlmVecColor("strain", strain, min_color);
 
-	ImGui::DisplayNamedGlmVecColor("rgba", rgba, min_color);
+	
+
+	ImGui::DisplayNamedGlmVecMixColor("x", x, min_color, max_color);
+	ImGui::DisplayNamedGlmVecMixColor("v", v, min_color, max_color);
+
+	ImGui::DisplayNamedGlmRealColor("m", m, max_color);
+	ImGui::DisplayNamedGlmRealColor("vol", vol, max_color);
+	ImGui::DisplayNamedGlmRealColor("vol0", vol, max_color);
+	ImGui::DisplayNamedGlmRealColor("Lz", Lz, max_color);
+
+	ImGui::DisplayNamedGlmRealColor("E", E, max_color);
+	ImGui::DisplayNamedGlmRealColor("poisson", poisson, max_color);
+	ImGui::DisplayNamedGlmRealColor("lam", lam, max_color);
+	ImGui::DisplayNamedGlmRealColor("mew", mew, max_color);
+
+	ImGui::DisplayNamedGlmRealColor("crit_c", crit_c, max_color);
+	ImGui::DisplayNamedGlmRealColor("crit_s", crit_s, max_color);
+	ImGui::DisplayNamedGlmRealColor("hardening", hardening, max_color);
+	ImGui::DisplayNamedGlmRealColor("padding2", padding2, max_color);
+
+	ImGui::DisplayNamedGlmRealColor("energy", energy, max_color);
+	ImGui::DisplayNamedGlmRealColor("selected", selected, max_color);
+	ImGui::DisplayNamedGlmRealColor("padding3", padding3, max_color);
+	ImGui::DisplayNamedGlmRealColor("padding4", padding4, max_color);
 
 	if (calcDecomp) {
 		mat2 R, S;
@@ -70,13 +77,6 @@ void mpm::MaterialPoint::ImGuiDisplay(bool calcDecomp, bool calcdPdF, bool calcV
 		ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_U", U, min_color, max_color);
 		ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_S", mat2(sig1, 0.0, 0.0, sig2), min_color, max_color);
 		ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_V", V, min_color, max_color);
-	}
-	else {
-		ImGui::DisplayNamedGlmMatrixMixColor("FePolar_R", FePolar_R, min_color, max_color);
-		ImGui::DisplayNamedGlmMatrixMixColor("FePolar_S", FePolar_S, min_color, max_color);
-		ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_U", FeSVD_U, min_color, max_color);
-		ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_S", FeSVD_S, min_color, max_color);
-		ImGui::DisplayNamedGlmMatrixMixColor("FeSVD_V", FeSVD_V, min_color, max_color);
 	}
 
 	if (calcdPdF) {
@@ -226,6 +226,13 @@ void mpm::PointCloud::GenPointCloudSSBO()
 		&(points.front().x.x),
 		GL_MAP_READ_BIT | GL_MAP_WRITE_BIT // add write bit for cpu mode
 	);
+
+	std::cout << sizeof(MaterialPoint) << " bytes per mp" << std::endl;
+	std::cout << sizeof(mat2) << " bytes per mat2" << std::endl;
+	std::cout << sizeof(vec4) << " bytes per vec4" << std::endl;
+	std::cout << sizeof(vec2) << " bytes per vec2" << std::endl;
+	std::cout << sizeof(double) << " bytes per double" << std::endl;
+
 	ComputeTotalMass(); // adding this here because every time a point cloud is gen, this function will be called
 }
 
@@ -392,11 +399,6 @@ std::ostream& operator<<(std::ostream& out, const mpm::MaterialPoint& c)
 	out << "Fe (highp): " << "(" << c.Fe[0][0] << ", " << c.Fe[0][1] << "), (" << c.Fe[1][0] << ", " << c.Fe[1][1] << ")" << "\n";
 	out << "Fp: " << glm::to_string(c.Fp) << "\n";
 	out << "P: " << glm::to_string(c.P) << "\n";
-	out << "FePolar_R: " << glm::to_string(c.FePolar_R) << "\n";
-	out << "FePolar_S: " << glm::to_string(c.FePolar_S) << "\n";
-	out << "FeSVD_U: " << glm::to_string(c.FeSVD_U) << "\n";
-	out << "FeSVD_S: " << glm::to_string(c.FeSVD_S) << "\n";
-	out << "FeSVD_V: " << glm::to_string(c.FeSVD_V) << "\n";
 	out << "energy: " << c.energy << "\n";
 	out << "selectedWpg: " << c.selected << "\n";
 	return out;

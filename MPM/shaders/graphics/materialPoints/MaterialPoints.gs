@@ -2,8 +2,8 @@
 
 in uint vs_pointID[];
 
-layout (points) in;
-layout (triangle_strip, max_vertices = 256) out;
+layout (points) in; // note this is glsl syntax, not our mp points array
+layout (triangle_strip, max_vertices = 204) out;
 
 uniform double zoomFactor;
 uniform dvec2 zoomPoint;
@@ -12,6 +12,8 @@ uniform double pointRadius = 1.0;
 uniform bool renderDeformationGradients;
 uniform bool renderControlDeformationGradients;
 
+out uint gs_pointID;
+
 /*** HEADER ***/
 
 #define PI 3.1415926535897932384626433832795
@@ -19,7 +21,8 @@ uniform bool renderControlDeformationGradients;
 void main() {
     //gl_Position = gl_in[0].gl_Position; // + vec4(-0.1, 0.0, 0.0, 0.0);
     //gl_PointSize = gl_in[0].gl_PointSize;
-
+    gs_pointID = vs_pointID[0];
+    
     dvec2 grid_vec = vec2(GRID_SIZE_X, GRID_SIZE_Y);
     dvec2 center = points[vs_pointID[0]].x.xy;
 
