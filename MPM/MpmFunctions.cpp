@@ -52,7 +52,8 @@ double mpm::QuadraticBSplineSlope(double x)
 		return -2.0 * x;
 	}
 	else if (0.5 <= absx && absx < 1.5) {
-		return -2.0 * x * (1.5 - absx) / absx;
+		//return -2.0 * x * (1.5 - absx) / absx;
+		return x - 1.5 * x / absx;
 	}
 	else {
 		return 0.0;

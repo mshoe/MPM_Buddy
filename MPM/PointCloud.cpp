@@ -13,6 +13,11 @@ void mpm::MaterialParameters::CalculateYongeAndPoisson()
 }
 
 
+double mpm::MaterialPoint::KE()
+{
+	return 0.5 * m * glm::dot(v, v);
+}
+
 void mpm::MaterialPoint::SetMaterialParameters(const MaterialParameters& parameters)
 {
 	E = parameters.youngMod;
@@ -48,7 +53,7 @@ void mpm::MaterialPoint::ImGuiDisplay(bool calcDecomp, bool calcdPdF, bool calcV
 
 	ImGui::DisplayNamedGlmRealColor("m", m, max_color);
 	ImGui::DisplayNamedGlmRealColor("vol", vol, max_color);
-	ImGui::DisplayNamedGlmRealColor("vol0", vol, max_color);
+	ImGui::DisplayNamedGlmRealColor("vol0", vol0, max_color);
 	ImGui::DisplayNamedGlmRealColor("Lz", Lz, max_color);
 
 	ImGui::DisplayNamedGlmRealColor("E", E, max_color);
@@ -61,9 +66,9 @@ void mpm::MaterialPoint::ImGuiDisplay(bool calcDecomp, bool calcdPdF, bool calcV
 	ImGui::DisplayNamedGlmRealColor("hardening", hardening, max_color);
 	ImGui::DisplayNamedGlmRealColor("padding2", padding2, max_color);
 
-	ImGui::DisplayNamedGlmRealColor("energy", energy, max_color);
+	ImGui::DisplayNamedGlmRealColor("epe", epe, max_color);
 	ImGui::DisplayNamedGlmRealColor("selected", selected, max_color);
-	ImGui::DisplayNamedGlmRealColor("padding3", padding3, max_color);
+	ImGui::DisplayNamedGlmRealColor("ke", ke, max_color);
 	ImGui::DisplayNamedGlmRealColor("padding4", padding4, max_color);
 
 	if (calcDecomp) {
@@ -320,23 +325,19 @@ double mpm::PointCloud::ComputeTotalMass()
 	return totalMass;
 }
 
-double mpm::PointCloud::ComputeCOMKE()
+double mpm::PointCloud::SumEPE()
 {
-	vec2 average_v = vec2(0.0);
+	double energy = 0.0;
 
-	// assume totalMass is already calculated
+	// assume energy already calculated
 
 	for (size_t p = 0; p < points.size(); p++) {
 		MaterialPoint& mp = points[p];
 
-		average_v += mp.v;
+		energy += mp.epe;
 	}
 
-	average_v = average_v / double(points.size());
-
-
-
-	return 0.5 * glm::dot(average_v, average_v) * totalMass;
+	return energy;
 }
 
 double mpm::PointCloud::ComputeMPKE()
@@ -345,31 +346,9 @@ double mpm::PointCloud::ComputeMPKE()
 	for (size_t p = 0; p < points.size(); p++) {
 		MaterialPoint& mp = points[p];
 
-		MPKE += 0.5 * glm::dot(mp.v, mp.v) * mp.m;
+		MPKE += mp.KE();
 	}
 	return MPKE;
-}
-
-double mpm::PointCloud::ComputeElasticPotential()
-{
-	double EPE = 0.0;
-	for (size_t p = 0; p < points.size(); p++) {
-		MaterialPoint& mp = points[p];
-
-		EPE += mp.vol * FixedCorotationalElasticity::EnergyDensity(mp.Fe, mp.lam, mp.mew);
-	}
-	return EPE;
-}
-
-double mpm::PointCloud::ComputeLinearElasticPotentialMUSL()
-{
-	double EPE = 0.0;
-	for (size_t p = 0; p < points.size(); p++) {
-		MaterialPoint& mp = points[p];
-
-		EPE += 0.5 * mp.vol * glm::dot(mp.stress, mp.strain);
-	}
-	return EPE;
 }
 
 double mpm::PointCloud::ComputeGravitionalPotential()
@@ -399,7 +378,31 @@ std::ostream& operator<<(std::ostream& out, const mpm::MaterialPoint& c)
 	out << "Fe (highp): " << "(" << c.Fe[0][0] << ", " << c.Fe[0][1] << "), (" << c.Fe[1][0] << ", " << c.Fe[1][1] << ")" << "\n";
 	out << "Fp: " << glm::to_string(c.Fp) << "\n";
 	out << "P: " << glm::to_string(c.P) << "\n";
-	out << "energy: " << c.energy << "\n";
+	out << "epe: " << c.epe << "\n";
 	out << "selectedWpg: " << c.selected << "\n";
 	return out;
+}
+
+void mpm::UpdateStress(MaterialPoint& mp, ENERGY_MODEL comodel)
+{
+	{
+		switch (comodel) {
+		case ENERGY_MODEL::LINEAR_ELASTICITY:
+			mp.P = LinearElasticity::PKTensor(mp.Fe, mp.lam, mp.mew);
+			mp.epe = mp.vol0 * LinearElasticity::EnergyDensity(mp.Fe, mp.lam, mp.mew);
+			break;
+		case ENERGY_MODEL::NEO_HOOKEAN_ELASTICITY:
+			mp.P = NeoHookean::PKTensor(mp.Fe, mp.lam, mp.mew);
+			break;
+		case ENERGY_MODEL::FIXED_COROTATIONAL_ELASTICITY:
+			mp.P = FixedCorotationalElasticity::PKTensor(mp.Fe, mp.lam, mp.mew);
+			mp.epe = mp.vol0 * FixedCorotationalElasticity::EnergyDensity(mp.Fe, mp.lam, mp.mew);
+			break;
+		case ENERGY_MODEL::SIMPLE_SNOW:
+			mp.P = SimpleSnow::PKTensor(mp.Fe, mp.Fp, mp.lam, mp.mew, mp.crit_c, mp.crit_s, mp.hardening);
+			break;
+		default:
+			break;
+		}
+	}
 }

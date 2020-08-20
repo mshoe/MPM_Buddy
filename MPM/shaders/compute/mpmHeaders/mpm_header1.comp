@@ -38,7 +38,7 @@ struct materialPoint {
 
 	double energy;
 	double selected;
-	double padding3;
+	double ke;
 	double padding4;
 
 	dmat2 B; // for APIC

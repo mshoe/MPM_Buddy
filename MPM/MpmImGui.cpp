@@ -459,6 +459,7 @@ void mpm::MpmEngine::ImGuiEnergyViewer()
 		ImGui::Checkbox("elastic potential energy", &elastic_potential_energy);
 		ImGui::Checkbox("gravity potential energy", &gravity_potential_energy);
 		
+
 		static const int energy_values_size = 100;
 		
 		static float Kenergy_values[energy_values_size];
@@ -495,7 +496,7 @@ void mpm::MpmEngine::ImGuiEnergyViewer()
 				total_elastic_potential_energy = 0.0;
 				for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
 					/*total_elastic_potential_energy += pointCloudPair.second->ComputeElasticPotential();*/
-					total_elastic_potential_energy += pointCloudPair.second->ComputeLinearElasticPotentialMUSL();
+					total_elastic_potential_energy += pointCloudPair.second->SumEPE();
 				}
 
 				total_energy += total_elastic_potential_energy;
@@ -543,9 +544,21 @@ void mpm::MpmEngine::ImGuiEnergyViewer()
 			refresh_time += 1.0/60;
 			
 		}
+
+
+		
+
+		
+
 		
 		if (kinetic_energy) {
+			double totalGridKE = m_grid->ComputeKE();
+			ImGui::DisplayNamedGlmRealColor("total grid kinetic energy", totalGridKE, glm::highp_fvec4(1.0));
 			ImGui::DisplayNamedGlmRealColor("total kinetic energy", total_kinetic_energy, glm::highp_fvec4(1.0));
+
+			double interpolation_error = totalGridKE - total_kinetic_energy;
+			ImGui::DisplayNamedGlmRealColor("interpolation error", interpolation_error, glm::highp_fvec4(1.0));
+
 			ImGui::DisplayNamedGlmRealColor("max total kinetic energy", max_total_kinetic_energy, glm::highp_fvec4(0.0, 1.0, 0.0, 1.0));
 			ImGui::PlotLines("Total Kinetic Energy", Kenergy_values, IM_ARRAYSIZE(Kenergy_values), 0, "", 0.0f, (float)max_total_kinetic_energy, ImVec2(0, 160));
 		}

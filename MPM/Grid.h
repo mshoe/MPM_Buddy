@@ -42,6 +42,7 @@ namespace mpm {
 
 		bool selected = false;
 
+		double ComputeKE();
 
 		friend std::ostream& operator << (std::ostream& out, const GridNode& c) {
 			out << "m: " << c.m << "\n";
@@ -110,7 +111,8 @@ namespace mpm {
 		std::vector<GridNode> nodes;
 
 
+		double KE = 0.0;
 
-
+		double ComputeKE();
 	};
 }

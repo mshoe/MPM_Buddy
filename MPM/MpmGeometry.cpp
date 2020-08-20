@@ -118,7 +118,8 @@ std::shared_ptr<mpm::PointCloud> mpm::MpmGeometryEngine::GenPointCloud(const std
 
 			if (sd < 0.0) {
 				MaterialPoint mp(p, initialVelocity, GLreal(mass));
-				mp.SetMaterialParameters(parameters);
+				mp.SetMaterialParameters(pointCloud->parameters);
+				mp.rgba = pointCloud->color;
 				// calculate mp.vol in a compute shader (not here)
 
 
@@ -129,9 +130,10 @@ std::shared_ptr<mpm::PointCloud> mpm::MpmGeometryEngine::GenPointCloud(const std
 	pointCloud->N = pointCloud->points.size();
 
 	if (pointCloud->N > 0) {
+		m_mpmAlgorithmEngine->CalculatePointCloudVolumes(pointCloudID, pointCloud);
 		pointCloud->GenPointCloudSSBO();
 
-		m_mpmAlgorithmEngine->CalculatePointCloudVolumes(pointCloudID, pointCloud);
+		
 
 		m_mpmEngine->m_pointCloudMap[pointCloudID] = pointCloud;
 	}

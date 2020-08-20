@@ -219,6 +219,18 @@
     <ClCompile Include="MpmAlgorithm_MUSL.cpp">
       <Filter>Source Files\MPM\Algorithm\Variants</Filter>
     </ClCompile>
+    <ClCompile Include="MpmAlgorithm_USL.cpp">
+      <Filter>Source Files\MPM\Algorithm\Variants</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmAlgorithm_USF.cpp">
+      <Filter>Source Files\MPM\Algorithm\Variants</Filter>
+    </ClCompile>
+    <ClCompile Include="Grid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmAlgorithm_SymplecticEuler.cpp">
+      <Filter>Source Files\MPM\Algorithm\Variants</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainEngine.h">

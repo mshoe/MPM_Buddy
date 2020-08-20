@@ -140,6 +140,7 @@
     <ClCompile Include="external\imgui\imgui_impl_opengl3.cpp" />
     <ClCompile Include="external\imgui\imgui_widgets.cpp" />
     <ClCompile Include="external\src\glad\glad.c" />
+    <ClCompile Include="Grid.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="MpmAlgorithm.cpp" />
     <ClCompile Include="MpmAlgorithmEngine.cpp" />
@@ -147,6 +148,8 @@
     <ClCompile Include="MpmAlgorithmImGui.cpp" />
     <ClCompile Include="MpmAlgorithm_MUSL.cpp" />
     <ClCompile Include="MpmAlgorithmSemiImplicit_MLS.cpp" />
+    <ClCompile Include="MpmAlgorithm_SymplecticEuler.cpp" />
+    <ClCompile Include="MpmAlgorithm_USL.cpp" />
     <ClCompile Include="MpmControlImGui.cpp" />
     <ClCompile Include="MpmControlEngineInit.cpp" />
     <ClCompile Include="MpmEigenRender.cpp" />
@@ -165,6 +168,7 @@
     <ClCompile Include="MpmGeometrySelection.cpp" />
     <ClCompile Include="MpmRender.cpp" />
     <ClCompile Include="MpmRenderImgui.cpp" />
+    <ClCompile Include="MpmAlgorithm_USF.cpp" />
     <ClCompile Include="OpenGLScreen.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainEngine.cpp" />

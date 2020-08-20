@@ -16,7 +16,7 @@ void mpm::MpmAlgorithmEngine::MassMomentumToNode_MLS(const mpm::MaterialPoint& m
 	node.m += wpg * mp.m;
 
 	// P2G APIC momentum transfer
-	mat2 Gp = -Dp_inv * dt * mp.vol * mp.P * glm::transpose(mp.Fe) + mp.m * mp.B;
+	mat2 Gp = -Dp_inv * dt * mp.vol0 * mp.P * glm::transpose(mp.Fe) + mp.m * mp.B;
 	node.momentum += wpg * (mp.m * mp.v + Gp * dpg);
 }
 
@@ -106,9 +106,7 @@ void mpm::MpmAlgorithmEngine::MpmTimeStep_MLS(real dt)
 		}
 	}
 
-	if (m_USL) {
-		MpmTimeStepP1_MLS(dt);
-	}
+	MpmTimeStepP_Stress(dt);
 
 	MpmTimeStepP2G_MLS(dt);
 
@@ -118,49 +116,13 @@ void mpm::MpmAlgorithmEngine::MpmTimeStep_MLS(real dt)
 		MpmTimeStepSemiImplicitGridUpdate_MLS(dt, m_beta);
 	}
 
-	if (!m_USL) {
-		MpmTimeStepP1_MLS(dt);
-	}
-
 	MpmTimeStepG2P_MLS(dt);
 
 	MpmTimeStepP2_MLS(dt);
-
-	m_timeStep++;
-	m_time += m_dt;
 #ifdef MPM_CPP_DEBUG
 	t2 = high_resolution_clock::now();
 	std::cout << "Finished calculating timestep in " << duration_cast<duration<double>>(t2 - t1).count() << " seconds.\n";
 #endif
-}
-
-void mpm::MpmAlgorithmEngine::MpmTimeStepP1_MLS(real dt)
-{
-	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_mpmEngine->m_pointCloudMap) {
-
-		for (MaterialPoint& point : pointCloudPair.second->points) {
-
-			switch (pointCloudPair.second->comodel) {
-			case ENERGY_MODEL::LINEAR_ELASTICITY:
-				point.P = LinearElasticity::PKTensor(point.Fe, point.lam, point.mew);
-				break;
-			case ENERGY_MODEL::NEO_HOOKEAN_ELASTICITY:
-				point.P = NeoHookean::PKTensor(point.Fe, point.lam, point.mew);
-				break;
-			case ENERGY_MODEL::FIXED_COROTATIONAL_ELASTICITY:
-				point.P = FixedCorotationalElasticity::PKTensor(point.Fe, point.lam, point.mew);
-				point.energy = FixedCorotationalElasticity::EnergyDensity(point.Fe, point.lam, point.mew);
-				break;
-			case ENERGY_MODEL::SIMPLE_SNOW:
-				point.P = SimpleSnow::PKTensor(point.Fe, point.Fp, point.lam, point.mew, point.crit_c, point.crit_s, point.hardening);
-				break;
-			default:
-				break;
-			}
-
-			
-		}
-	}
 }
 
 void mpm::MpmAlgorithmEngine::MpmTimeStepP2G_MLS(real dt)

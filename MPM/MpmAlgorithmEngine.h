@@ -69,6 +69,7 @@ namespace mpm {
 		
 		// geometry engine wants access to this
 		void CalculatePointCloudVolumes(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
+		void CalculatePointCloudVolumesCPP(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
 
 		/******************** TIME INTEGRATOR ********************/
 		int m_timeStep = 0;
@@ -92,11 +93,17 @@ namespace mpm {
 		// MPM ALGORITHMS
 		enum class MPM_ALGO {
 			MLS = 0,
-			MUSL = 1
+			MUSL = 1,
+			USF = 2,
+			USL = 3,
+			SE = 4
 		};
 		std::vector<std::string> m_mpmAlgoStrVec = {
 			"MLS",
-			"MUSL"
+			"MUSL",
+			"USF",
+			"USL",
+			"Symplectic Euler"
 		};
 		volatile MPM_ALGO m_mpm_algo = MPM_ALGO::MUSL;
 
@@ -136,6 +143,9 @@ namespace mpm {
 		void CleanupShaders();
 
 		
+		// Piola-Kirchoff stress calculation
+		void MpmTimeStepP_Stress(real dt);
+
 
 		/******************** MLS MPM GLSL COMPUTE SHADER IMPLEMENTATION ********************/
 	public:
@@ -163,7 +173,6 @@ namespace mpm {
 		void VelocityToParticle_MLS(const mpm::GridNode& node, mpm::MaterialPoint& mp, real dt);
 
 
-		void MpmTimeStepP1_MLS(real dt);
 		void MpmTimeStepP2G_MLS(real dt);
 		void MpmTimeStepExplicitGridUpdate_MLS(real dt);
 		void MpmTimeStepSemiImplicitGridUpdate_MLS(real dt, real beta);
@@ -174,11 +183,11 @@ namespace mpm {
 
 		bool m_USL = true;
 
+		void MpmTimeStep(real dt);
+		void MpmTimeStepAlgoSelector(real dt);
+
 		/******************** MUSL MPM CPU C++ IMPLEMENTATION ********************/
 	public:
-
-		void MpmTimeStep(real dt);
-
 		void MpmTimeStep_MUSL(real dt);
 	private:
 		void MassToNode_MUSL(const mpm::MaterialPoint& mp, mpm::GridNode& node);
@@ -187,15 +196,44 @@ namespace mpm {
 		void VelocityToNode_MUSL(const mpm::MaterialPoint& mp, mpm::GridNode& node);
 		void CalculateNodeVelocity_MUSL(mpm::GridNode& node, double dt);
 		void NodeToParticlePosition_MUSL(const mpm::GridNode& node, mpm::MaterialPoint& mp, mat2& Lp, double dt);
-		void ParticleUpdateStressStrain_MUSL(mpm::MaterialPoint& mp, const mat2& Lp, real dt);
+		void ParticleUpdateStressStrain_MUSL(mpm::MaterialPoint& mp, real dt, ENERGY_MODEL comodel);
+		
 
 		void MpmTimeStepP2G_MUSL(real dt);
-		void MpmTimeStepG_Update_MUSL(real dt);
+		void MpmTimeStepG_Momentum_MUSL(real dt);
 		void MpmTimeStepG2P_Velocity_MUSL(real dt);
 		void MpmTimeStepP2G_Velocity_MUSL(real dt);
 		void MpmTimeStepG_Velocity_MUSL(real dt);
 		void MpmTimeStepG2P_Position_MUSL(real dt);
-		
+
+		/******************** USF MPM CPU C++ IMPLEMENTATION ********************/
+	public:
+		void MpmTimeStep_USF(real dt);
+
+	private:
+		void MpmTimeStepP2G_Velocity_USF(real dt);
+		void MpmTimeStepG_Velocity_USF(real dt);
+		void MpmTimeStepG2P_GradientVelocity_USF(real dt);
+		void MpmTimeStepP2G_Forces_USF(real dt);
+		void MpmTimeStepG_Momentum_USF(real dt);
+		void MpmTimeStepG2P_PositionVelocity_USF(real dt);
+
+
+		/******************** USL MPM CPU C++ IMPLEMENTATION ********************/
+	public:
+		void MpmTimeStep_USL(real dt);
+
+	private:
+
+		/******************** Symplectic Euler MPM CPU C++ IMPLEMENTATION ********************/
+	public:
+		void MpmTimeStep_SE(real dt);
+	private:
+		void MpmTimeStepP2G_SE(real dt);
+		void MpmTimeStepG_Velocity_SE(real dt);
+		void MpmTimeStepG2P_SE(real dt);
+
+
 		Basis::NodeGetter nodeGetter;
 		
 		

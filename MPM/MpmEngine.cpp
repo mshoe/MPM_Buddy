@@ -107,6 +107,8 @@ void mpm::MpmEngine::HandleStates()
 
 void mpm::MpmEngine::UpdatePointCloudData(std::string pointCloudStr)
 {
+	// Note: I'm not sure this is working correctly, 8/20/2020
+
 	if (m_pointCloudMap.count(pointCloudStr)) {
 		void* ptr = glMapNamedBuffer(m_pointCloudMap[pointCloudStr]->ssbo, GL_READ_ONLY);
 		MaterialPoint* data = static_cast<MaterialPoint*>(ptr);

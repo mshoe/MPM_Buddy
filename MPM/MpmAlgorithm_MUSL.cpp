@@ -26,8 +26,9 @@ void mpm::MpmAlgorithmEngine::MassToNode_MUSL(const mpm::MaterialPoint& mp, mpm:
 	niforce(id,1)   = niforce(id,1) - pvol*(stress(1)*dNIdx + stress(3)*dNIdy);
 	niforce(id,2)   = niforce(id,2) - pvol*(stress(3)*dNIdx + stress(2)*dNIdy);
 	*/
-	node.f_int -= mp.vol * (mp.stress.x * wpgSlope.x + mp.stress.z * wpgSlope.y);
-	node.f_int -= mp.vol * (mp.stress.z * wpgSlope.x + mp.stress.y * wpgSlope.y);
+	/*node.f_int -= mp.vol * (mp.stress.x * wpgSlope.x + mp.stress.z * wpgSlope.y);
+	node.f_int -= mp.vol * (mp.stress.z * wpgSlope.x + mp.stress.y * wpgSlope.y);*/
+	node.f_int -= mp.vol * mp.P * glm::transpose(mp.Fe) * wpgSlope;
 }
 
 void mpm::MpmAlgorithmEngine::UpdateNodeMomentum_MUSL(mpm::GridNode& node, vec2 f_ext, real dt)
@@ -38,9 +39,9 @@ void mpm::MpmAlgorithmEngine::UpdateNodeMomentum_MUSL(mpm::GridNode& node, vec2 
 	if (node.m != 0.0) {
 
 		//node.f_int += vec2(0.0, -9.81) * node.m; // gravity
-		node.f_int += f_ext * node.m;
+		node.force = node.f_int + f_ext * node.m;
 
-		node.momentum += dt * node.f_int;
+		node.momentum += dt * node.force;
 	}
 }
 
@@ -56,7 +57,7 @@ void mpm::MpmAlgorithmEngine::NodeToParticleVelocity_MUSL(const mpm::GridNode& n
 	real wpg = nodeGetter.ShapeFunction(dx) * nodeGetter.ShapeFunction(dy);
 
 	if (node.m != 0.0) {
-		mp.v += dt * wpg * node.f_int / node.m;// +dt * wpg * vec2(0.0, -9.81);
+		mp.v += dt * wpg * node.force / node.m;// +dt * wpg * vec2(0.0, -9.81);
 	}
 }
 
@@ -114,12 +115,18 @@ void mpm::MpmAlgorithmEngine::NodeToParticlePosition_MUSL(const mpm::GridNode& n
 	*/
 
 	if (node.m != 0.0) {
+
+		vec2 dx = dt * mp.v;
+		if (dx.x >= 1.0 || dx.y >= 1.0) {
+			m_paused = true; // GRID CROSSING INSTABILITY
+		}
+
 		mp.x += dt * wpg * node.v;// node.momentum / node.m;
 		Lp += glm::outerProduct(node.v, wpgSlope);
 	}
 }
 
-void mpm::MpmAlgorithmEngine::ParticleUpdateStressStrain_MUSL(mpm::MaterialPoint& mp, const mat2& Lp, real dt) {
+void mpm::MpmAlgorithmEngine::ParticleUpdateStressStrain_MUSL(mpm::MaterialPoint& mp, real dt, ENERGY_MODEL comodel) {
 	/*
 	F       = ([1 0;0 1] + Lp*dtime)*reshape(Fp(pid,:),2,2);
 	Fp(pid,:)= reshape(F,1,4);
@@ -135,16 +142,12 @@ void mpm::MpmAlgorithmEngine::ParticleUpdateStressStrain_MUSL(mpm::MaterialPoint
 
 
 
-	mp.Fe = (mat2(1.0) + dt * Lp) * mp.Fe;
-	mp.vol = glm::determinant(mp.Fe) * mp.vol0;
-	mat2 dEps = dt * 0.5 * (Lp + glm::transpose(Lp));
+	
+	
 
-	static mat3 C = mpm::LinearElasticity::ElasticityMatrix(1000000, 0.3, true);
 
-	vec3 dsigma = C * vec3(dEps[0][0], dEps[1][1], dEps[1][0] * 2.0);
-
-	mp.stress += vec4(dsigma, 0.0);
-	mp.strain += vec4(dEps[0][0], dEps[1][1], dEps[1][0] * 2.0, 0.0);
+	
+	
 }
 
 
@@ -159,21 +162,19 @@ void mpm::MpmAlgorithmEngine::MpmTimeStep_MUSL(real dt)
 			m_mpmEngine->m_grid->nodes[index].v = vec2(0.0);
 			m_mpmEngine->m_grid->nodes[index].momentum = vec2(0.0);
 			m_mpmEngine->m_grid->nodes[index].f_int = vec2(0.0);
+			m_mpmEngine->m_grid->nodes[index].force = vec2(0.0);
 			m_mpmEngine->m_grid->nodes[index].nodalAcceleration = vec2(0.0);
 		}
 	}
 
 	MpmTimeStepP2G_MUSL(dt);
-	MpmTimeStepG_Update_MUSL(dt);
+	MpmTimeStepG_Momentum_MUSL(dt);
 	MpmTimeStepG2P_Velocity_MUSL(dt);
 	MpmTimeStepP2G_Velocity_MUSL(dt);
 	MpmTimeStepG_Velocity_MUSL(dt);
 	MpmTimeStepG2P_Position_MUSL(dt);
+	MpmTimeStepP_Stress(dt);
 }
-
-
-
-
 
 void mpm::MpmAlgorithmEngine::MpmTimeStepP2G_MUSL(real dt)
 {
@@ -203,7 +204,7 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepP2G_MUSL(real dt)
 	}
 }
 
-void mpm::MpmAlgorithmEngine::MpmTimeStepG_Update_MUSL(real dt)
+void mpm::MpmAlgorithmEngine::MpmTimeStepG_Momentum_MUSL(real dt)
 {
 	for (size_t i = 0; i < size_t(m_mpmEngine->m_chunks_x) * size_t(m_cppChunkX); i++) {
 		for (size_t j = 0; j < size_t(m_mpmEngine->m_chunks_y) * size_t(m_cppChunkY); j++) {
@@ -245,6 +246,7 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepG2P_Velocity_MUSL(real dt)
 
 void mpm::MpmAlgorithmEngine::MpmTimeStepP2G_Velocity_MUSL(real dt)
 {
+	// don't need to reset velocity here, as only nodal mass, force, and momentum have been computed so far
 
 	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_mpmEngine->m_pointCloudMap) {
 
@@ -297,9 +299,23 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepG2P_Position_MUSL(real dt)
 				}
 			}
 
-			ParticleUpdateStressStrain_MUSL(mp, Lp, dt);
+			mp.Fe = (mat2(1.0) + dt * Lp) * mp.Fe;
+			mp.vol = glm::determinant(mp.Fe) * mp.vol0;
 
+
+
+
+			/*mat2 dEps = dt * 0.5 * (Lp + glm::transpose(Lp));
+
+			static mat3 C = mpm::LinearElasticity::ElasticityMatrix(1000, 0.3, true);
+
+			vec3 dsigma = C * vec3(dEps[0][0], dEps[1][1], dEps[1][0] * 2.0);
+
+			mp.stress += vec4(dsigma, 0.0);
+			mp.strain += vec4(dEps[0][0], dEps[1][1], dEps[1][0] * 2.0, 0.0);*/
 		}
 	}
 }
+
+
 

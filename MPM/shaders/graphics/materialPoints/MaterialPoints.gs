@@ -48,9 +48,9 @@ void main() {
             float sinusoidalValue = 2.0 * float(j) / float(N) * PI;
             dvec2 circle_point = dvec2(double(cos(sinusoidalValue)), double(sin(sinusoidalValue)));
 
-            if (renderDeformationGradients) {
-                circle_point = F * circle_point;
-            }
+            // if (renderDeformationGradients) {
+            //     circle_point = F * circle_point;
+            // }
 
             dvec2 pos = (center + pointRadius * circle_point);
 

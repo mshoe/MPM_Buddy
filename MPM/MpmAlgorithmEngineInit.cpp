@@ -62,6 +62,10 @@ void mpm::MpmAlgorithmEngine::InitShaders()
 	InitSparseMatrixWindow();
 
 	// initialize material parameters here for now
+	m_energyModels[size_t(ENERGY_MODEL::LINEAR_ELASTICITY)].youngMod = 90000.0;
+	m_energyModels[size_t(ENERGY_MODEL::LINEAR_ELASTICITY)].poisson = 0.3;
+	m_energyModels[size_t(ENERGY_MODEL::LINEAR_ELASTICITY)].density = 40;
+
 	m_energyModels[size_t(ENERGY_MODEL::NEO_HOOKEAN_ELASTICITY)].youngMod = 90000.0;
 	m_energyModels[size_t(ENERGY_MODEL::NEO_HOOKEAN_ELASTICITY)].poisson = 0.3;
 	m_energyModels[size_t(ENERGY_MODEL::NEO_HOOKEAN_ELASTICITY)].density = 40;

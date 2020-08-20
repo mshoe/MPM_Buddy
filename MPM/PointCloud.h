@@ -69,9 +69,9 @@ namespace mpm {
 		double hardening = 0.0;
 		double padding2 = 4.2;
 
-		double energy = 0.0;
+		double epe = 0.0; // elastic potential energy
 		double selected = 0.0;
-		double padding3 = 22;
+		double ke = 0.0; // kinetic energy
 		double padding4 = 0.89;
 
 		mat2 B = mat2(0.0); // for APIC
@@ -84,6 +84,9 @@ namespace mpm {
 		// FOR MUSL
 		vec4 stress = vec4(0.0);
 		vec4 strain = vec4(0.0);
+
+
+		double KE();
 
 		
 
@@ -98,7 +101,7 @@ namespace mpm {
 		void LoadFromFile(std::ifstream& myFile);
 	};
 
-	
+	void UpdateStress(MaterialPoint& mp, ENERGY_MODEL comodel);
 
 	// optimize move semantics later
 	struct PointCloud {
@@ -115,10 +118,8 @@ namespace mpm {
 		void LoadFromFile(std::string fileName);
 		
 		double ComputeTotalMass();
-		double ComputeCOMKE(); // compute center of mass kinetic energy
+		double SumEPE();
 		double ComputeMPKE(); // compute total material point kinetic energy
-		double ComputeElasticPotential(); // compute elastic potential energy
-		double ComputeLinearElasticPotentialMUSL(); 
 		double ComputeGravitionalPotential();
 
 		size_t N = 0;
