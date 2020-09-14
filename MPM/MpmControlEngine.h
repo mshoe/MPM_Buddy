@@ -84,9 +84,9 @@ namespace mpm {
 		int m_simStateFramesPerFrame = 2;
 
 		// INTERACTIONS
-		std::unique_ptr<ComputeShader> m_pSetDeformationGradients = nullptr;
+		/*std::unique_ptr<ComputeShader> m_pSetDeformationGradients = nullptr;
 		std::unique_ptr<ComputeShader> m_pMultDeformationGradients = nullptr;
-		std::unique_ptr<ComputeShader> m_pSetLameParamters = nullptr;
+		std::unique_ptr<ComputeShader> m_pSetLameParamters = nullptr;*/
 		std::shared_ptr<StandardShader> m_gridDensityShader = nullptr;
 
 		// GRAPHICS
@@ -109,10 +109,9 @@ namespace mpm {
 
 
 		/******************** INTERNAL FORCE CONTROLLER ********************/
-		void SetDeformationGradientsGLSL(std::string pointCloudID, mat2 Fe, mat2 Fp, bool setSelected);
-		void SetDeformationGradientsGLSL(std::shared_ptr<PointCloud> pointCloud, mat2 Fe, mat2 Fp, bool setSelected);
-		void MultiplyDeformationGradientsGLSL(std::string pointCloudID, mat2 multFe, mat2 multFp, bool setSelected);
-		void SetLameParametersGLSL(std::string pointCloudID, real lam, real mew, bool setSelected);
+		void SetDeformationGradients(std::shared_ptr<PointCloud> pointCloud, mat2 Fe, mat2 Fp, bool setSelected);
+		void MultiplyDeformationGradients(std::shared_ptr<PointCloud> pointCloud, mat2 multFe, mat2 multFp, bool setSelected);
+		void SetLameParameters(std::shared_ptr<PointCloud> pointCloud, real lam, real mew, bool setSelected);
 
 
 

@@ -17,7 +17,10 @@ void main() {
 	dvec2 pos = points[pointID].x - zoomPoint;
 	pos *= zoomFactor;
 	pos += zoomPoint;
-	dvec2 norm_pos = (2.0*pos - dvec2(GRID_SIZE_X, GRID_SIZE_Y))/dvec2(GRID_SIZE_X, GRID_SIZE_Y);
+
+	int maxDim = max(GRID_SIZE_X, GRID_SIZE_Y);
+    dvec2 grid_vec = dvec2(maxDim, maxDim);
+	dvec2 norm_pos = (2.0*pos - grid_vec)/grid_vec;
 	
 	// gl_Position needs to take float, not double
     gl_Position = vec4(float(norm_pos.x), float(norm_pos.y), 0.0, 1.0);

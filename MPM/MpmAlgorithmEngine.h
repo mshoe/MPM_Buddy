@@ -147,19 +147,22 @@ namespace mpm {
 		void MpmTimeStepP_Stress(real dt);
 
 
-		/******************** MLS MPM GLSL COMPUTE SHADER IMPLEMENTATION ********************/
-	public:
-		void MpmReset_GLSL();
-		void MpmTimeStep_GLSL(real dt);
-	private:
-		void MpmTimeStepP2G_GLSL(real dt);
-		void MpmTimeStepExplicitGridUpdate_GLSL(real dt);
-		void MpmTimeStepG2P_GLSL(real dt);
-		void MpmTimeStepSemiImplicitCRGridUpdate_GLSL(real dt);
-		void MpmCRInit_GLSL(real dt);
-		bool MpmCRStep_GLSL(real dt, real& L2_norm_rk, bool& L2_converged, bool& L_inf_converged);
-		void MpmCREnd_GLSL(real dt);
-		void CalculatePointCloudVolumes_GLSL(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
+		void MpmTimeStep(real dt);
+		void MpmTimeStepAlgoSelector(real dt);
+
+	//	/******************** MLS MPM GLSL COMPUTE SHADER IMPLEMENTATION ********************/
+	//public:
+		void MpmReset();
+	//	void MpmTimeStep_GLSL(real dt);
+	//private:
+	//	void MpmTimeStepP2G_GLSL(real dt);
+	//	void MpmTimeStepExplicitGridUpdate_GLSL(real dt);
+	//	void MpmTimeStepG2P_GLSL(real dt);
+	//	void MpmTimeStepSemiImplicitCRGridUpdate_GLSL(real dt);
+	//	void MpmCRInit_GLSL(real dt);
+	//	bool MpmCRStep_GLSL(real dt, real& L2_norm_rk, bool& L2_converged, bool& L_inf_converged);
+	//	void MpmCREnd_GLSL(real dt);
+	//	void CalculatePointCloudVolumes_GLSL(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud);
 
 		/******************** MLS MPM CPU C++ IMPLEMENTATION ********************/
 	public:
@@ -175,7 +178,7 @@ namespace mpm {
 
 		void MpmTimeStepP2G_MLS(real dt);
 		void MpmTimeStepExplicitGridUpdate_MLS(real dt);
-		void MpmTimeStepSemiImplicitGridUpdate_MLS(real dt, real beta);
+		//void MpmTimeStepSemiImplicitGridUpdate_MLS(real dt, real beta);
 		void MpmTimeStepG2P_MLS(real dt);
 		void MpmTimeStepP2_MLS(real dt);
 
@@ -183,8 +186,7 @@ namespace mpm {
 
 		bool m_USL = true;
 
-		void MpmTimeStep(real dt);
-		void MpmTimeStepAlgoSelector(real dt);
+		
 
 		/******************** MUSL MPM CPU C++ IMPLEMENTATION ********************/
 	public:
@@ -220,7 +222,7 @@ namespace mpm {
 
 
 		/******************** USL MPM CPU C++ IMPLEMENTATION ********************/
-	public:
+	public:  
 		void MpmTimeStep_USL(real dt);
 
 	private:
@@ -233,6 +235,7 @@ namespace mpm {
 		void MpmTimeStepG_Velocity_SE(real dt);
 		void MpmTimeStepG2P_SE(real dt);
 
+		double SE_alpha = 0.95;
 
 		Basis::NodeGetter nodeGetter;
 		
@@ -261,7 +264,7 @@ namespace mpm {
 		bool m_imguiTimeIntegrator = false;
 
 		/******************** MPM ALGORITHM COMPUTE SHADERS ********************/
-		std::unique_ptr<ComputeShader> m_gReset = nullptr;
+		/*std::unique_ptr<ComputeShader> m_gReset = nullptr;
 		std::unique_ptr<ComputeShader> m_p2gScatter = nullptr;
 		std::unique_ptr<ComputeShader> m_p2gGather = nullptr;
 		std::unique_ptr<ComputeShader> m_gUpdate = nullptr;
@@ -269,16 +272,16 @@ namespace mpm {
 
 
 		std::unique_ptr<ComputeShader> m_p2gCalcVolumes = nullptr;
-		std::unique_ptr<ComputeShader> m_g2pCalcVolumes = nullptr;
+		std::unique_ptr<ComputeShader> m_g2pCalcVolumes = nullptr;*/
 
 		// Implict time integration shaders
-		std::unique_ptr<ComputeShader> m_p2g2pDeltaForce = nullptr;
+		/*std::unique_ptr<ComputeShader> m_p2g2pDeltaForce = nullptr;
 		std::unique_ptr<ComputeShader> m_gConjugateResidualsInitPart1 = nullptr;
 		std::unique_ptr<ComputeShader> m_gConjugateResidualsInitPart2 = nullptr;
 		std::unique_ptr<ComputeShader> m_gConjugateResidualsInitPart3 = nullptr;
 		std::unique_ptr<ComputeShader> m_gConjugateResidualsStepPart1 = nullptr;
 		std::unique_ptr<ComputeShader> m_gConjugateResidualsStepPart2 = nullptr;
-		std::unique_ptr<ComputeShader> m_gConjugateResidualsConclusion = nullptr;
+		std::unique_ptr<ComputeShader> m_gConjugateResidualsConclusion = nullptr;*/
 
 		// graphics
 
@@ -309,15 +312,15 @@ namespace mpm {
 
 
 		/******************** CONJUGATE RESIDUALS FOR SEMI-IMPLICT TIME INTEGRATION ********************/
-		bool m_semi_implicit_CR = false;
-		real m_semi_implicit_ratio = 1.0;
-		int m_max_conj_res_iter = 300;//30;// GRID_SIZE_X* GRID_SIZE_Y;
-		bool m_check_L2_norm = false;
-		bool m_check_L_inf_norm = false;
-		real m_L2_norm_threshold = 0.001; // * number of active nodes ?
-		real m_L_inf_norm_threshold = 1.0; // * 1.0 / node mass?;
-		int m_cr_step = 0;
-		bool m_pause_if_not_converged = true;
+		//bool m_semi_implicit_CR = false;
+		//real m_semi_implicit_ratio = 1.0;
+		//int m_max_conj_res_iter = 300;//30;// GRID_SIZE_X* GRID_SIZE_Y;
+		//bool m_check_L2_norm = false;
+		//bool m_check_L_inf_norm = false;
+		//real m_L2_norm_threshold = 0.001; // * number of active nodes ?
+		//real m_L_inf_norm_threshold = 1.0; // * 1.0 / node mass?;
+		//int m_cr_step = 0;
+		//bool m_pause_if_not_converged = true;
 
 		
 

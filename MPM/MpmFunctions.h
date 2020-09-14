@@ -2,9 +2,13 @@
 #include "Constants.h"
 
 namespace mpm {
-	const real Dp_inv = 3.0;
+	const real Dp_inv_cubic = 3.0;
+	const real Dp_inv_quadratic = 4.0;
+	
 
-	bool InBounds(int node_i, int node_j, int x_bound, int y_bound);
+
+
+	bool InBounds(size_t node_i, size_t node_j, size_t x_bound, size_t y_bound);
 
 
 	double LinearShape(double x);

@@ -1,6 +1,7 @@
 #include "MpmFunctions.h"
 
-bool mpm::InBounds(int node_i, int node_j, int x_bound, int y_bound) {
+bool mpm::InBounds(size_t node_i, size_t node_j, size_t x_bound, size_t y_bound) {
+
 	return (node_i >= 0 && node_i < x_bound && node_j >= 0 && node_j < y_bound);
 }
 

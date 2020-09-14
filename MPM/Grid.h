@@ -33,6 +33,8 @@ namespace mpm {
 		vec2 Ark = vec2(0.0);
 		vec2 Apk = vec2(0.0);
 
+		double delta_KE = 0.0; // the change in kinetic energy at each time step
+
 		GLreal rkArk = 0.0;
 		//GLreal glsl_padding2 = 0.0;
 		bool converged = true;
@@ -87,29 +89,16 @@ namespace mpm {
 	};
 
 	struct Grid {
-		Grid() {
-			nodes = std::vector<GridNode>(GRID_SIZE_X * GRID_SIZE_Y, GridNode());
+		Grid(size_t grid_size_x, size_t grid_size_y);
 
-			for (int i = 0; i < GRID_SIZE_X; i++) {
-				for (int j = 0; j < GRID_SIZE_Y; j++) {
-					nodes[i + j *GRID_SIZE_Y].x = vec2(i, j);
-				}
-			}
-
-		}
-		Grid(size_t grid_size_x, size_t grid_size_y) {
-			nodes = std::vector<GridNode>(grid_size_x * grid_size_y, GridNode());
-
-			for (int i = 0; i < grid_size_x; i++) {
-				for (int j = 0; j < grid_size_y; j++) {
-					nodes[i + j * grid_size_y].x = vec2(i, j);
-				}
-			}
-		}
 		~Grid() {}
+
+		GridNode& GetNode(size_t i, size_t j);
 
 		std::vector<GridNode> nodes;
 
+		size_t grid_dim_x = 16;
+		size_t grid_dim_y = 16;
 
 		double KE = 0.0;
 

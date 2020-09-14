@@ -1,80 +1,147 @@
 #include "MpmControlEngine.h"
 
-void mpm::MpmControlEngine::SetDeformationGradientsGLSL(std::string pointCloudID, mat2 Fe, mat2 Fp, bool setSelected)
+void mpm::MpmControlEngine::SetDeformationGradients(std::shared_ptr<PointCloud> pointCloud, mat2 setFe, mat2 setFp, bool setSelected)
 {
-	if (m_mpmEngine->m_pointCloudMap.count(pointCloudID)) {
-		SetDeformationGradientsGLSL(m_mpmEngine->m_pointCloudMap[pointCloudID], Fe, Fp, setSelected);
+	if (setSelected) {
+		for (MaterialPoint& mp : pointCloud->points) {
+			if (mp.selected != 0.0) {
+				mp.Fe = setFe;
+				mp.Fp = setFe;
+
+				// update volume (assuming setFe and setFp are non-singular)
+				mp.vol = glm::determinant(glm::inverse(setFe) * glm::inverse(setFp) * mp.Fe * mp.Fp) * mp.vol;
+			}
+		}
 	}
-}
+	else {
+		for (MaterialPoint& mp : pointCloud->points) {
+			mp.Fe = setFe;
+			mp.Fp = setFe;
 
-void mpm::MpmControlEngine::SetDeformationGradientsGLSL(std::shared_ptr<PointCloud> pointCloud, mat2 Fe, mat2 Fp, bool setSelected)
-{
-	if (m_mpmAlgorithmEngine->m_algo_code == MpmAlgorithmEngine::MPM_ALGORITHM_CODE::CPP) {
-		// shouldn't need to map cpu to gpu first b/c that happens already at the end of the cpp mode time step for rendering,
-		// and this fxn can only be called in between time steps
-		m_mpmEngine->MapCPUPointCloudToGPU(pointCloud);
-	}
-
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloud->ssbo);
-	m_pSetDeformationGradients->Use();
-	m_pSetDeformationGradients->SetMat("setFe", Fe);
-	m_pSetDeformationGradients->SetMat("setFp", Fp);
-	m_pSetDeformationGradients->SetBool("setSelected", setSelected);
-	int p_workgroups = int(glm::ceil(real(pointCloud->N) / real(G2P_WORKGROUP_SIZE)));
-	glDispatchCompute(p_workgroups, 1, 1);
-	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
-
-	if (m_mpmAlgorithmEngine->m_algo_code == MpmAlgorithmEngine::MPM_ALGORITHM_CODE::CPP) {
-		// shouldn't need to map cpu to gpu first b/c that happens already at the end of the cpp mode time step for rendering,
-		// and this fxn can only be called in between time steps
-		m_mpmEngine->MapGPUPointCloudToCPU(pointCloud);
-	}
-}
-
-void mpm::MpmControlEngine::MultiplyDeformationGradientsGLSL(std::string pointCloudID, mat2 multFe, mat2 multFp, bool multSelected)
-{
-	if (m_mpmEngine->m_pointCloudMap.count(pointCloudID)) {
-		std::shared_ptr<PointCloud> pointCloud = m_mpmEngine->m_pointCloudMap[pointCloudID];
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloud->ssbo);
-		m_pMultDeformationGradients->Use();
-		m_pMultDeformationGradients->SetMat("multFe", multFe);
-		m_pMultDeformationGradients->SetMat("multFp", multFp);
-		m_pMultDeformationGradients->SetBool("multSelected", multSelected);
-		int p_workgroups = int(glm::ceil(real(pointCloud->N) / real(G2P_WORKGROUP_SIZE)));
-		glDispatchCompute(p_workgroups, 1, 1);
-		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
-
-		if (m_mpmAlgorithmEngine->m_algo_code == MpmAlgorithmEngine::MPM_ALGORITHM_CODE::CPP) {
-			// shouldn't need to map cpu to gpu first b/c that happens already at the end of the cpp mode time step for rendering,
-			// and this fxn can only be called in between time steps
-			m_mpmEngine->MapGPUPointCloudsToCPU();
+			// update volume (assuming setFe and setFp are non-singular)
+			mp.vol = glm::determinant(glm::inverse(setFe) * glm::inverse(setFp) * mp.Fe * mp.Fp) * mp.vol;
 		}
 	}
 }
 
-void mpm::MpmControlEngine::SetLameParametersGLSL(std::string pointCloudID, real lam, real mew, bool setSelected)
+void mpm::MpmControlEngine::MultiplyDeformationGradients(std::shared_ptr<PointCloud> pointCloud, mat2 multFe, mat2 multFp, bool setSelected)
 {
-	if (m_mpmEngine->m_pointCloudMap.count(pointCloudID)) {
-		std::shared_ptr<PointCloud> pointCloud = m_mpmEngine->m_pointCloudMap[pointCloudID];
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloud->ssbo);
-		m_pSetLameParamters->Use();
-		m_pSetLameParamters->SetReal("setLam", lam);
-		m_pSetLameParamters->SetReal("setMew", mew);
-		m_pSetLameParamters->SetBool("setSelected", setSelected);
-		int p_workgroups = int(glm::ceil(real(pointCloud->N) / real(G2P_WORKGROUP_SIZE)));
-		glDispatchCompute(p_workgroups, 1, 1);
-		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
+	if (setSelected) {
+		for (MaterialPoint& mp : pointCloud->points) {
+			if (mp.selected != 0.0) {
+				mp.Fe = multFe * mp.Fe;
+				mp.Fp = multFp * mp.Fp;
 
-		if (m_mpmAlgorithmEngine->m_algo_code == MpmAlgorithmEngine::MPM_ALGORITHM_CODE::CPP) {
-			// shouldn't need to map cpu to gpu first b/c that happens already at the end of the cpp mode time step for rendering,
-			// and this fxn can only be called in between time steps
-			m_mpmEngine->MapGPUPointCloudsToCPU();
+				// update vol, assuming multFe is non-singular
+				mp.vol = 1.0 / glm::determinant(multFe * multFp) * mp.vol;
+			}
+		}
+	}
+	else {
+		for (MaterialPoint& mp : pointCloud->points) {
+			mp.Fe = multFe * mp.Fe;
+			mp.Fp = multFp * mp.Fp;
+
+			// update vol, assuming multFe is non-singular
+			mp.vol = 1.0 / glm::determinant(multFe * multFp) * mp.vol;
 		}
 	}
 }
+
+void mpm::MpmControlEngine::SetLameParameters(std::shared_ptr<PointCloud> pointCloud, real lam, real mew, bool setSelected)
+{
+	if (setSelected) {
+		for (MaterialPoint& mp : pointCloud->points) {
+			if (mp.selected != 0.0) {
+				mp.lam = lam;
+				mp.mew = mew;
+			}
+		}
+	}
+	else {
+		for (MaterialPoint& mp : pointCloud->points) {
+			mp.lam = lam;
+			mp.mew = mew;
+		}
+	}
+}
+
+
+//void mpm::MpmControlEngine::SetDeformationGradientsGLSL(std::string pointCloudID, mat2 Fe, mat2 Fp, bool setSelected)
+//{
+//	if (m_mpmEngine->m_pointCloudMap.count(pointCloudID)) {
+//		SetDeformationGradientsGLSL(m_mpmEngine->m_pointCloudMap[pointCloudID], Fe, Fp, setSelected);
+//	}
+//}
+//
+//void mpm::MpmControlEngine::SetDeformationGradientsGLSL(std::shared_ptr<PointCloud> pointCloud, mat2 Fe, mat2 Fp, bool setSelected)
+//{
+//	if (m_mpmAlgorithmEngine->m_algo_code == MpmAlgorithmEngine::MPM_ALGORITHM_CODE::CPP) {
+//		// shouldn't need to map cpu to gpu first b/c that happens already at the end of the cpp mode time step for rendering,
+//		// and this fxn can only be called in between time steps
+//		m_mpmEngine->MapCPUPointCloudToGPU(pointCloud);
+//	}
+//
+//	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloud->ssbo);
+//	m_pSetDeformationGradients->Use();
+//	m_pSetDeformationGradients->SetMat("setFe", Fe);
+//	m_pSetDeformationGradients->SetMat("setFp", Fp);
+//	m_pSetDeformationGradients->SetBool("setSelected", setSelected);
+//	int p_workgroups = int(glm::ceil(real(pointCloud->N) / real(G2P_WORKGROUP_SIZE)));
+//	glDispatchCompute(p_workgroups, 1, 1);
+//	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+//	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
+//
+//	if (m_mpmAlgorithmEngine->m_algo_code == MpmAlgorithmEngine::MPM_ALGORITHM_CODE::CPP) {
+//		// shouldn't need to map cpu to gpu first b/c that happens already at the end of the cpp mode time step for rendering,
+//		// and this fxn can only be called in between time steps
+//		m_mpmEngine->MapGPUPointCloudToCPU(pointCloud);
+//	}
+//}
+//
+//void mpm::MpmControlEngine::MultiplyDeformationGradientsGLSL(std::string pointCloudID, mat2 multFe, mat2 multFp, bool multSelected)
+//{
+//	if (m_mpmEngine->m_pointCloudMap.count(pointCloudID)) {
+//		std::shared_ptr<PointCloud> pointCloud = m_mpmEngine->m_pointCloudMap[pointCloudID];
+//		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloud->ssbo);
+//		m_pMultDeformationGradients->Use();
+//		m_pMultDeformationGradients->SetMat("multFe", multFe);
+//		m_pMultDeformationGradients->SetMat("multFp", multFp);
+//		m_pMultDeformationGradients->SetBool("multSelected", multSelected);
+//		int p_workgroups = int(glm::ceil(real(pointCloud->N) / real(G2P_WORKGROUP_SIZE)));
+//		glDispatchCompute(p_workgroups, 1, 1);
+//		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+//		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
+//
+//		if (m_mpmAlgorithmEngine->m_algo_code == MpmAlgorithmEngine::MPM_ALGORITHM_CODE::CPP) {
+//			// shouldn't need to map cpu to gpu first b/c that happens already at the end of the cpp mode time step for rendering,
+//			// and this fxn can only be called in between time steps
+//			m_mpmEngine->MapGPUPointCloudsToCPU();
+//		}
+//	}
+//}
+//
+//void mpm::MpmControlEngine::SetLameParametersGLSL(std::string pointCloudID, real lam, real mew, bool setSelected)
+//{
+//	if (m_mpmEngine->m_pointCloudMap.count(pointCloudID)) {
+//		std::shared_ptr<PointCloud> pointCloud = m_mpmEngine->m_pointCloudMap[pointCloudID];
+//		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, pointCloud->ssbo);
+//		m_pSetLameParamters->Use();
+//		m_pSetLameParamters->SetReal("setLam", lam);
+//		m_pSetLameParamters->SetReal("setMew", mew);
+//		m_pSetLameParamters->SetBool("setSelected", setSelected);
+//		int p_workgroups = int(glm::ceil(real(pointCloud->N) / real(G2P_WORKGROUP_SIZE)));
+//		glDispatchCompute(p_workgroups, 1, 1);
+//		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+//		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
+//
+//		if (m_mpmAlgorithmEngine->m_algo_code == MpmAlgorithmEngine::MPM_ALGORITHM_CODE::CPP) {
+//			// shouldn't need to map cpu to gpu first b/c that happens already at the end of the cpp mode time step for rendering,
+//			// and this fxn can only be called in between time steps
+//			m_mpmEngine->MapGPUPointCloudsToCPU();
+//		}
+//	}
+//}
 
 
 

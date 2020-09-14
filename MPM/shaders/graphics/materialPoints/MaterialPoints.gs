@@ -23,7 +23,9 @@ void main() {
     //gl_PointSize = gl_in[0].gl_PointSize;
     gs_pointID = vs_pointID[0];
     
-    dvec2 grid_vec = vec2(GRID_SIZE_X, GRID_SIZE_Y);
+    // int maxDim = max(GRID_SIZE_X, GRID_SIZE_Y);
+    // dvec2 grid_vec = dvec2(maxDim, maxDim);
+    dvec2 grid_vec = dvec2(GRID_SIZE_X, GRID_SIZE_Y);
     dvec2 center = points[vs_pointID[0]].x.xy;
 
     dvec2 norm_center = center;

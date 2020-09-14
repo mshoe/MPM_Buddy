@@ -5,9 +5,9 @@ void mpm::MpmAlgorithmEngine::InitShaders()
 	using namespace ShaderPaths;
 
 	// first compile shaders
-	m_gReset = std::make_unique<ComputeShader>(
+	/*m_gReset = std::make_unique<ComputeShader>(
 		std::vector<std::string>{computePath + "gResetNodes.comp"},
-		std::vector<std::string>{mpmHeadersPath + "mpm_header1.comp"});
+		std::vector<std::string>{mpmHeadersPath + "mpm_header1.comp"});*/
 	//m_p2gScatter = std::make_unique<ComputeShader>(
 	//	std::vector<std::string>{computePath + "p2gScatterParticleAndUpdateNodes.comp"},
 	//	std::vector<std::string>{mpmHeadersPath + "mpm_header1.comp", mpmHeadersPath + "shapeFunctions.comp"});
@@ -18,12 +18,12 @@ void mpm::MpmAlgorithmEngine::InitShaders()
 	//m_g2pGather = std::make_unique<ComputeShader>(
 	//	std::vector<std::string>{computePath + "g2pGatherNodesAndUpdateParticle.comp"},
 	//	std::vector<std::string>{mpmHeadersPath + "mpm_header1.comp", mpmHeadersPath + "shapeFunctions.comp", mpmHeadersPath + "energyFunctions.comp"});
-	m_p2gCalcVolumes = std::make_unique<ComputeShader>(
+	/*m_p2gCalcVolumes = std::make_unique<ComputeShader>(
 		std::vector<std::string>{computePath + "p2gCalculateVolumes.comp"},
 		std::vector<std::string>{mpmHeadersPath + "mpm_header1.comp", mpmHeadersPath + "shapeFunctions.comp"});
 	m_g2pCalcVolumes = std::make_unique<ComputeShader>(
 		std::vector<std::string>{computePath + "g2pCalculateVolumes.comp"},
-		std::vector<std::string>{mpmHeadersPath + "mpm_header1.comp", mpmHeadersPath + "shapeFunctions.comp"});
+		std::vector<std::string>{mpmHeadersPath + "mpm_header1.comp", mpmHeadersPath + "shapeFunctions.comp"});*/
 
 
 

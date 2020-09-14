@@ -25,7 +25,7 @@ void mpm::MpmGeometryEngine::GenPointCloudPolygon(std::shared_ptr<sdf::Polygon> 
 	glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
 
 	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(polygonID, *polygon, 
-														   real(m_mpmEngine->m_chunks_x) * real(CHUNK_WIDTH), real(m_mpmEngine->m_chunks_y) * real(CHUNK_WIDTH), 
+														   real(m_mpmEngine->m_grid->grid_dim_x), real(m_mpmEngine->m_grid->grid_dim_y),
 														   0.0, 0.0, m_particleSpacing, 
 														   m_mpmAlgorithmEngine->m_mpParameters, m_mpmAlgorithmEngine->m_comodel,
 														   sdf::SDF_OPTION::NORMAL, m_invertedSdf, m_fixedPointCloud, 
@@ -59,7 +59,7 @@ void mpm::MpmGeometryEngine::GenPointCloudPWLine()
 	glm::highp_fvec4 color = glm::highp_fvec4(m_color[0], m_color[1], m_color[2], m_color[3]);
 
 	std::shared_ptr<PointCloud> pointCloud = GenPointCloud(pwLineID, *m_pwLine, 
-														   real(m_mpmEngine->m_chunks_x) * real(CHUNK_WIDTH), real(m_mpmEngine->m_chunks_y) * real(CHUNK_WIDTH), 
+														   real(m_mpmEngine->m_grid->grid_dim_x), real(m_mpmEngine->m_grid->grid_dim_y),
 														   0.0, m_pwLineRounding, m_particleSpacing, 
 														   m_mpmAlgorithmEngine->m_mpParameters, m_mpmAlgorithmEngine->m_comodel,
 														   sdf::SDF_OPTION::ROUNDED, false, m_fixedPointCloud, 
@@ -256,7 +256,7 @@ void mpm::MpmGeometryEngine::HandleGeometryStates()
 
 		real inner_rounding = m_circle_r - m_circle_inner_radius;
 		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(circleID, shape, 
-															   real(chunks_x) * real(CHUNK_WIDTH), real(chunks_y) * real(CHUNK_WIDTH), 
+															   real(m_mpmEngine->m_grid->grid_dim_x), real(m_mpmEngine->m_grid->grid_dim_y),
 															   inner_rounding, m_circle_rounding, m_particleSpacing, 
 															   m_mpmAlgorithmEngine->m_mpParameters, m_mpmAlgorithmEngine->m_comodel,
 															   sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, 
@@ -291,7 +291,7 @@ void mpm::MpmGeometryEngine::HandleGeometryStates()
 
 		real inner_rounding = glm::min(m_rect_b, m_rect_h) - m_rect_inner_radius;
 		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(rectID, shape, 
-															   real(chunks_x) * real(CHUNK_WIDTH), real(chunks_y) * real(CHUNK_WIDTH), 
+															   real(m_mpmEngine->m_grid->grid_dim_x), real(m_mpmEngine->m_grid->grid_dim_y),
 															   inner_rounding, m_rect_rounding, m_particleSpacing, 
 															   m_mpmAlgorithmEngine->m_mpParameters, m_mpmAlgorithmEngine->m_comodel,
 															   sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, 
@@ -325,7 +325,7 @@ void mpm::MpmGeometryEngine::HandleGeometryStates()
 
 		real inner_rounding = glm::min(m_iso_tri_b, m_iso_tri_h) - m_iso_tri_inner_radius;
 		std::shared_ptr<PointCloud> pointCloud = GenPointCloud(isoTriID, shape, 
-															   real(chunks_x) * real(CHUNK_WIDTH), real(chunks_y) * real(CHUNK_WIDTH), 
+															   real(m_mpmEngine->m_grid->grid_dim_x), real(m_mpmEngine->m_grid->grid_dim_y),
 															   inner_rounding, m_iso_tri_rounding, m_particleSpacing, 
 															   m_mpmAlgorithmEngine->m_mpParameters, m_mpmAlgorithmEngine->m_comodel,
 															   sdf::SDF_OPTION::HOLLOW, false, m_fixedPointCloud, 

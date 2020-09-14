@@ -32,19 +32,24 @@ void main() {
     dvec2 grid_vec = dvec2(GRID_SIZE_X, GRID_SIZE_Y);
     dvec2 vector = dvec2(0.0, 0.0);
 
+
+    gridNode node;
+    GetNode(gridNodeI[0], gridNodeJ[0], node);
+
+
     if (selectedVector == VIS_GRID_MOMENTUM) { // momentum
-        vector = nodes[gridNodeI[0]][gridNodeJ[0]].momentum / grid_vec; // normalizing momentum
+        vector = node.momentum / grid_vec; // normalizing momentum
     } else if (selectedVector == VIS_GRID_VELOCITY) { // velocity
-        vector = nodes[gridNodeI[0]][gridNodeJ[0]].v / grid_vec; // normalizing velocity?
+        vector = node.v / grid_vec; // normalizing velocity?
     } else if (selectedVector == VIS_GRID_ACCELERATION) { // acceleration
-        double m = (nodes[gridNodeI[0]][gridNodeJ[0]].m == 0) ? 1.0 : nodes[gridNodeI[0]][gridNodeJ[0]].m;
-        vector = nodes[gridNodeI[0]][gridNodeJ[0]].force / grid_vec / m;
+        double m = (node.m == 0) ? 1.0 : node.m;
+        vector = node.force / grid_vec / m;
     } else if (selectedVector == VIS_GRID_FORCE) { // force
-        vector = nodes[gridNodeI[0]][gridNodeJ[0]].force / grid_vec;
+        vector = node.force / grid_vec;
     } else if (selectedVector == VIS_GRID_RESIDUAL_VELOCITY) { // residual velocity (rk)
-        vector = nodes[gridNodeI[0]][gridNodeJ[0]].rk / grid_vec;
+        vector = node.rk / grid_vec;
     } else if (selectedVector == VIS_GRID_NODAL_ACCELERATION) { // nodal accelerations
-        vector = nodes[gridNodeI[0]][gridNodeJ[0]].nodalAcceleration / grid_vec;
+        vector = node.nodalAcceleration / grid_vec;
     }
 
     double vLength = clamp(length(vector), 0.0, maxGridVectorLength);

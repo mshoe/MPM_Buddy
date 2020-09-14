@@ -8,6 +8,11 @@ void mpm::MpmAlgorithmEngine::MpmTimeStep(real dt)
 	real rt_dt = 1.0 / 60.0;
 	int timeStepCount = 0;
 
+
+	
+
+
+
 	if (!m_rt) {
 		MpmTimeStepAlgoSelector(m_dt);
 		m_time += m_dt;
@@ -23,12 +28,29 @@ void mpm::MpmAlgorithmEngine::MpmTimeStep(real dt)
 		m_timeStep += timeStepCount;
 	}
 
+
+	
+
 	m_mpmEngine->MapCPUPointCloudsToGPU();
 	m_mpmEngine->MapCPUGridToGPU();
 }
 
 void mpm::MpmAlgorithmEngine::MpmTimeStepAlgoSelector(real dt)
 {
+
+
+	// For each point, calculate kinetic and strain energy
+	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_mpmEngine->m_pointCloudMap) {
+
+		for (MaterialPoint& mp : pointCloudPair.second->points) {
+			mp.se = mp.SE(pointCloudPair.second->comodel);
+			mp.delta_SE = mp.se;
+			mp.ke = mp.KE();
+			mp.delta_KE = mp.ke;
+		}
+	}
+
+
 	switch (m_mpm_algo) {
 	case MPM_ALGO::MLS:
 		MpmTimeStep_MLS(m_dt);
@@ -45,33 +67,28 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepAlgoSelector(real dt)
 	default:
 		break;
 	}
+
+
+
+
+	// Measure change in kinetic and strain energy on points
+	for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_mpmEngine->m_pointCloudMap) {
+
+		for (MaterialPoint& mp : pointCloudPair.second->points) {
+			mp.se = mp.SE(pointCloudPair.second->comodel);
+			mp.delta_SE = mp.se - mp.delta_SE;
+			mp.ke = mp.KE();
+			mp.delta_KE = mp.ke - mp.delta_KE;
+		}
+	}
+
 	return;
 }
 
 void mpm::MpmAlgorithmEngine::Update()
 {
 	if (!m_paused) {
-		switch (m_algo_code) {
-		case MPM_ALGORITHM_CODE::GLSL:
-			if (!m_rt) {
-				MpmTimeStep_GLSL(m_dt);
-
-			}
-			else {
-				real curr_dt = 0.0;
-				real rt_dt = 1.0 / 60.0;
-				while (curr_dt < rt_dt) {
-					MpmTimeStep_GLSL(m_dt);
-					curr_dt += m_dt;
-				}
-			}
-			break;
-		case MPM_ALGORITHM_CODE::CPP:
-			MpmTimeStep(m_dt);
-			break;
-		default:
-			break;
-		}
+		MpmTimeStep(m_dt);
 	}
 }
 
@@ -99,10 +116,11 @@ void mpm::MpmAlgorithmEngine::CalculatePointCloudVolumesCPP(std::string pointClo
 {
 
 	// reset the grid masses
-	for (size_t i = 0; i < size_t(m_mpmEngine->m_chunks_x) * size_t(m_cppChunkX); i++) {
-		for (size_t j = 0; j < size_t(m_mpmEngine->m_chunks_y) * size_t(m_cppChunkY); j++) {
-			size_t index = i + GRID_SIZE_Y * j;
-			m_mpmEngine->m_grid->nodes[index].m = 0.0;
+	for (size_t i = 0; i < m_mpmEngine->m_grid->grid_dim_x; i++) {
+		for (size_t j = 0; j < m_mpmEngine->m_grid->grid_dim_y; j++) {
+			GridNode& node = m_mpmEngine->m_grid->GetNode(i, j);
+			node.m = 0.0;
+			//std::cout << node.x.x << ", " << node.x.y << std::endl;
 		}
 	}
 
@@ -110,6 +128,8 @@ void mpm::MpmAlgorithmEngine::CalculatePointCloudVolumesCPP(std::string pointClo
 	for (MaterialPoint& mp : pointCloud->points) {
 
 		nodeGetter = Basis::NodeGetter(mp, m_mpmEngine->m_grid, m_basisFunction);
+
+		//std::cout << nodeGetter.botLeftNodeIndex.x << ", " << nodeGetter.botLeftNodeIndex.y << std::endl;
 
 		while (!nodeGetter.Complete()) {
 			GridNode& node = nodeGetter.NextNode();
@@ -121,6 +141,13 @@ void mpm::MpmAlgorithmEngine::CalculatePointCloudVolumesCPP(std::string pointClo
 				real dy = dpg.y;
 				real wpg = nodeGetter.ShapeFunction(dx) * nodeGetter.ShapeFunction(dy);
 
+				
+
+				//std::cout << xg.x << ", " << xg.y << std::endl;
+				//std::cout << nodeGetter.botLeftNodeIndex.x + nodeGetter.i << ", " << nodeGetter.botLeftNodeIndex.y + nodeGetter.j << std::endl << std::endl;
+				
+				//std::cout << mp.x.x << ", " << mp.x.y << std::endl << std::endl;
+				//std::cout << dpg.x << ", " << dpg.y << std::endl;
 
 				// P2G mass
 				node.m += wpg * mp.m;
@@ -177,4 +204,20 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepP_Stress(real dt)
 			UpdateStress(mp, pointCloudPair.second->comodel);
 		}
 	}
+}
+
+void mpm::MpmAlgorithmEngine::MpmReset()
+{
+	m_mpmEngine->m_pointCloudMap.clear();
+	m_mpmEngine->m_circleCount = 0;
+	m_mpmEngine->m_rectCount = 0;
+	m_mpmEngine->m_isoTriCount = 0;
+	m_mpmEngine->m_polygonCount = 0;
+	m_mpmEngine->m_pwLineCount = 0;
+	m_timeStep = 0;
+	m_time = 0.0;
+	/*glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_mpmEngine->gridSSBO);
+	m_gReset->Use();
+	glDispatchCompute(m_mpmEngine->m_chunks_x, m_mpmEngine->m_chunks_y, 1);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);*/
 }

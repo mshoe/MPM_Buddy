@@ -105,6 +105,21 @@ void mpm::MpmEngine::HandleStates()
 	m_mpmGeometryEngine->HandleGeometryStates();
 }
 
+void mpm::MpmEngine::InitGrid(int grid_dim_x, int grid_dim_y)
+{
+	// Initialize the grid SSBO on the GPU
+	m_grid = std::make_shared<Grid>(grid_dim_x, grid_dim_y);
+
+	glCreateBuffers(1, &gridSSBO);
+
+	glNamedBufferStorage(
+		gridSSBO,
+		sizeof(GridNode) * grid_dim_x * grid_dim_y,
+		&(m_grid->nodes[0].m),
+		GL_MAP_READ_BIT | GL_MAP_WRITE_BIT // adding write bit for debug purposes
+	);
+}
+
 void mpm::MpmEngine::UpdatePointCloudData(std::string pointCloudStr)
 {
 	// Note: I'm not sure this is working correctly, 8/20/2020
@@ -120,10 +135,10 @@ void mpm::MpmEngine::UpdatePointCloudData(std::string pointCloudStr)
 
 void mpm::MpmEngine::UpdateNodeData()
 {
-	if (0 <= m_node[0] && m_node[0] < GRID_SIZE_X && 0 <= m_node[1] && m_node[1] < GRID_SIZE_Y) {
+	if (InBounds(m_node[0], m_grid->grid_dim_x, m_node[1], m_grid->grid_dim_y)) {
 		void* ptr = glMapNamedBuffer(gridSSBO, GL_READ_ONLY);
 		GridNode* data = static_cast<GridNode*>(ptr);
-		m_gn = data[m_node[0] * GRID_SIZE_X + m_node[1]];
+		m_gn = data[m_node[0] + m_node[1] * m_grid->grid_dim_y];
 		glUnmapNamedBuffer(gridSSBO);
 	}
 }

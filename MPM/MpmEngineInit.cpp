@@ -1,5 +1,25 @@
 #include "MpmEngine.h"
 
+mpm::MpmEngine::MpmEngine()
+{
+	{
+		InitComputeShaderPipeline();
+		InitEngines();
+
+		// Create OpenGL render window based on grid dimensions
+
+		
+
+		m_openGLScreen = std::make_shared<OpenGLScreen>();
+		m_openGLScreen->center = vec2(1350.0, 450.0);
+		m_openGLScreen->screen_dimensions = vec2((real)SRC_WIDTH, (real)SRC_HEIGHT);
+		m_openGLScreen->sim_dimensions = vec2(900.0, 900.0);
+		
+
+		InitMpmSpace(64, 64);
+	}
+}
+
 bool mpm::MpmEngine::InitEngines()
 {
 	m_mpmGeometryEngine = std::make_shared<MpmGeometryEngine>();
@@ -14,6 +34,16 @@ bool mpm::MpmEngine::InitEngines()
 	m_mpmAlgorithmEngine->SetMpmEngine(this);
 	m_mpmAlgorithmEngine->SetMpmControlEngine(m_mpmControlEngine);
 	m_mpmAlgorithmEngine->SetMpmGeometryEngine(m_mpmGeometryEngine);
+
+	
+	return true;
+}
+
+bool mpm::MpmEngine::InitMpmSpace(int grid_dim_x, int grid_dim_y)
+{
+	InitGrid(grid_dim_x, grid_dim_y);
+	InitZoomWindow();
+	InitMpmRenderWindow();
 	return true;
 }
 
@@ -72,7 +102,7 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 		std::vector<std::string>{graphicsGridPath + "gridShaderVector.gs"},
 		std::vector<std::string>{graphicsGridPath + "gridShader.fs"},
 		std::vector<std::string>{mpmHeadersPath + "mpm_header1.comp"});
-	m_gridShaderMarchingSquares = std::make_shared<StandardShader>(
+	/*m_gridShaderMarchingSquares = std::make_shared<StandardShader>(
 		std::vector<std::string>{graphicsGridPath + "marchingSquares.vs"},
 		std::vector<std::string>{graphicsGridPath + "marchingSquares.gs"},
 		std::vector<std::string>{graphicsGridPath + "marchingSquares.fs"},
@@ -81,7 +111,7 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 		std::vector<std::string>{graphicsGridPath + "densityField.vs"},
 		std::vector<std::string>{},
 		std::vector<std::string>{graphicsGridPath + "densityField.fs"},
-		std::vector<std::string>{mpmHeadersPath + "mpm_header1.comp", mpmHeadersPath + "shapeFunctions.comp"});
+		std::vector<std::string>{mpmHeadersPath + "mpm_header1.comp", mpmHeadersPath + "shapeFunctions.comp"});*/
 
 	m_borderShader = std::make_shared<StandardShader>(
 		std::vector<std::string>{graphicsGeometryPath + "polygon.vs"},
@@ -92,25 +122,9 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 	
 
 
-	m_openGLScreen = std::make_shared<OpenGLScreen>();
-	m_openGLScreen->center = vec2(1350.0, 450.0);
-	m_openGLScreen->screen_dimensions = vec2((real)SRC_WIDTH, (real)SRC_HEIGHT);
-	m_openGLScreen->sim_dimensions = vec2(900.0, 900.0);
+	
 
-	InitZoomWindow();
-	InitMpmRenderWindow();
-
-	// Initialize the grid SSBO on the GPU
-	m_grid = std::make_shared<Grid>(GRID_SIZE_X, GRID_SIZE_Y);
-
-	glCreateBuffers(1, &gridSSBO);
-
-	glNamedBufferStorage(
-		gridSSBO,
-		sizeof(GridNode) * GRID_SIZE_X * GRID_SIZE_Y,
-		&(m_grid->nodes[0].m),
-		GL_MAP_READ_BIT | GL_MAP_WRITE_BIT // adding write bit for debug purposes
-	);
+	
 
 	
 
@@ -137,10 +151,18 @@ void mpm::MpmEngine::InitZoomWindow() {
 
 void mpm::MpmEngine::InitMpmRenderWindow()
 {
-	m_mpmRenderWindow = std::make_shared<ImGuiScreen>(vec2(800.0, 800.0));
+	real max_dim = glm::max(m_grid->grid_dim_x, m_grid->grid_dim_y);
+	vec2 max_dims = vec2(max_dim, max_dim);
+	vec2 norm_dims = vec2(m_grid->grid_dim_x, m_grid->grid_dim_y) / max_dims;
+	vec2 sim_dimensions = vec2(800, 800) * norm_dims;
+
+	m_mpmRenderWindow = std::make_shared<ImGuiScreen>(sim_dimensions);
 	m_mpmRenderWindow->center = vec2(400.0, 400.0);
 	//m_zoomWindow->screen_dimensions = vec2(450.0, 450.0);
-	m_mpmRenderWindow->sim_dimensions = vec2(800.0, 800.0);
+	//m_mpmRenderWindow->sim_dimensions = vec2(800.0, 800.0);
+
+	
+	m_mpmRenderWindow->sim_dimensions = sim_dimensions;
 }
 
 //void mpm::MpmEngine::InitPolygonEditorScreen()

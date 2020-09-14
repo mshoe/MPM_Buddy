@@ -45,10 +45,10 @@ void mpm::MpmAlgorithmEngine::ImGuiTimeIntegrator()
 		ImGui::Checkbox("Realtime Rendering", &m_rt);
 
 
-		ImGui::Checkbox("Implicit Time Integration (W I P)", &m_semi_implicit_CR);
+		/*ImGui::Checkbox("Implicit Time Integration (W I P)", &m_semi_implicit_CR);
 		ImGui::InputReal("Implict Ratio", &m_semi_implicit_ratio);
 		ImGui::InputInt("Max CR Iterations", &m_max_conj_res_iter);
-		ImGui::InputReal("L2 Norm Threshold", &m_L2_norm_threshold);
+		ImGui::InputReal("L2 Norm Threshold", &m_L2_norm_threshold);*/
 
 		/*static size_t transferScheme = size_t(TRANSFER_SCHEME::APIC);
 		m_mpmEngine->ImGuiDropDown("Transfer Scheme", transferScheme, m_transferSchemeStrVec);
@@ -58,83 +58,83 @@ void mpm::MpmAlgorithmEngine::ImGuiTimeIntegrator()
 
 		ImGui::Checkbox("Paused", &m_paused);
 		if (ImGui::Button("Advance") && m_paused) {
-			MpmTimeStep_GLSL(m_dt);
-			m_mpmEngine->UpdatePointCloudData(m_mpmEngine->m_pointCloudViewSelectStr);
-			m_mpmEngine->UpdateNodeData();
+			MpmTimeStep(m_dt);
+			//m_mpmEngine->UpdatePointCloudData(m_mpmEngine->m_pointCloudViewSelectStr);
+			//m_mpmEngine->UpdateNodeData();
 		}
 		if (ImGui::Button("Advance 10") && m_paused) {
 			for (int i = 0; i < 10; i++) {
-				MpmTimeStep_GLSL(m_dt);
+				MpmTimeStep(m_dt);
 			}
-			m_mpmEngine->UpdatePointCloudData(m_mpmEngine->m_pointCloudViewSelectStr);
-			m_mpmEngine->UpdateNodeData();
+			//m_mpmEngine->UpdatePointCloudData(m_mpmEngine->m_pointCloudViewSelectStr);
+			//m_mpmEngine->UpdateNodeData();
 		}
 		if (ImGui::Button("Advance 100") && m_paused) {
 			for (int i = 0; i < 100; i++) {
-				MpmTimeStep_GLSL(m_dt);
+				MpmTimeStep(m_dt);
 			}
-			m_mpmEngine->UpdatePointCloudData(m_mpmEngine->m_pointCloudViewSelectStr);
-			m_mpmEngine->UpdateNodeData();
+			//m_mpmEngine->UpdatePointCloudData(m_mpmEngine->m_pointCloudViewSelectStr);
+			//m_mpmEngine->UpdateNodeData();
 		}
 		if (ImGui::Button("Reset")) {
-			MpmReset_GLSL();
+			MpmReset();
 		}
-		ImGui::Text("MPM Algorithm Breakdown");
-		if (ImGui::Button("P2G") && m_paused) {
-			MpmTimeStepP2G_GLSL(m_dt);
-			m_mpmEngine->UpdatePointCloudData(m_mpmEngine->m_pointCloudViewSelectStr);
-			m_mpmEngine->UpdateNodeData();
-		}
-		if (ImGui::Button("Explicit Grid Update") && m_paused) {
-			MpmTimeStepExplicitGridUpdate_GLSL(m_dt);
-			m_mpmEngine->UpdatePointCloudData(m_mpmEngine->m_pointCloudViewSelectStr);
-			m_mpmEngine->UpdateNodeData();
-		}
-		if (ImGui::Button("Semi-Implicit Grid Update") && m_paused) {
-			MpmTimeStepSemiImplicitCRGridUpdate_GLSL(m_dt);
-			m_mpmEngine->UpdatePointCloudData(m_mpmEngine->m_pointCloudViewSelectStr);
-			m_mpmEngine->UpdateNodeData();
-		}
-		if (ImGui::Button("G2P") && m_paused) {
-			MpmTimeStepG2P_GLSL(m_dt);
-			m_mpmEngine->UpdatePointCloudData(m_mpmEngine->m_pointCloudViewSelectStr);
-			m_mpmEngine->UpdateNodeData();
-		}
+		//ImGui::Text("MPM Algorithm Breakdown");
+		//if (ImGui::Button("P2G") && m_paused) {
+		//	MpmTimeStepP2G_GLSL(m_dt);
+		//	m_mpmEngine->UpdatePointCloudData(m_mpmEngine->m_pointCloudViewSelectStr);
+		//	m_mpmEngine->UpdateNodeData();
+		//}
+		//if (ImGui::Button("Explicit Grid Update") && m_paused) {
+		//	MpmTimeStepExplicitGridUpdate_GLSL(m_dt);
+		//	m_mpmEngine->UpdatePointCloudData(m_mpmEngine->m_pointCloudViewSelectStr);
+		//	m_mpmEngine->UpdateNodeData();
+		//}
+		//if (ImGui::Button("Semi-Implicit Grid Update") && m_paused) {
+		//	MpmTimeStepSemiImplicitCRGridUpdate_GLSL(m_dt);
+		//	m_mpmEngine->UpdatePointCloudData(m_mpmEngine->m_pointCloudViewSelectStr);
+		//	m_mpmEngine->UpdateNodeData();
+		//}
+		//if (ImGui::Button("G2P") && m_paused) {
+		//	MpmTimeStepG2P_GLSL(m_dt);
+		//	m_mpmEngine->UpdatePointCloudData(m_mpmEngine->m_pointCloudViewSelectStr);
+		//	m_mpmEngine->UpdateNodeData();
+		//}
 
-		ImGui::Text("Conjugate residual steps (used after \"Explicit Grid Update\"");
-		if (ImGui::Button("CR Init") && m_paused) {
-			m_cr_step = 0;
-			MpmCRInit_GLSL(m_dt);
-			m_mpmEngine->UpdatePointCloudData(m_mpmEngine->m_pointCloudViewSelectStr);
-			m_mpmEngine->UpdateNodeData();
-		}
-		bool converged = false;
-		ImGui::Checkbox("Pause if not converged", &m_pause_if_not_converged);
-		/*if (ImGui::Button("CR Step") && m_paused) {
-			converged = MpmCRStep(m_dt);
-			m_cr_step++;
-			UpdateNodeData();
-		}
-		if (ImGui::Button("CR Step 10") && m_paused) {
-			for (int i = 0; i < 10; i++) {
-				converged = MpmCRStep(m_dt);
-			}
-			m_cr_step += 10;
-			UpdateNodeData();
-		}
-		if (ImGui::Button("CR Step 100") && m_paused) {
-			for (int i = 0; i < 100; i++) {
-				converged = MpmCRStep(m_dt);
-			}
-			m_cr_step += 100;
-			UpdateNodeData();
-		}
-		ImGui::Text((std::string("CR step: ") + std::to_string(m_cr_step)).c_str());*/
-		if (ImGui::Button("CR End") && m_paused) {
-			MpmCREnd_GLSL(m_dt);
-			m_mpmEngine->UpdatePointCloudData(m_mpmEngine->m_pointCloudViewSelectStr);
-			m_mpmEngine->UpdateNodeData();
-		}
+		//ImGui::Text("Conjugate residual steps (used after \"Explicit Grid Update\"");
+		//if (ImGui::Button("CR Init") && m_paused) {
+		//	m_cr_step = 0;
+		//	MpmCRInit_GLSL(m_dt);
+		//	m_mpmEngine->UpdatePointCloudData(m_mpmEngine->m_pointCloudViewSelectStr);
+		//	m_mpmEngine->UpdateNodeData();
+		//}
+		//bool converged = false;
+		//ImGui::Checkbox("Pause if not converged", &m_pause_if_not_converged);
+		///*if (ImGui::Button("CR Step") && m_paused) {
+		//	converged = MpmCRStep(m_dt);
+		//	m_cr_step++;
+		//	UpdateNodeData();
+		//}
+		//if (ImGui::Button("CR Step 10") && m_paused) {
+		//	for (int i = 0; i < 10; i++) {
+		//		converged = MpmCRStep(m_dt);
+		//	}
+		//	m_cr_step += 10;
+		//	UpdateNodeData();
+		//}
+		//if (ImGui::Button("CR Step 100") && m_paused) {
+		//	for (int i = 0; i < 100; i++) {
+		//		converged = MpmCRStep(m_dt);
+		//	}
+		//	m_cr_step += 100;
+		//	UpdateNodeData();
+		//}
+		//ImGui::Text((std::string("CR step: ") + std::to_string(m_cr_step)).c_str());*/
+		//if (ImGui::Button("CR End") && m_paused) {
+		//	MpmCREnd_GLSL(m_dt);
+		//	m_mpmEngine->UpdatePointCloudData(m_mpmEngine->m_pointCloudViewSelectStr);
+		//	m_mpmEngine->UpdateNodeData();
+		//}
 
 		//ImGui::DisplayNamedBoolColor("CR Convergence", converged, )
 	}
@@ -160,34 +160,54 @@ void mpm::MpmAlgorithmEngine::ImGuiMaterialParametersEditor()
 		}
 		switch (m_comodel) {
 		case ENERGY_MODEL::LINEAR_ELASTICITY:
-			ImGui::InputReal("Young's Modulus", &m_mpParameters.youngMod, 1.0, 10.0, "%.1f");
-			ImGui::InputReal("Poisson's Ratio", &m_mpParameters.poisson, 0.005, 0.05, "%.3f");
-			ImGui::InputReal("Density", &m_mpParameters.density, 0.01, 0.1, "%.2f");
+			ImGui::InputReal("Young's Modulus", &m_mpParameters.youngMod, 1.0, 10.0, "%.6f");
+			ImGui::InputReal("Poisson's Ratio", &m_mpParameters.poisson, 0.005, 0.05, "%.6f");
+			ImGui::InputReal("Density", &m_mpParameters.density, 0.01, 0.1, "%.6f");
 			break;
 		case ENERGY_MODEL::NEO_HOOKEAN_ELASTICITY:
-			ImGui::InputReal("Young's Modulus", &m_mpParameters.youngMod, 1.0, 10.0, "%.1f");
-			ImGui::InputReal("Poisson's Ratio", &m_mpParameters.poisson, 0.005, 0.05, "%.3f");
-			ImGui::InputReal("Density", &m_mpParameters.density, 0.01, 0.1, "%.2f");
+			ImGui::InputReal("Young's Modulus", &m_mpParameters.youngMod, 1.0, 10.0, "%.6f");
+			ImGui::InputReal("Poisson's Ratio", &m_mpParameters.poisson, 0.005, 0.05, "%.6f");
+			ImGui::InputReal("Density", &m_mpParameters.density, 0.01, 0.1, "%.6f");
 			break;
 		case ENERGY_MODEL::FIXED_COROTATIONAL_ELASTICITY:
-			ImGui::InputReal("Young's Modulus", &m_mpParameters.youngMod, 1.0, 10.0, "%.1f");
-			ImGui::InputReal("Poisson's Ratio", &m_mpParameters.poisson, 0.005, 0.05, "%.3f");
-			ImGui::InputReal("Density", &m_mpParameters.density, 0.01, 0.1, "%.2f");
+			ImGui::InputReal("Young's Modulus", &m_mpParameters.youngMod, 1.0, 10.0, "%.6");
+			ImGui::InputReal("Poisson's Ratio", &m_mpParameters.poisson, 0.005, 0.05, "%.6f");
+			ImGui::InputReal("Density", &m_mpParameters.density, 0.01, 0.1, "%.6f");
 			break;
 		case ENERGY_MODEL::SIMPLE_SNOW:
-			ImGui::InputReal("Young's Modulus", &m_mpParameters.youngMod, 1.0, 10.0, "%.1f");
-			ImGui::InputReal("Poisson's Ratio", &m_mpParameters.poisson, 0.005, 0.05, "%.3f");
-			ImGui::InputReal("Density", &m_mpParameters.density, 0.01, 0.1, "%.2f");
-			ImGui::InputReal("Critical Compression", &m_mpParameters.crit_c, 0.001, 0.01, "%.4f");
-			ImGui::InputReal("Critical Stretch", &m_mpParameters.crit_s, 0.001, 0.01, "%.4f");
-			ImGui::InputReal("Hardening", &m_mpParameters.hardening, 0.001, 0.01, "%.4f");
+			ImGui::InputReal("Young's Modulus", &m_mpParameters.youngMod, 1.0, 10.0, "%.6f");
+			ImGui::InputReal("Poisson's Ratio", &m_mpParameters.poisson, 0.005, 0.05, "%.6f");
+			ImGui::InputReal("Density", &m_mpParameters.density, 0.01, 0.1, "%.6f");
+			ImGui::InputReal("Critical Compression", &m_mpParameters.crit_c, 0.001, 0.01, "%.6f");
+			ImGui::InputReal("Critical Stretch", &m_mpParameters.crit_s, 0.001, 0.01, "%.6f");
+			ImGui::InputReal("Hardening", &m_mpParameters.hardening, 0.001, 0.01, "%.6f");
 			break;
 		default:
 			break;
 		}
+
+
+		m_mpParameters.CalculateLameParameters();
+		ImGui::DisplayNamedGlmRealColor("lambda", m_mpParameters.lam, glm::highp_fvec4(1.0));
+		ImGui::DisplayNamedGlmRealColor("mew", m_mpParameters.mew, glm::highp_fvec4(1.0));
+
+		double E = m_mpParameters.youngMod;
+		double v = m_mpParameters.poisson;
+		double rho = m_mpParameters.density;
+		double max_wave_speed = sqrt(E * (1.0 - v) / (1.0 + v) / (1.0 - 2.0 * v) / rho);
+
+		ImGui::DisplayNamedGlmRealColor("Max Wave Speed Linear Elasticity", max_wave_speed, glm::highp_fvec4(1.0));
+		
+		static double CourantNumber = 0.5;
+
+		ImGui::InputDouble("Courant Number", &CourantNumber, 0.01, 0.1);
+
+		double critical_timestep = 1.0 / max_wave_speed * CourantNumber;
+		ImGui::DisplayNamedGlmRealColor("Critical Timestep", critical_timestep, glm::highp_fvec4(1.0));
 	}
 	ImGui::End();
 }
+
 void mpm::MpmAlgorithmEngine::ImGuiCPUMode()
 {
 	if (ImGui::Begin("CPU Mode", &m_imguiCPUMode)) {
@@ -213,6 +233,9 @@ void mpm::MpmAlgorithmEngine::ImGuiCPUMode()
 		static size_t basisFn = size_t(m_basisFunction);
 		m_mpmEngine->ImGuiDropDown("MPM Basis Function", basisFn, m_basisFunctionStrVec);
 		m_basisFunction = Basis::BasisType(basisFn);
+
+
+		ImGui::InputDouble("SE alpha", &SE_alpha, 0.05, 0.1);
 
 		ImGui::InputInt("CPU Mode Chunk Size X", &m_cppChunkX, 1, 4);
 		ImGui::InputInt("CPU Mode Chunk Size Y", &m_cppChunkY, 1, 4);

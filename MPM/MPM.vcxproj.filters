@@ -94,6 +94,9 @@
     <Filter Include="Source Files\MPM\Algorithm\Variants">
       <UniqueIdentifier>{4ad1277e-ad75-4467-99ac-2377093f66ef}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\MPM\Algorithm\Deprecated">
+      <UniqueIdentifier>{7388f7b0-3701-48eb-be68-9525f005f9c6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -134,12 +137,6 @@
     </ClCompile>
     <ClCompile Include="external\imgui\imgui.cpp">
       <Filter>Resource Files\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="MpmAlgorithm_GLSL.cpp">
-      <Filter>Source Files\MPM\Algorithm</Filter>
-    </ClCompile>
-    <ClCompile Include="MpmAlgorithmCR_GLSL.cpp">
-      <Filter>Source Files\MPM\Algorithm</Filter>
     </ClCompile>
     <ClCompile Include="MpmGeometry.cpp">
       <Filter>Source Files\MPM\Geometry</Filter>
@@ -230,6 +227,12 @@
     </ClCompile>
     <ClCompile Include="MpmAlgorithm_SymplecticEuler.cpp">
       <Filter>Source Files\MPM\Algorithm\Variants</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmAlgorithmCR_GLSL.cpp">
+      <Filter>Source Files\MPM\Algorithm\Deprecated</Filter>
+    </ClCompile>
+    <ClCompile Include="MpmAlgorithm_GLSL.cpp">
+      <Filter>Source Files\MPM\Algorithm\Deprecated</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

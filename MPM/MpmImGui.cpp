@@ -45,6 +45,9 @@ void mpm::MpmEngine::RenderGUI()
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("View")) {
+				if (ImGui::MenuItem("Simulation Settings", "", m_imguiSimulationSettings)) {
+					m_imguiSimulationSettings = !m_imguiSimulationSettings;
+				}
 				if (ImGui::MenuItem("MPM Window", "", m_imguiMpmRenderWindow)) {
 					m_imguiMpmRenderWindow = !m_imguiMpmRenderWindow;
 				}
@@ -84,6 +87,7 @@ void mpm::MpmEngine::RenderGUI()
 		m_mpmControlEngine->GUI();
 		m_mpmAlgorithmEngine->GUI();
 
+		if (m_imguiSimulationSettings) ImGuiSimulationSettings();
 		if (m_imguiGridOptions) ImGuiGridOptions();
 		if (m_imguiGridNodeViewer) ImGuiGridNodeViewer();
 		if (m_imguiMaterialPointViewer) ImGuiMaterialPointViewer();
@@ -118,6 +122,21 @@ void mpm::MpmEngine::RenderGUI()
 //}
 
 
+
+void mpm::MpmEngine::ImGuiSimulationSettings()
+{
+	if (ImGui::Begin("Simulation Settings", &m_imguiPointCloudSaver)) {
+
+		static int grid_dims[2] = { 32, 64 };
+		ImGui::InputInt2("Grid Dimensions", grid_dims);
+
+		if (ImGui::Button("Create Grid")) {
+			InitMpmSpace(grid_dims[0], grid_dims[1]);
+		}
+
+	}
+	ImGui::End();
+}
 
 void mpm::MpmEngine::ImGuiPointCloudSaver()
 {
@@ -186,14 +205,6 @@ void mpm::MpmEngine::ImGuiGridOptions()
 {
 	if (ImGui::Begin("Grid Options", &m_imguiGridOptions)) {
 
-		std::string chunkWidthStr = "Chunk width: " + std::to_string(CHUNK_WIDTH);
-		ImGui::Text(chunkWidthStr.c_str());
-
-		ImGui::InputInt("# chunks (x)", &m_chunks_x, 1, 1);
-		m_chunks_x = glm::clamp(m_chunks_x, 1, 4);
-		ImGui::InputInt("# chunks (y)", &m_chunks_y, 1, 1);
-		m_chunks_y = glm::clamp(m_chunks_y, 1, 4);
-
 		
 		if (ImGui::CollapsingHeader("Grid Viewing Options")) {
 			ImGui::ColorEdit4("Background color", m_backgroundColor);
@@ -222,7 +233,7 @@ void mpm::MpmEngine::ImGuiGridOptions()
 				ImGui::TreePop();
 			}
 
-			if (ImGui::TreeNode("Marching Squares options")) {
+			/*if (ImGui::TreeNode("Marching Squares options")) {
 
 				ImGui::InputReal("Isomass", &m_isoMass, 0.5, 5.0);
 				static float mscolor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -250,7 +261,7 @@ void mpm::MpmEngine::ImGuiGridOptions()
 				ImGui::InputReal("Min grid mass", &m_gridMinMass);
 				ImGui::Checkbox("Sharp density field", &m_densitySharp);
 				ImGui::TreePop();
-			}
+			}*/
 		}
 
 		/*if (ImGui::CollapsingHeader("Experimental grid forces")) {
@@ -302,7 +313,7 @@ void mpm::MpmEngine::ImGuiGridOptions()
 				int node_i = 0, node_j = 0;
 				void* ptr = glMapNamedBuffer(gridSSBO, GL_READ_ONLY);
 				GridNode* data = static_cast<GridNode*>(ptr);
-				for (int i = 0; i < GRID_SIZE_X * GRID_SIZE_Y; i++) {
+				for (int i = 0; i < m_grid->grid_dim_x * m_grid->grid_dim_y; i++) {
 					GridNode gn = data[i];
 					/*if (!gn.converged) {
 						converged = false;
@@ -311,8 +322,8 @@ void mpm::MpmEngine::ImGuiGridOptions()
 						real cur_norm = glm::abs(glm::dot(gn.rk, gn.rk));
 						if (cur_norm > largest_norm_rk) {
 							largest_norm_rk = cur_norm;
-							node_i = i / GRID_SIZE_Y;
-							node_j = i % GRID_SIZE_Y;
+							node_i = i / m_grid->grid_dim_y;
+							node_j = i % m_grid->grid_dim_y;
 						}
 					}
 				}
@@ -556,8 +567,24 @@ void mpm::MpmEngine::ImGuiEnergyViewer()
 			ImGui::DisplayNamedGlmRealColor("total grid kinetic energy", totalGridKE, glm::highp_fvec4(1.0));
 			ImGui::DisplayNamedGlmRealColor("total kinetic energy", total_kinetic_energy, glm::highp_fvec4(1.0));
 
-			double interpolation_error = totalGridKE - total_kinetic_energy;
-			ImGui::DisplayNamedGlmRealColor("interpolation error", interpolation_error, glm::highp_fvec4(1.0));
+			/*double interpolation_error = totalGridKE - total_kinetic_energy;
+			ImGui::DisplayNamedGlmRealColor("interpolation error", interpolation_error, glm::highp_fvec4(1.0));*/
+
+			double deltaKEPoints = 0.0;
+			for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+				deltaKEPoints += pointCloudPair.second->DeltaKEPoints();
+			}
+			ImGui::DisplayNamedGlmRealColor("Delta KE Points", deltaKEPoints, glm::highp_fvec4(1.0));
+
+			double deltaSEPoints = 0.0;
+			for (std::pair<std::string, std::shared_ptr<PointCloud>> pointCloudPair : m_pointCloudMap) {
+				deltaSEPoints += pointCloudPair.second->DeltaSEPoints();
+			}
+			ImGui::DisplayNamedGlmRealColor("Delta SE Points", deltaKEPoints, glm::highp_fvec4(1.0));
+
+
+			double algorithm_error = -deltaKEPoints - deltaSEPoints;
+			ImGui::DisplayNamedGlmRealColor("Algorithm Error", algorithm_error, glm::highp_fvec4(1.0));
 
 			ImGui::DisplayNamedGlmRealColor("max total kinetic energy", max_total_kinetic_energy, glm::highp_fvec4(0.0, 1.0, 0.0, 1.0));
 			ImGui::PlotLines("Total Kinetic Energy", Kenergy_values, IM_ARRAYSIZE(Kenergy_values), 0, "", 0.0f, (float)max_total_kinetic_energy, ImVec2(0, 160));

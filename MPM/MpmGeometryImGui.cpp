@@ -299,7 +299,7 @@ void mpm::MpmGeometryEngine::ImGuiImageLoader()
 				t1 = high_resolution_clock::now();
 
 				std::shared_ptr<PointCloud> pointCloud = GenPointCloudFromImage(std::string(pointCloudName), pixelData, image_width, image_height,
-									   real(m_mpmEngine->m_chunks_x) * real(CHUNK_WIDTH), real(m_mpmEngine->m_chunks_y) * real(CHUNK_WIDTH), 
+									   real(m_mpmEngine->m_grid->grid_dim_x), real(m_mpmEngine->m_grid->grid_dim_y), 
 									   m_mpmAlgorithmEngine->m_mpParameters, m_mpmAlgorithmEngine->m_comodel,
 									   m_initVelocity, color);
 

@@ -22,6 +22,9 @@ out vec4 fragColor;
 
 void main() {
 
+	// int maxDim = max(GRID_SIZE_X, GRID_SIZE_Y);
+    // dvec2 grid_vec = dvec2(maxDim, maxDim);
+
 	dvec2 grid_vec = dvec2(GRID_SIZE_X, GRID_SIZE_Y);
 	dvec2 norm_zoomPoint = zoomPoint / grid_vec;
 

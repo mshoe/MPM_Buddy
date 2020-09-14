@@ -18,6 +18,26 @@ double mpm::MaterialPoint::KE()
 	return 0.5 * m * glm::dot(v, v);
 }
 
+double mpm::MaterialPoint::SE(ENERGY_MODEL model)
+{
+	double see = 0.0;
+	switch (model) {
+	case ENERGY_MODEL::LINEAR_ELASTICITY:
+		see = vol0 * LinearElasticity::EnergyDensity(Fe, lam, mew);
+		break;
+	case ENERGY_MODEL::NEO_HOOKEAN_ELASTICITY:
+		break;
+	case ENERGY_MODEL::FIXED_COROTATIONAL_ELASTICITY:
+		see = vol0 * FixedCorotationalElasticity::EnergyDensity(Fe, lam, mew);
+		break;
+	case ENERGY_MODEL::SIMPLE_SNOW:
+		break;
+	default:
+		break;
+	}
+	return see;
+}
+
 void mpm::MaterialPoint::SetMaterialParameters(const MaterialParameters& parameters)
 {
 	E = parameters.youngMod;
@@ -64,12 +84,12 @@ void mpm::MaterialPoint::ImGuiDisplay(bool calcDecomp, bool calcdPdF, bool calcV
 	ImGui::DisplayNamedGlmRealColor("crit_c", crit_c, max_color);
 	ImGui::DisplayNamedGlmRealColor("crit_s", crit_s, max_color);
 	ImGui::DisplayNamedGlmRealColor("hardening", hardening, max_color);
-	ImGui::DisplayNamedGlmRealColor("padding2", padding2, max_color);
-
-	ImGui::DisplayNamedGlmRealColor("epe", epe, max_color);
 	ImGui::DisplayNamedGlmRealColor("selected", selected, max_color);
+
+	ImGui::DisplayNamedGlmRealColor("se", se, max_color);
+	ImGui::DisplayNamedGlmRealColor("delta se", delta_SE, max_color);
 	ImGui::DisplayNamedGlmRealColor("ke", ke, max_color);
-	ImGui::DisplayNamedGlmRealColor("padding4", padding4, max_color);
+	ImGui::DisplayNamedGlmRealColor("delta_KE", delta_KE, max_color);
 
 	if (calcDecomp) {
 		mat2 R, S;
@@ -334,7 +354,7 @@ double mpm::PointCloud::SumEPE()
 	for (size_t p = 0; p < points.size(); p++) {
 		MaterialPoint& mp = points[p];
 
-		energy += mp.epe;
+		energy += mp.se;
 	}
 
 	return energy;
@@ -363,6 +383,26 @@ double mpm::PointCloud::ComputeGravitionalPotential()
 	return GPE;
 }
 
+double mpm::PointCloud::DeltaKEPoints()
+{
+	double delta_KE = 0.0;
+	for (MaterialPoint& mp : points) {
+		delta_KE += mp.delta_KE;
+	}
+
+	return delta_KE;
+}
+
+double mpm::PointCloud::DeltaSEPoints()
+{
+	double delta_SE = 0.0;
+	for (MaterialPoint& mp : points) {
+		delta_SE += mp.delta_SE;
+	}
+
+	return delta_SE;
+}
+
 
 
 std::ostream& operator<<(std::ostream& out, const mpm::MaterialPoint& c)
@@ -378,8 +418,8 @@ std::ostream& operator<<(std::ostream& out, const mpm::MaterialPoint& c)
 	out << "Fe (highp): " << "(" << c.Fe[0][0] << ", " << c.Fe[0][1] << "), (" << c.Fe[1][0] << ", " << c.Fe[1][1] << ")" << "\n";
 	out << "Fp: " << glm::to_string(c.Fp) << "\n";
 	out << "P: " << glm::to_string(c.P) << "\n";
-	out << "epe: " << c.epe << "\n";
-	out << "selectedWpg: " << c.selected << "\n";
+	//out << "epe: " << c.epe << "\n";
+	//out << "selectedWpg: " << c.selected << "\n";
 	return out;
 }
 
@@ -389,14 +429,14 @@ void mpm::UpdateStress(MaterialPoint& mp, ENERGY_MODEL comodel)
 		switch (comodel) {
 		case ENERGY_MODEL::LINEAR_ELASTICITY:
 			mp.P = LinearElasticity::PKTensor(mp.Fe, mp.lam, mp.mew);
-			mp.epe = mp.vol0 * LinearElasticity::EnergyDensity(mp.Fe, mp.lam, mp.mew);
+			mp.se = mp.vol0 * LinearElasticity::EnergyDensity(mp.Fe, mp.lam, mp.mew);
 			break;
 		case ENERGY_MODEL::NEO_HOOKEAN_ELASTICITY:
 			mp.P = NeoHookean::PKTensor(mp.Fe, mp.lam, mp.mew);
 			break;
 		case ENERGY_MODEL::FIXED_COROTATIONAL_ELASTICITY:
 			mp.P = FixedCorotationalElasticity::PKTensor(mp.Fe, mp.lam, mp.mew);
-			mp.epe = mp.vol0 * FixedCorotationalElasticity::EnergyDensity(mp.Fe, mp.lam, mp.mew);
+			mp.se = mp.vol0 * FixedCorotationalElasticity::EnergyDensity(mp.Fe, mp.lam, mp.mew);
 			break;
 		case ENERGY_MODEL::SIMPLE_SNOW:
 			mp.P = SimpleSnow::PKTensor(mp.Fe, mp.Fp, mp.lam, mp.mew, mp.crit_c, mp.crit_s, mp.hardening);

@@ -108,6 +108,8 @@ void mpm::MpmEngine::RenderScreenShader(vec2 zoomPoint, real zoomFactor, std::sh
 	m_mouseShader->SetInt("selectedNodeJ", m_node[1]);
 	m_mouseShader->SetReal("zoomFactor", zoomFactor);
 	m_mouseShader->SetVec("zoomPoint", zoomPoint);
+	m_mouseShader->SetInt("GRID_SIZE_X", (int)m_grid->grid_dim_x);
+	m_mouseShader->SetInt("GRID_SIZE_Y", (int)m_grid->grid_dim_y);
 
 	glm::highp_fvec4 backgroundColor = glm::highp_fvec4(m_backgroundColor[0], m_backgroundColor[1], m_backgroundColor[2], m_backgroundColor[3]);
 	m_mouseShader->SetVec("backgroundColor", backgroundColor);
@@ -127,6 +129,8 @@ void mpm::MpmEngine::RenderPointCloud(std::shared_ptr<PointCloud> pointCloud, ve
 	m_mpmGeometryEngine->SetSelectionUniforms(pointShader);
 	pointShader->SetReal("zoomFactor", zoomFactor);
 	pointShader->SetVec("zoomPoint", zoomPoint);
+	pointShader->SetInt("GRID_SIZE_X", (int)m_grid->grid_dim_x);
+	pointShader->SetInt("GRID_SIZE_Y", (int)m_grid->grid_dim_y);
 	// iResolution and iSourceResolution should be same for the zoom window we make, and iCenter should be the actual center
 	//m_pPointCloudShader->SetVec("iResolution", openGLScreen->sim_dimensions);
 	//m_pPointCloudShader->SetVec("iSourceResolution", openGLScreen->screen_dimensions);
@@ -154,6 +158,8 @@ void mpm::MpmEngine::RenderPointClouds(vec2 zoomPoint, real zoomFactor, std::sha
 	m_mpmGeometryEngine->SetSelectionUniforms(pointShader);
 	pointShader->SetReal("zoomFactor", zoomFactor);
 	pointShader->SetVec("zoomPoint", zoomPoint);
+	pointShader->SetInt("GRID_SIZE_X", (int)m_grid->grid_dim_x);
+	pointShader->SetInt("GRID_SIZE_Y", (int)m_grid->grid_dim_y);
 	// iResolution and iSourceResolution should be same for the zoom window we make, and iCenter should be the actual center
 	//m_pPointCloudShader->SetVec("iResolution", openGLScreen->sim_dimensions);
 	//m_pPointCloudShader->SetVec("iSourceResolution", openGLScreen->screen_dimensions);
@@ -192,11 +198,16 @@ void mpm::MpmEngine::RenderGrid(vec2 zoomPoint, real zoomFactor, std::shared_ptr
 	gridShader->SetuInt("selectedVector", unsigned int(m_gridVectorOption));
 	gridShader->SetReal("maxGridVectorLength", m_maxGridVectorLength);
 	gridShader->SetReal("maxGridVectorVisualLength", m_maxGridVectorVisualLength);
+
+	gridShader->SetInt("GRID_SIZE_X", m_grid->grid_dim_x);
+	gridShader->SetInt("GRID_SIZE_Y", m_grid->grid_dim_y);
+	gridShader->SetInt("SCREEN_DIM_X", (int)m_mpmRenderWindow->sim_dimensions.x);
+	gridShader->SetInt("SCREEN_DIM_Y", (int)m_mpmRenderWindow->sim_dimensions.y);
 	//gridShader->SetBool("collectiveNodeGraphics", m_collectiveNodeSelectionGraphics);
 
 	glBindVertexArray(VisualizeVAO);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
-	glDrawArrays(GL_POINTS, 0, (GLsizei)(GRID_SIZE_X * GRID_SIZE_Y));
+	glDrawArrays(GL_POINTS, 0, (GLsizei)(m_grid->grid_dim_x * m_grid->grid_dim_y));
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
 	glBindVertexArray(0);
 }
@@ -212,7 +223,7 @@ void mpm::MpmEngine::RenderMarchingSquares(vec2 zoomPoint, real zoomFactor, std:
 
 	glBindVertexArray(VisualizeVAO);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, gridSSBO);
-	glDrawArrays(GL_POINTS, 0, (GLsizei)(GRID_SIZE_X * GRID_SIZE_Y));
+	glDrawArrays(GL_POINTS, 0, (GLsizei)(m_grid->grid_dim_x * m_grid->grid_dim_y));
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
 	glBindVertexArray(0);
 }

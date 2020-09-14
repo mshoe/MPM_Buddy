@@ -3,21 +3,33 @@
 #include "MpmFunctions.h"
 #include "EnergyFunctions.h"
 
+// note: APIC works only with quadratic or cubic basis functions, not linear
+
 void mpm::MpmAlgorithmEngine::MassMomentumToNode_MLS(const mpm::MaterialPoint& mp, mpm::GridNode& node, real dt)
 {
+	vec2 xp = mp.x;
 	vec2 xg = node.x;
-	vec2 dpg = xg - mp.x;
-	real dx = dpg.x; // sign matters for gradient
-	real dy = dpg.y;
+	vec2 dgp = xg - xp;
+	real dx = dgp.x; // sign matters for gradient
+	real dy = dgp.y;
 	real wpg = nodeGetter.ShapeFunction(dx) * nodeGetter.ShapeFunction(dy);
 
 
 	// P2G mass transfer
 	node.m += wpg * mp.m;
 
+
+	real Dp_inv;
+	if (m_basisFunction == Basis::BasisType::CUBIC_B_SPLINE) {
+		Dp_inv = Dp_inv_cubic;
+	}
+	else {
+		Dp_inv = Dp_inv_quadratic;
+	}
+
 	// P2G APIC momentum transfer
 	mat2 Gp = -Dp_inv * dt * mp.vol0 * mp.P * glm::transpose(mp.Fe) + mp.m * mp.B;
-	node.momentum += wpg * (mp.m * mp.v + Gp * dpg);
+	node.momentum += wpg * (mp.m * mp.v + Gp * dgp);
 }
 
 void mpm::MpmAlgorithmEngine::UpdateNodeVelocity_MLS(mpm::GridNode& node, real dt)
@@ -41,10 +53,11 @@ void mpm::MpmAlgorithmEngine::UpdateNodeVelocity_MLS(mpm::GridNode& node, real d
 
 void mpm::MpmAlgorithmEngine::VelocityToParticle_MLS(const mpm::GridNode& node, mpm::MaterialPoint& mp, real dt)
 {
+	vec2 xp = mp.x;
 	vec2 xg = node.x;
-	vec2 dpg = xg - mp.x;
-	real dx = dpg.x; // sign matters for gradient
-	real dy = dpg.y;
+	vec2 dgp = xg - xp;
+	real dx = dgp.x; // sign matters for gradient
+	real dy = dgp.y;
 	real wpg = nodeGetter.ShapeFunction(dx) * nodeGetter.ShapeFunction(dy);
 
 	vec2 vg = node.v;
@@ -53,7 +66,7 @@ void mpm::MpmAlgorithmEngine::VelocityToParticle_MLS(const mpm::GridNode& node, 
 	mp.v += wpg * vg;
 
 	// APIC
-	mp.B += wpg * outerProduct(vg, dpg);
+	mp.B += wpg * outerProduct(vg, dgp);
 }
 
 
@@ -77,12 +90,12 @@ void mpm::MpmAlgorithmEngine::MpmReset_MLS()
 	m_timeStep = 0;
 	m_time = 0.0;
 
-	for (size_t i = 0; i < size_t(m_mpmEngine->m_chunks_x) * size_t(m_cppChunkX); i++) {
-		for (size_t j = 0; j < size_t(m_mpmEngine->m_chunks_y) * size_t(m_cppChunkY); j++) {
-			size_t index = i * GRID_SIZE_Y + j;
-			m_mpmEngine->m_grid->nodes[index].m = 0.0;
-			m_mpmEngine->m_grid->nodes[index].v = vec2(0.0);
-			m_mpmEngine->m_grid->nodes[index].momentum = vec2(0.0);
+	for (size_t i = 0; i < m_mpmEngine->m_grid->grid_dim_x; i++) {
+		for (size_t j = 0; j < m_mpmEngine->m_grid->grid_dim_y; j++) {
+			GridNode& node = m_mpmEngine->m_grid->GetNode(i, j);
+			node.m = 0.0;
+			node.v = vec2(0.0);
+			node.momentum = vec2(0.0);
 		}
 	}
 }
@@ -97,12 +110,12 @@ void mpm::MpmAlgorithmEngine::MpmTimeStep_MLS(real dt)
 #endif
 
 	// reset the grid
-	for (size_t i = 0; i < size_t(m_mpmEngine->m_chunks_x) * size_t(m_cppChunkX); i++) {
-		for (size_t j = 0; j < size_t(m_mpmEngine->m_chunks_y) * size_t(m_cppChunkY); j++) {
-			size_t index = i * GRID_SIZE_Y + j;
-			m_mpmEngine->m_grid->nodes[index].m = 0.0;
-			m_mpmEngine->m_grid->nodes[index].v = vec2(0.0);
-			m_mpmEngine->m_grid->nodes[index].momentum = vec2(0.0);
+	for (size_t i = 0; i < m_mpmEngine->m_grid->grid_dim_x; i++) {
+		for (size_t j = 0; j < m_mpmEngine->m_grid->grid_dim_y; j++) {
+			GridNode& node = m_mpmEngine->m_grid->GetNode(i, j);
+			node.m = 0.0;
+			node.v = vec2(0.0);
+			node.momentum = vec2(0.0);
 		}
 	}
 
@@ -112,9 +125,9 @@ void mpm::MpmAlgorithmEngine::MpmTimeStep_MLS(real dt)
 
 	MpmTimeStepExplicitGridUpdate_MLS(dt);
 
-	if (m_semiImplicitCPP) {
+	/*if (m_semiImplicitCPP) {
 		MpmTimeStepSemiImplicitGridUpdate_MLS(dt, m_beta);
-	}
+	}*/
 
 	MpmTimeStepG2P_MLS(dt);
 
@@ -148,11 +161,9 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepP2G_MLS(real dt)
 
 void mpm::MpmAlgorithmEngine::MpmTimeStepExplicitGridUpdate_MLS(real dt)
 {
-	for (size_t i = 0; i < size_t(m_mpmEngine->m_chunks_x) * size_t(m_cppChunkX); i++) {
-		for (size_t j = 0; j < size_t(m_mpmEngine->m_chunks_y) * size_t(m_cppChunkY); j++) {
-
-			size_t index = size_t(i) + size_t(j) * size_t(GRID_SIZE_Y);
-			GridNode& node = m_mpmEngine->m_grid->nodes[index];
+	for (size_t i = 0; i < m_mpmEngine->m_grid->grid_dim_x; i++) {
+		for (size_t j = 0; j < m_mpmEngine->m_grid->grid_dim_y; j++) {
+			GridNode& node = m_mpmEngine->m_grid->GetNode(i, j);
 			UpdateNodeVelocity_MLS(node, dt);
 		}
 	}
@@ -182,6 +193,14 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepG2P_MLS(real dt)
 
 					VelocityToParticle_MLS(node, mp, dt);
 				}
+			}
+
+			real Dp_inv;
+			if (m_basisFunction == Basis::BasisType::CUBIC_B_SPLINE) {
+				Dp_inv = Dp_inv_cubic;
+			}
+			else {
+				Dp_inv = Dp_inv_quadratic;
 			}
 
 			mp.B = Dp_inv * mp.B; // for APIC
@@ -216,6 +235,8 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepP2_MLS(real dt)
 
 void mpm::MpmAlgorithmEngine::GetPointCloudVolumesFromGPUtoCPU(std::string pointCloudID, std::shared_ptr<PointCloud> pointCloud)
 {
+	// not using this anymore
+
 	void* ptr = glMapNamedBuffer(pointCloud->ssbo, GL_READ_ONLY);
 	MaterialPoint* data = static_cast<MaterialPoint*>(ptr);
 

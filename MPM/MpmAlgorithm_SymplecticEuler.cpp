@@ -4,14 +4,14 @@
 void mpm::MpmAlgorithmEngine::MpmTimeStep_SE(real dt)
 {
 	// reset the grid
-	for (size_t i = 0; i < size_t(m_mpmEngine->m_chunks_x) * size_t(m_cppChunkX); i++) {
-		for (size_t j = 0; j < size_t(m_mpmEngine->m_chunks_y) * size_t(m_cppChunkY); j++) {
-			size_t index = i + GRID_SIZE_Y * j;
-			m_mpmEngine->m_grid->nodes[index].m = 0.0;
-			m_mpmEngine->m_grid->nodes[index].v = vec2(0.0);
-			m_mpmEngine->m_grid->nodes[index].momentum = vec2(0.0);
-			m_mpmEngine->m_grid->nodes[index].f_int = vec2(0.0);
-			m_mpmEngine->m_grid->nodes[index].force = vec2(0.0);
+	for (size_t i = 0; i < m_mpmEngine->m_grid->grid_dim_x; i++) {
+		for (size_t j = 0; j < m_mpmEngine->m_grid->grid_dim_y; j++) {
+			GridNode& node = m_mpmEngine->m_grid->GetNode(i, j);
+			node.m = 0.0;
+			node.v = vec2(0.0);
+			node.momentum = vec2(0.0);
+			node.f_int = vec2(0.0);
+			node.force = vec2(0.0);
 		}
 	}
 
@@ -37,18 +37,19 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepP2G_SE(real dt)
 				GridNode& node = nodeGetter.NextNode();
 				if (nodeGetter.IsNodeOK()) {
 
+					vec2 xp = mp.x;
 					vec2 xg = node.x;
-					vec2 dpg = xg - mp.x;
-					real dx = dpg.x; // sign matters for gradient
-					real dy = dpg.y;
+					vec2 dgp = xg - xp;
+					real dx = dgp.x;
+					real dy = dgp.y;
 					real wpg = nodeGetter.ShapeFunction(dx) * nodeGetter.ShapeFunction(dy);
-					vec2 wpgSlope = vec2(nodeGetter.ShapeFunctionSlope(dx) * nodeGetter.ShapeFunction(dy),
+					vec2 wpgSlope = -vec2(nodeGetter.ShapeFunctionSlope(dx) * nodeGetter.ShapeFunction(dy),
 										 nodeGetter.ShapeFunction(dx) * nodeGetter.ShapeFunctionSlope(dy));
 
 					// P2G mass/momentum transfer
 					node.m += wpg * mp.m;
 					node.momentum += wpg * mp.m * mp.v;
-					node.f_int += mp.vol0 * mp.P * glm::transpose(mp.Fe) * wpgSlope; // WHY DOES THIS ONLY WORK WHEN + BUT NOT -?
+					node.f_int -= mp.vol0 * mp.P * glm::transpose(mp.Fe) * wpgSlope; // WHY DOES THIS ONLY WORK WHEN + BUT NOT -?
 				}
 			}
 		}
@@ -57,11 +58,10 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepP2G_SE(real dt)
 
 void mpm::MpmAlgorithmEngine::MpmTimeStepG_Velocity_SE(real dt)
 {
-	for (size_t i = 0; i < size_t(m_mpmEngine->m_chunks_x) * size_t(m_cppChunkX); i++) {
-		for (size_t j = 0; j < size_t(m_mpmEngine->m_chunks_y) * size_t(m_cppChunkY); j++) {
+	for (size_t i = 0; i < m_mpmEngine->m_grid->grid_dim_x; i++) {
+		for (size_t j = 0; j < m_mpmEngine->m_grid->grid_dim_y; j++) {
 
-			size_t index = size_t(i) + size_t(j) * size_t(GRID_SIZE_Y);
-			GridNode& node = m_mpmEngine->m_grid->nodes[index];
+			GridNode& node = m_mpmEngine->m_grid->GetNode(i, j);
 			
 
 			real nodeMass = node.m;
@@ -94,7 +94,7 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepG2P_SE(real dt)
 			vec2 v_flip = mp.v;
 			vec2 v_pic = vec2(0.0);
 
-			double alpha = 0.95;
+			//double alpha = 0;// 0.95;
 
 			nodeGetter = Basis::NodeGetter(mp, m_mpmEngine->m_grid, m_basisFunction);
 
@@ -104,14 +104,14 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepG2P_SE(real dt)
 
 					vec2 xp = mp.x;
 					vec2 xg = node.x;
-					vec2 dpg = xp - xg;
-					real dx = dpg.x; // sign matters for gradient
-					real dy = dpg.y;
+					vec2 dgp = xg - xp;
+					real dx = dgp.x;
+					real dy = dgp.y;
 
 
 					real wpg = nodeGetter.ShapeFunction(dx) * nodeGetter.ShapeFunction(dy);
 
-					vec2 wpgSlope = vec2(nodeGetter.ShapeFunctionSlope(dx) * nodeGetter.ShapeFunction(dy),
+					vec2 wpgSlope = -vec2(nodeGetter.ShapeFunctionSlope(dx) * nodeGetter.ShapeFunction(dy),
 										 nodeGetter.ShapeFunction(dx) * nodeGetter.ShapeFunctionSlope(dy));
 
 
@@ -126,7 +126,7 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepG2P_SE(real dt)
 			}
 
 			mp.Fe = (mat2(1.0) + dt * Lp) * mp.Fe;
-			mp.v = (1.0 - alpha) * v_pic + alpha * v_flip;
+			mp.v = (1.0 - SE_alpha) * v_pic + SE_alpha * v_flip;
 			
 			vec2 dx = dt * mp.v;
 			if (dx.x >= 1.0 || dx.y >= 1.0) {

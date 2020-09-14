@@ -61,12 +61,20 @@ namespace mpm {
 
 				//std::cout << i << ", " << j << std::endl;
 
-				if (InBounds(botLeftNodeIndex.x + i, botLeftNodeIndex.y + j, GRID_SIZE_X, GRID_SIZE_Y)) {
-					size_t index = size_t(botLeftNodeIndex.x + i) + size_t(botLeftNodeIndex.y + j) * size_t(GRID_SIZE_Y);
-					//std::cout << "[" << grid->nodes[index].x.x << ", " << grid->nodes[index].x.y << "]" << std::endl;
+				if (InBounds(size_t(botLeftNodeIndex.x) + i, size_t(botLeftNodeIndex.y) + j, grid->grid_dim_x, grid->grid_dim_y)) {
+					size_t index_i = size_t(botLeftNodeIndex.x) + i;
+					size_t index_j = size_t(botLeftNodeIndex.y) + j;
 					nodeOk = true;
 					NodeIndexIncrement();
-					return grid->nodes[index];
+
+					
+
+					//std::cout << index_i << ", " << index_j << std::endl;
+					//std::cout << grid->GetNode(index_i, index_j).x.x << ", " << grid->GetNode(index_i, index_j).x.y << std::endl << std::endl;
+
+					GridNode& node = grid->GetNode(index_i, index_j);
+
+					return node;
 				}
 				else {
 					nodeOk = false;
@@ -111,11 +119,10 @@ namespace mpm {
 			}
 
 
-		private:
 			bool complete = false;
 			bool nodeOk;
-			int i = 0;
-			int j = 0;
+			size_t i = 0;
+			size_t j = 0;
 			ivec2 botLeftNodeIndex;
 			ivec2 maxRelativeIndex;
 			std::shared_ptr<Grid> grid;
@@ -124,7 +131,7 @@ namespace mpm {
 			BasisType basisType = BasisType::CUBIC_B_SPLINE;
 
 			void NodeIndexIncrement() {
-				j++;
+				/*j++;
 				if (j > maxRelativeIndex.y) {
 					if (i == maxRelativeIndex.x) {
 						complete = true;
@@ -132,6 +139,16 @@ namespace mpm {
 					else {
 						j = 0;
 						i++;
+					}
+				}*/
+				i++;
+				if (i > maxRelativeIndex.x) {
+					if (j == maxRelativeIndex.y) {
+						complete = true;
+					}
+					else {
+						i = 0;
+						j++;
 					}
 				}
 			}

@@ -40,15 +40,10 @@ void mpm::MpmGeometryEngine::RenderCircle(vec2 zoomPoint, real zoomFactor,
 	circleShader->SetVec("zoomPoint", zoomPoint);
 	circleShader->SetReal("zoomFactor", zoomFactor);
 
-	glBindVertexArray(vao);
-	glDrawArrays(GL_POINTS, 0, (GLsizei)1);
-	glBindVertexArray(0);
-
-	circleShader->Use();
-	circleShader->SetVec("mouse", mpmMouse);
-	circleShader->SetReal("radius", m_circle_inner_radius);
-	circleShader->SetVec("zoomPoint", zoomPoint);
-	circleShader->SetReal("zoomFactor", zoomFactor);
+	circleShader->SetInt("GRID_SIZE_X", m_mpmEngine->m_grid->grid_dim_x);
+	circleShader->SetInt("GRID_SIZE_Y", m_mpmEngine->m_grid->grid_dim_y);
+	circleShader->SetInt("SCREEN_DIM_X", (int)m_mpmEngine->m_mpmRenderWindow->sim_dimensions.x);
+	circleShader->SetInt("SCREEN_DIM_Y", (int)m_mpmEngine->m_mpmRenderWindow->sim_dimensions.y);
 
 	glBindVertexArray(vao);
 	glDrawArrays(GL_POINTS, 0, (GLsizei)1);
@@ -71,6 +66,11 @@ void mpm::MpmGeometryEngine::RenderPolygon(vec2 polygonCenter, bool addPolygonVe
 	polygonShader->SetVec("zoomPoint", zoomPoint);
 	polygonShader->SetReal("zoomFactor", zoomFactor);
 	polygonShader->SetVec("polygonCenter", polygonCenter);
+
+	polygonShader->SetInt("GRID_SIZE_X", m_mpmEngine->m_grid->grid_dim_x);
+	polygonShader->SetInt("GRID_SIZE_Y", m_mpmEngine->m_grid->grid_dim_y);
+	polygonShader->SetInt("SCREEN_DIM_X", (int)m_mpmEngine->m_mpmRenderWindow->sim_dimensions.x);
+	polygonShader->SetInt("SCREEN_DIM_Y", (int)m_mpmEngine->m_mpmRenderWindow->sim_dimensions.y);
 	GLuint polygonSSBO;
 	glCreateBuffers(1, &polygonSSBO);
 
@@ -104,6 +104,12 @@ void mpm::MpmGeometryEngine::RenderPWLine(vec2 zoomPoint, real zoomFactor,
 
 	pwLineShader->SetVec("zoomPoint", zoomPoint);
 	pwLineShader->SetReal("zoomFactor", zoomFactor);
+
+	pwLineShader->SetInt("GRID_SIZE_X", m_mpmEngine->m_grid->grid_dim_x);
+	pwLineShader->SetInt("GRID_SIZE_Y", m_mpmEngine->m_grid->grid_dim_y);
+	pwLineShader->SetInt("SCREEN_DIM_X", (int)m_mpmEngine->m_mpmRenderWindow->sim_dimensions.x);
+	pwLineShader->SetInt("SCREEN_DIM_Y", (int)m_mpmEngine->m_mpmRenderWindow->sim_dimensions.y);
+
 	GLuint pwLineSSBO;
 	glCreateBuffers(1, &pwLineSSBO);
 

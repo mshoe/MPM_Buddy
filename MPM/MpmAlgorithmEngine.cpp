@@ -19,7 +19,7 @@ void mpm::MpmAlgorithmEngine::ProcessKeyboardInput(GLFWwindow* window, real lag)
 
 	if (m_paused) {
 		if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS) {
-			MpmReset_GLSL();
+			MpmReset();
 		}
 	}
 }

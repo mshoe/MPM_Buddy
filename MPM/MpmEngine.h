@@ -30,14 +30,13 @@ namespace mpm {
 
 	class MpmEngine {
 	public:
-		MpmEngine() { 
-			InitComputeShaderPipeline();
-			InitEngines();
-		}
+		MpmEngine();
 		~MpmEngine() { CleanupComputeShaderPipeline(); }
 
-		bool InitEngines();
 		bool InitComputeShaderPipeline();
+		bool InitEngines();
+		bool InitMpmSpace(int grid_dim_x, int grid_dim_y);
+
 		bool CleanupComputeShaderPipeline();
 
 		void Update();
@@ -71,6 +70,8 @@ namespace mpm {
 		// MPM DATA STRUCTURES
 		std::shared_ptr<Grid> m_grid;
 		std::map<std::string, std::shared_ptr<PointCloud>> m_pointCloudMap;
+
+		void InitGrid(int grid_dim_x, int grid_dim_y);
 		
 		// MPM data structure interaction
 		std::string m_pointCloudViewSelectStr = "";
@@ -131,12 +132,16 @@ namespace mpm {
 		void RenderDensityField(vec2 zoomPoint, real zoomFactor, int binding, GLuint ssbo, bool controlMode, std::shared_ptr<OpenGLScreen> openGLScreen, std::shared_ptr<StandardShader> densityShader);
 	private:
 		//*** GUI FUNCTIONS ***//
+		void ImGuiSimulationSettings();
+
 		void ImGuiPointCloudSaver();
 		void ImGuiPointCloudLoader();
 		void ImGuiGridOptions();
 		void ImGuiGridNodeViewer();
 		void ImGuiMaterialPointViewer();
 		void ImGuiEnergyViewer();
+
+		
 		
 
 		// state variables for rendering different windows
@@ -145,13 +150,14 @@ namespace mpm {
 
 		bool m_imguiMpmRenderWindow = true;
 
+		bool m_imguiSimulationSettings = true;
+
 		// grid
 		bool m_imguiGridOptions = false;
 		bool m_imguiGridNodeViewer = false;
 
 		// material point
 		bool m_imguiMaterialPointViewer = false;
-
 		bool m_imguiEnergyViewer = false;
 		
 
@@ -169,13 +175,15 @@ namespace mpm {
 		bool m_showZoomBorder = true;
 		bool m_movingZoomWindow = true;
 		vec2 m_zoomPoint = vec2(0.0, 0.0); // ZOOM POINT IN GRID SPACE
-		vec2 m_zoomDim = vec2(GRID_SIZE_X, GRID_SIZE_Y);
+		//vec2 m_zoomDim = vec2(GRID_SIZE_X, GRID_SIZE_Y);
 
 		/******************** MPM RENDER WINDOW AND RENDERING ********************/
 		void InitMpmRenderWindow();
 		void ImGuiMpmRenderWindow();
 		void MpmRender();
 		void ZoomRender();
+
+	public:
 		std::shared_ptr<ImGuiScreen> m_mpmRenderWindow = nullptr;
 
 
@@ -184,7 +192,6 @@ namespace mpm {
 		
 
 		// RENDERING
-	public:
 		std::shared_ptr<StandardShader> m_pPointCloudShader = nullptr;
 
 		bool m_viewGridDensity = false; // for gridDensityShader
@@ -231,13 +238,13 @@ namespace mpm {
 		
 		bool m_nodeGraphicsActive = false;
 		int m_node[2] = { 26, 8 };
-		bool m_viewGrid = false;
-		bool m_viewGridMass = true;
+		bool m_viewGrid = true;
+		bool m_viewGridMass = false;
 		real m_maxNodeMassClamp = 40.0;
 		real m_minNodeMassClamp = 1.0;
 		real m_minNodeMassPointSize = 0.0;
 		real m_maxNodeMassPointSize = 5.0;
-		bool m_viewGridVector = true;
+		bool m_viewGridVector = false;
 		enum class GRID_VECTOR_OPTION {
 			MOMENTUM = 0,
 			VELOCITY = 1,

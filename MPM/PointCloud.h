@@ -67,12 +67,12 @@ namespace mpm {
 		double crit_c = 0.0;
 		double crit_s = 0.0;
 		double hardening = 0.0;
-		double padding2 = 4.2;
+		double selected = 0.0; // for selecting MPs
 
-		double epe = 0.0; // elastic potential energy
-		double selected = 0.0;
+		double se = 0.0; // strain energy
+		double delta_SE = 0.0; // the change in strain energy for each time step
 		double ke = 0.0; // kinetic energy
-		double padding4 = 0.89;
+		double delta_KE = 0.0; // the change in kinetic energy for each time step
 
 		mat2 B = mat2(0.0); // for APIC
 		mat2 Fe = mat2(1.0);
@@ -87,7 +87,7 @@ namespace mpm {
 
 
 		double KE();
-
+		double SE(ENERGY_MODEL model);
 		
 
 		void SetMaterialParameters(const MaterialParameters& parameters);
@@ -121,6 +121,9 @@ namespace mpm {
 		double SumEPE();
 		double ComputeMPKE(); // compute total material point kinetic energy
 		double ComputeGravitionalPotential();
+
+		double DeltaKEPoints();
+		double DeltaSEPoints();
 
 		size_t N = 0;
 		std::vector<MaterialPoint> points;

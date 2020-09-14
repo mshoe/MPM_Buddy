@@ -37,7 +37,7 @@ void main() {
 	// calculate radius
     
 //	gl_PointSize = 1.0;
-    vs_nodeColor = vec4(1.0, 1.0, 1.0, 1.0);
+    vs_nodeColor = vec4(0.0, 0.0, 0.0, 1.0);
 
     int nodei = int(floor(gl_VertexID / GRID_SIZE_Y));
     int nodej = int(mod(gl_VertexID, GRID_SIZE_Y));
@@ -45,34 +45,37 @@ void main() {
     gridNodeI = nodei;
     gridNodeJ = nodej;
 
-    double nodeMass = nodes[nodei][nodej].m;
+    gridNode node;
+    GetNode(nodei, nodej, node);
+
+    double nodeMass = node.m;
 
 
 
-    if (viewGridMass) {
-        double normNodeMass = (nodeMass - minNodeMassClamp)/ (maxNodeMassClamp - minNodeMassClamp);
-        normNodeMass = clamp(normNodeMass, 0.0, 1.0);
-        double scaledNormNodeMass;
-        if (gridPointSizeScalingOption == -1) {
-            scaledNormNodeMass = sqrt(sqrt(normNodeMass));
-        } else if (gridPointSizeScalingOption == 0) {
-            scaledNormNodeMass = sqrt(normNodeMass);
-        } else if (gridPointSizeScalingOption == 1) {
-            scaledNormNodeMass = normNodeMass;
-        } else if (gridPointSizeScalingOption == 2) {
-            scaledNormNodeMass = normNodeMass * normNodeMass;
-        } else if (gridPointSizeScalingOption == 3) {
-            scaledNormNodeMass = normNodeMass * normNodeMass * normNodeMass;
-        }
-        gl_PointSize = float(mix(minNodeMassPointSize, maxNodeMassPointSize, sqrt(scaledNormNodeMass)));
-    } else {
-        gl_PointSize = 1.0;
-    }
+    // if (viewGridMass) {
+    //     double normNodeMass = (nodeMass - minNodeMassClamp)/ (maxNodeMassClamp - minNodeMassClamp);
+    //     normNodeMass = clamp(normNodeMass, 0.0, 1.0);
+    //     double scaledNormNodeMass;
+    //     if (gridPointSizeScalingOption == -1) {
+    //         scaledNormNodeMass = sqrt(sqrt(normNodeMass));
+    //     } else if (gridPointSizeScalingOption == 0) {
+    //         scaledNormNodeMass = sqrt(normNodeMass);
+    //     } else if (gridPointSizeScalingOption == 1) {
+    //         scaledNormNodeMass = normNodeMass;
+    //     } else if (gridPointSizeScalingOption == 2) {
+    //         scaledNormNodeMass = normNodeMass * normNodeMass;
+    //     } else if (gridPointSizeScalingOption == 3) {
+    //         scaledNormNodeMass = normNodeMass * normNodeMass * normNodeMass;
+    //     }
+    //     gl_PointSize = float(mix(minNodeMassPointSize, maxNodeMassPointSize, sqrt(scaledNormNodeMass)));
+    // } else {
+    gl_PointSize = 1.0;
+    // }
 
     
 
     if (collectiveNodeGraphics) {
-        if (nodes[nodei][nodej].selected) {
+        if (node.selected) {
             vs_nodeColor = vec4(1.0, 1.0, 0.0, 1.0);
             gl_PointSize = 10.0;
         }
@@ -85,37 +88,9 @@ void main() {
         }
     }
 
-    // if (nodes[nodei][nodej].selected == true) {
-    // //if (nodes[nodei][nodej].force.x > 2.0) {
-    //     vs_nodeColor = vec4(0.0, 1.0, 0.0, 1.0);
-    //     gl_PointSize = 10.0;
-    // }
-
-    dvec2 grid_vec = dvec2(GRID_SIZE_X, GRID_SIZE_Y);
-
-    // norm_pos mapped to (0, 1)
-    dvec2 norm_node_pos = dvec2(nodei, nodej) / grid_vec;
-
-    // get normalized zoomPoint;
-    dvec2 norm_zoomPoint = zoomPoint / grid_vec;
-    norm_node_pos -= norm_zoomPoint;
-    norm_node_pos *= zoomFactor;
-    norm_node_pos += norm_zoomPoint;
-
-
-	// // original borders are x: (-1.0, 1.0), y: (-1.0, 1.0)
-	// double left_border = (iCenter.x - iSourceResolution.x/2.0 - iResolution.x/2.0) / iSourceResolution.x * 2.0;
-	// double right_border = (iCenter.x - iSourceResolution.x/2.0 + iResolution.x/2.0) / iSourceResolution.x * 2.0;
-	// double bottom_border = (iCenter.y - iSourceResolution.y/2.0 - iResolution.y/2.0) / iSourceResolution.y * 2.0;
-	// double top_border = (iCenter.y - iSourceResolution.y/2.0 + iResolution.y/2.0) / iSourceResolution.y * 2.0;
-
-	// // map norm_pos to the new borders;
-
-    // map to opengl window space (-1.0, 1.0)
-	norm_node_pos.x = mix(-1.0, 1.0, norm_node_pos.x);
-	norm_node_pos.y = mix(-1.0, 1.0, norm_node_pos.y);
+    
 	
 
-	// gl_Position needs to take float, not double
-    gl_Position = vec4(float(norm_node_pos.x), float(norm_node_pos.y), 0.0, 1.0);
+	// not important here, using geometry shader for this stuff
+    gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
 }

@@ -4,15 +4,15 @@
 void mpm::MpmAlgorithmEngine::MpmTimeStep_USF(real dt)
 {
 	// reset the grid
-	for (size_t i = 0; i < size_t(m_mpmEngine->m_chunks_x) * size_t(m_cppChunkX); i++) {
-		for (size_t j = 0; j < size_t(m_mpmEngine->m_chunks_y) * size_t(m_cppChunkY); j++) {
-			size_t index = i + GRID_SIZE_Y * j;
-			m_mpmEngine->m_grid->nodes[index].m = 0.0;
-			m_mpmEngine->m_grid->nodes[index].v = vec2(0.0);
-			m_mpmEngine->m_grid->nodes[index].momentum = vec2(0.0);
-			m_mpmEngine->m_grid->nodes[index].f_int = vec2(0.0);
-			m_mpmEngine->m_grid->nodes[index].force = vec2(0.0);
-			m_mpmEngine->m_grid->nodes[index].nodalAcceleration = vec2(0.0);
+	for (size_t i = 0; i < m_mpmEngine->m_grid->grid_dim_x; i++) {
+		for (size_t j = 0; j < m_mpmEngine->m_grid->grid_dim_y; j++) {
+			GridNode& node = m_mpmEngine->m_grid->GetNode(i, j);
+			node.m = 0.0;
+			node.v = vec2(0.0);
+			node.momentum = vec2(0.0);
+			node.f_int = vec2(0.0);
+			node.force = vec2(0.0);
+			node.nodalAcceleration = vec2(0.0);
 		}
 	}
 
@@ -64,12 +64,10 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepP2G_Velocity_USF(real dt)
 
 void mpm::MpmAlgorithmEngine::MpmTimeStepG_Velocity_USF(real dt)
 {
-	for (size_t i = 0; i < size_t(m_mpmEngine->m_chunks_x) * size_t(m_cppChunkX); i++) {
-		for (size_t j = 0; j < size_t(m_mpmEngine->m_chunks_y) * size_t(m_cppChunkY); j++) {
+	for (size_t i = 0; i < m_mpmEngine->m_grid->grid_dim_x; i++) {
+		for (size_t j = 0; j < m_mpmEngine->m_grid->grid_dim_y; j++) {
 
-			size_t index = size_t(i) + size_t(j) * size_t(GRID_SIZE_Y);
-
-			GridNode& node = m_mpmEngine->m_grid->nodes[index];
+			GridNode& node = m_mpmEngine->m_grid->GetNode(i, j);
 			if (node.m != 0.0) {
 				node.v = node.momentum / node.m;
 			}
@@ -148,12 +146,11 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepP2G_Forces_USF(real dt)
 
 void mpm::MpmAlgorithmEngine::MpmTimeStepG_Momentum_USF(real dt)
 {
-	for (size_t i = 0; i < size_t(m_mpmEngine->m_chunks_x) * size_t(m_cppChunkX); i++) {
-		for (size_t j = 0; j < size_t(m_mpmEngine->m_chunks_y) * size_t(m_cppChunkY); j++) {
+	for (size_t i = 0; i < m_mpmEngine->m_grid->grid_dim_x; i++) {
+		for (size_t j = 0; j < m_mpmEngine->m_grid->grid_dim_y; j++) {
+			size_t index = i + m_mpmEngine->m_grid->grid_dim_y * j;
 
-			size_t index = size_t(i) + size_t(j) * size_t(GRID_SIZE_Y);
-
-			GridNode& node = m_mpmEngine->m_grid->nodes[index];
+			GridNode& node = m_mpmEngine->m_grid->GetNode(i, j);
 
 
 
@@ -191,8 +188,8 @@ void mpm::MpmAlgorithmEngine::MpmTimeStepG2P_PositionVelocity_USF(real dt)
 					if (node.m != 0.0) {
 
 						vec2 dx = dt * mp.v;
-						if (dx.x >= 1.0 || dx.y >= 1.0) {
-							m_paused = true; // GRID CROSSING INSTABILITY
+						if (dx.x >= 0.5 || dx.y >= 0.5) {
+							m_paused = true; // APPROACHING GRID CROSSING INSTABILITY
 						}
 
 						mp.v += dt * wpg * node.force / node.m;

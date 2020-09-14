@@ -25,8 +25,8 @@ void mpm::MpmEngine::ImGuiMpmRenderWindow()
 		std::string mouseInRenderScreenStr = std::to_string(mouseInRenderScreen.x) + ", " + std::to_string(mouseInRenderScreen.y);
 
 		m_mouseMpmRenderScreen = vec2(mouseInRenderScreen.x, mouseInRenderScreen.y);
-		m_mouseMpmRenderScreenNormalized = m_mouseMpmRenderScreen / m_mpmRenderWindow->screen_dimensions;
-		m_mouseMpmRenderScreenGridSpace = vec2(m_mouseMpmRenderScreenNormalized.x * GRID_SIZE_X, m_mouseMpmRenderScreenNormalized.y * GRID_SIZE_Y);
+		m_mouseMpmRenderScreenNormalized = m_mouseMpmRenderScreen / m_mpmRenderWindow->sim_dimensions;
+		m_mouseMpmRenderScreenGridSpace = vec2(m_mouseMpmRenderScreenNormalized.x * m_grid->grid_dim_x, m_mouseMpmRenderScreenNormalized.y * m_grid->grid_dim_y);
 		m_mouseMpmRenderScreenGridSpaceFull = vec4(m_mouseMpmRenderScreenGridSpace, real(int(m_leftButtonDown)), real(int(m_rightButtonDown)));
 
 		//if (!m_paused)
