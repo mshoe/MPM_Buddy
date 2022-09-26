@@ -106,12 +106,12 @@ bool mpm::MpmEngine::InitComputeShaderPipeline()
 		std::vector<std::string>{graphicsGridPath + "marchingSquares.vs"},
 		std::vector<std::string>{graphicsGridPath + "marchingSquares.gs"},
 		std::vector<std::string>{graphicsGridPath + "marchingSquares.fs"},
-		std::vector<std::string>{mpmHeadersPath + "mpm_header1.comp"});
+		std::vector<std::string>{mpmHeadersPath + "mpm_header1.comp"});*/
 	m_gridDensityShader = std::make_shared<StandardShader>(
 		std::vector<std::string>{graphicsGridPath + "densityField.vs"},
 		std::vector<std::string>{},
 		std::vector<std::string>{graphicsGridPath + "densityField.fs"},
-		std::vector<std::string>{mpmHeadersPath + "mpm_header1.comp", mpmHeadersPath + "shapeFunctions.comp"});*/
+		std::vector<std::string>{mpmHeadersPath + "mpm_header1.comp", mpmHeadersPath + "shapeFunctions.comp"});
 
 	m_borderShader = std::make_shared<StandardShader>(
 		std::vector<std::string>{graphicsGeometryPath + "polygon.vs"},

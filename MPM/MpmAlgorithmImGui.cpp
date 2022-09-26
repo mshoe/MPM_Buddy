@@ -272,7 +272,7 @@ void mpm::MpmAlgorithmEngine::ImGuiCPUMode()
 
 		ImGui::Checkbox("Paused", &m_paused);
 
-		ImGui::Checkbox("USL/USF", &m_USL);
+		//ImGui::Checkbox("USL/USF", &m_USL);
 
 		ImGui::Checkbox("Semi Implict Time Integration", &m_semiImplicitCPP);
 		ImGui::InputDouble("Implicit Ratio (beta)", &m_beta, 0.05, 0.1);

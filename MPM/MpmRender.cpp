@@ -29,9 +29,9 @@ void mpm::MpmEngine::MpmRender()
 			RenderGrid(m_zoomPoint, 1.0, m_mpmRenderWindow, m_gridShaderVector);
 		}
 	}
-	if (m_viewMarchingSquares) {
+	/*if (m_viewMarchingSquares) {
 		RenderMarchingSquares(m_zoomPoint, 1.0, m_mpmRenderWindow, m_gridShaderMarchingSquares);
-	}
+	}*/
 	// Render Zoom Border
 	if (m_showZoomBorder) {
 		m_zoomWindowShader->Use();

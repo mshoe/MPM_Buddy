@@ -105,7 +105,7 @@ namespace mpm {
 			"USL",
 			"Symplectic Euler"
 		};
-		volatile MPM_ALGO m_mpm_algo = MPM_ALGO::MUSL;
+		volatile MPM_ALGO m_mpm_algo = MPM_ALGO::MLS;
 
 		// BASIS FUNCTIONS
 		// enum declared in ShapeFunctions.h
@@ -184,7 +184,7 @@ namespace mpm {
 
 		
 
-		bool m_USL = true;
+		//bool m_USL = true;
 
 		
 

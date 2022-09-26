@@ -212,7 +212,7 @@ void mpm::MpmEngine::ImGuiGridOptions()
 			ImGui::Checkbox("View grid", &m_viewGrid);
 			ImGui::Checkbox("View grid mass", &m_viewGridMass);
 			ImGui::Checkbox("View grid vector", &m_viewGridVector);
-			ImGui::Checkbox("Marching squares", &m_viewMarchingSquares);
+			//ImGui::Checkbox("Marching squares", &m_viewMarchingSquares);
 			ImGui::Checkbox("Density field", &m_viewGridDensity);
 			if (ImGui::TreeNode("View grid mass options")) {
 				ImGui::InputReal("max node mass clamp", &m_maxNodeMassClamp, 1.0, 10.0, "%.1f");

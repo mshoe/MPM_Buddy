@@ -32,7 +32,9 @@ double GetNodeMass(in ivec2 gn) {
         return 0.0;
     }
 
-    return nodes[gn.x][gn.y].m;
+    gridNode node;
+    GetNode(gn.x, gn.y, node);
+    return node.m;
 }
 
 double GetInterpolatedMass(in dvec2 pos) {
