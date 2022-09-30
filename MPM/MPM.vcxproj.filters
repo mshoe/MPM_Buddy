@@ -409,5 +409,11 @@
     <None Include="shaders\compute\interactive\pSetDeformationGradients.comp">
       <Filter>Resource Files\Shaders\compute\interactive</Filter>
     </None>
+    <None Include="shaders\graphics\grid\densityField.fs">
+      <Filter>Resource Files\Shaders\graphics</Filter>
+    </None>
+    <None Include="shaders\graphics\grid\densityField.vs">
+      <Filter>Resource Files\Shaders\graphics</Filter>
+    </None>
   </ItemGroup>
 </Project>

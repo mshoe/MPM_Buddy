@@ -256,7 +256,8 @@ void mpm::MpmEngine::RenderDensityField(vec2 zoomPoint, real zoomFactor, int bin
 	//m_mouseShader->SetVec("iResolution", openGLScreen->sim_dimensions);
 	densityShader->SetReal("zoomFactor", zoomFactor);
 	densityShader->SetVec("zoomPoint", zoomPoint);
-	densityShader->SetVec("screenResolution", openGLScreen->screen_dimensions);
+	densityShader->SetVec("screenResolution", openGLScreen->sim_dimensions);
+	//std::cout << openGLScreen->screen_dimensions.x << ", " << m_openGLScreen->screen_dimensions.y << std::endl;
 	glm::highp_fvec4 backgroundColor = glm::highp_fvec4(m_backgroundColor[0], m_backgroundColor[1], m_backgroundColor[2], m_backgroundColor[3]);
 	densityShader->SetVec("backgroundColor", backgroundColor);
 	glm::highp_fvec4 densityColor = glm::highp_fvec4(m_densityColor[0], m_densityColor[1], m_densityColor[2], m_densityColor[3]);
@@ -274,12 +275,16 @@ void mpm::MpmEngine::RenderDensityField(vec2 zoomPoint, real zoomFactor, int bin
 	if (m_mpmAlgorithmEngine->m_algo_code == MpmAlgorithmEngine::MPM_ALGORITHM_CODE::CPP) {
 		densityShader->SetInt("currGridSizeX", m_mpmAlgorithmEngine->m_cppChunkX * m_chunks_x);
 		densityShader->SetInt("currGridSizeY", m_mpmAlgorithmEngine->m_cppChunkY * m_chunks_y);
+		//std::cout << m_mpmAlgorithmEngine->m_cppChunkX * m_chunks_x << ", " << m_mpmAlgorithmEngine->m_cppChunkY * m_chunks_y << std::endl;
 	}
 	else {
 		densityShader->SetInt("currGridSizeX", 32 * m_chunks_x);
 		densityShader->SetInt("currGridSizeY", 32 * m_chunks_y);
 	}
-	
+	densityShader->SetInt("GRID_SIZE_X", m_grid->grid_dim_x);
+	densityShader->SetInt("GRID_SIZE_Y", m_grid->grid_dim_y);
+	densityShader->SetInt("SCREEN_DIM_X", (int)m_mpmRenderWindow->sim_dimensions.x);
+	densityShader->SetInt("SCREEN_DIM_Y", (int)m_mpmRenderWindow->sim_dimensions.y);
 
 	glBindVertexArray(openGLScreen->VAO);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, binding, ssbo);

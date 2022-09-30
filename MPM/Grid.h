@@ -33,7 +33,7 @@ namespace mpm {
 		vec2 Ark = vec2(0.0);
 		vec2 Apk = vec2(0.0);
 
-		double delta_KE = 0.0; // the change in kinetic energy at each time step
+		//double delta_KE = 0.0; // the change in kinetic energy at each time step
 
 		GLreal rkArk = 0.0;
 		//GLreal glsl_padding2 = 0.0;

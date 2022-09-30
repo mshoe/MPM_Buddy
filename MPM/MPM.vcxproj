@@ -231,6 +231,8 @@
     <None Include="shaders\compute\p2gScatterParticleAndUpdateNodes.comp" />
     <None Include="shaders\graphics\gridShader.fs" />
     <None Include="shaders\graphics\gridShader.vs" />
+    <None Include="shaders\graphics\grid\densityField.fs" />
+    <None Include="shaders\graphics\grid\densityField.vs" />
     <None Include="shaders\graphics\mouseShader.fs" />
     <None Include="shaders\graphics\mouseShader.vs" />
     <None Include="shaders\graphics\pointCloud.fs" />
